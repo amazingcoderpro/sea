@@ -25,7 +25,7 @@ SECRET_KEY = 'a^1#l#&@h^1%_8iing(x#xv7m7^jv*%x9q-b9jyprc9b&jjnyn'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["0.0.0.0"]
 
 
 # Application definition
@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'sea_app'
 ]
 
 MIDDLEWARE = [
