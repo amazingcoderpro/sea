@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 import os
 import sys
+import logging
+from log_config import log_config
+
+log_config.init_log_config("logs", "sea")
+logger = logging.getLogger()
 
 if __name__ == '__main__':
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sea.settings')
@@ -12,4 +17,6 @@ if __name__ == '__main__':
             "available on your PYTHONPATH environment variable? Did you "
             "forget to activate a virtual environment?"
         ) from exc
+
+    logger.info("---start run---")
     execute_from_command_line(sys.argv)
