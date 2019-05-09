@@ -81,7 +81,7 @@ DATABASES = {
     'ENGINE': 'django.db.backends.mysql',
     'NAME':'sea',
     'USER': 'sea',
-    'PASSWORD': 'sea@orderplus',
+    'PASSWORD': 'sea@orderplus.com',
     'HOST': '47.112.113.252',
     'PORT': '3306',
     }
