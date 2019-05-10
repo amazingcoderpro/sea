@@ -13,7 +13,6 @@ class LoginView(generics.CreateAPIView):
     serializer_class = userinfo_serializers.LoginSerializer
 
     def create(self, request, *args, **kwargs):
-        print("1111111")
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             username = request.data.get('username')
@@ -29,4 +28,11 @@ class LoginView(generics.CreateAPIView):
                 return Response({"message": "用户名密码错误"}, status=status.HTTP_401_UNAUTHORIZED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RegisterView(generics.CreateAPIView):
+    """注册"""
+    queryset = models.User.objects.all()
+    serializer_class = userinfo_serializers.RegisterSerializer
+
 
