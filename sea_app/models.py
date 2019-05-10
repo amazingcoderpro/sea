@@ -35,7 +35,7 @@ class User(AbstractUser):
     """系统用户表"""
     username = models.CharField(max_length=64, verbose_name="账户名", unique=True)
     nickname = models.CharField(max_length=45, blank=True, null=True, verbose_name="昵称")
-    password = models.CharField(max_length=32, verbose_name="密码")
+    password = models.CharField(max_length=128, verbose_name="密码")
     site_name = models.CharField(max_length=45, blank=True, null=True, verbose_name="站点名称")
     site_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="站点URL")
     link = models.CharField(max_length=255, blank=True, null=True, verbose_name="链接参数")
