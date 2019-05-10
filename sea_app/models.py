@@ -6,11 +6,12 @@ from django.db import models
 
 class Menu(models.Model):
     """菜单表"""
-    module = models.CharField(max_length=255, verbose_name="菜单名称")
-    menu_url = models.CharField(max_length=255, verbose_name="菜单链接")
-    parent_id = models.IntegerField(blank=True, null=True, verbose_name="菜单ID")
+    menu_name = models.CharField(max_length=255, verbose_name="菜单名称")
+    menu_url = models.CharField(blank=True, null=True, max_length=255, verbose_name="菜单链接")
+    parent_id = models.IntegerField(db_index=True, blank=True, null=True, verbose_name="菜单ID")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+    menu_num = models.FloatField(blank=True, null=True, verbose_name="菜单排序")
 
     class Meta:
         # managed = False
@@ -41,14 +42,16 @@ class User(AbstractUser):
     link = models.CharField(max_length=255, blank=True, null=True, verbose_name="链接参数")
     state_choices = ((0, '正常'), (1, '隐蔽'), (2, '关闭'))
     state = models.SmallIntegerField(choices=state_choices, default=0, verbose_name="用户状态")
-    parent_id = models.IntegerField(db_index=True, blank=True, null=True, verbose_name="站长ID")
+    # parent_id = models.IntegerField(db_index=True, blank=True, null=True, verbose_name="站长ID")
+    parent = models.ForeignKey("self", on_delete=models.DO_NOTHING, blank=True, null=True)
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     role = models.ForeignKey(Role, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'user'
+        ordering = ["-id"]
 
 
 class Platform(models.Model):
@@ -57,7 +60,7 @@ class Platform(models.Model):
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="平台URL")
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'platform'
 
 
@@ -71,7 +74,7 @@ class Store(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'store'
 
 
@@ -92,7 +95,7 @@ class Product(models.Model):
     store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'product'
 
 
@@ -111,7 +114,7 @@ class Account(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'account'
 
 
@@ -125,7 +128,7 @@ class Board(models.Model):
     account = models.ForeignKey(Account, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'board'
 
 
@@ -143,7 +146,7 @@ class Pin(models.Model):
     board = models.ForeignKey(Board, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'pin'
 
 
@@ -165,7 +168,7 @@ class Rule(models.Model):
     board = models.ManyToManyField(Board)
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'rule'
 
 
@@ -179,6 +182,6 @@ class PublishRecord(models.Model):
     execute_time = models.DateTimeField(auto_now_add=True, verbose_name="执行时间")
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'publishrecord'
 
