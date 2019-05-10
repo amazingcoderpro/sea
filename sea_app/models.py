@@ -5,26 +5,33 @@ from django.db import models
 
 
 class Menu(models.Model):
+    """菜单表"""
     module = models.CharField(max_length=255, verbose_name="菜单名称")
+    menu_url = models.CharField(max_length=255, verbose_name="菜单链接")
+    parent_id = models.IntegerField(blank=True, null=True, verbose_name="菜单ID")
+    create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'menu'
 
 
 class Role(models.Model):
+    """角色表"""
     name = models.CharField(unique=True, max_length=255, verbose_name="角色名称")
-    owner = models.IntegerField(blank=True, null=True, verbose_name="创建者")
+    user_id = models.IntegerField(blank=True, null=True, verbose_name="创建者")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     menu = models.CharField(max_length=45, blank=True, null=True, verbose_name="菜单权限")
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'role'
 
 
 class User(AbstractBaseUser):
+    """系统用户表"""
     username = models.CharField(max_length=64, unique=True, verbose_name="用户名")
     nickname = models.CharField(max_length=45, blank=True, null=True, verbose_name="昵称")
     password = models.CharField(max_length=32, verbose_name="密码")
@@ -32,12 +39,36 @@ class User(AbstractBaseUser):
     site_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="站点URL")
     link = models.CharField(max_length=255, blank=True, null=True, verbose_name="链接参数")
     state_choices = ((0, '正常'), (1, '隐蔽'), (2, '关闭'))
-    state = models.CharField(choices=state_choices, default=0, verbose_name="用户状态")
-    parent = models.IntegerField(blank=True, null=True, verbose_name="用户名")
+    state = models.SmallIntegerField(choices=state_choices, default=0, verbose_name="用户状态")
+    parent_id = models.IntegerField(db_index=True, blank=True, null=True, verbose_name="站长ID")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     role = models.ForeignKey(Role, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'user'
+
+
+class Platform(models.Model):
+    """平台表"""
+    name = models.CharField(max_length=64, unique=True, verbose_name="平台名称")
+    url = models.CharField(max_length=255, blank=True, null=True, verbose_name="平台URL")
+
+    class Meta:
+        # managed = False
+        db_table = 'platform'
+
+
+class Store(models.Model):
+    """店铺表"""
+    name = models.CharField(max_length=64, unique=True, verbose_name="店铺名称")
+    url = models.CharField(max_length=255, blank=True, null=True, verbose_name="店铺URL")
+    create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+    platform = models.ForeignKey(Platform, on_delete=models.DO_NOTHING, blank=True, null=True)
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
+
+    class Meta:
+        # managed = False
+        db_table = 'store'
