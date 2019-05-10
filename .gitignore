@@ -23,6 +23,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+*.DS_Store
 MANIFEST
 
 # PyInstaller
@@ -53,6 +54,7 @@ coverage.xml
 
 # Django stuff:
 *.log
+logs/*
 local_settings.py
 db.sqlite3
 
@@ -101,7 +103,22 @@ venv.bak/
 /site
 
 # mypy
-.mypy_cache/
+.mypy_
+cache/
 
-.idea/
+# pycharm
+.idea
+
+# test.html
+test.html
+/web_service/data/static/test.html
+# /Pipfile.lock
+/Pipfile.lock~4ca206d43160e756925c06f0c2a255771dc2b9ee
+
+# png
+*.png
+scripts/*.png
+
+# logs
+*.log
 logs
