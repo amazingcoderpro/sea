@@ -19,7 +19,7 @@ class Menu(models.Model):
 
 class Role(models.Model):
     """角色表"""
-    name = models.CharField(unique=True, max_length=255, verbose_name="角色名称")
+    name = models.CharField(max_length=255, verbose_name="角色名称")
     user_id = models.IntegerField(blank=True, null=True, verbose_name="创建者")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
@@ -32,7 +32,7 @@ class Role(models.Model):
 
 class User(AbstractBaseUser):
     """系统用户表"""
-    username = models.CharField(max_length=64, unique=True, verbose_name="用户名")
+    username = models.CharField(max_length=64, verbose_name="用户名")
     nickname = models.CharField(max_length=45, blank=True, null=True, verbose_name="昵称")
     password = models.CharField(max_length=32, verbose_name="密码")
     site_name = models.CharField(max_length=45, blank=True, null=True, verbose_name="站点名称")
@@ -62,7 +62,7 @@ class Platform(models.Model):
 
 class Store(models.Model):
     """店铺表"""
-    name = models.CharField(max_length=64, unique=True, verbose_name="店铺名称")
+    name = models.CharField(max_length=64, verbose_name="店铺名称")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="店铺URL")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
@@ -72,3 +72,8 @@ class Store(models.Model):
     class Meta:
         # managed = False
         db_table = 'store'
+
+
+# class Product(models.Model):
+#     """产品表"""
+#     sku = models.CharField(max_length=64, verbose_name="店铺名称")
