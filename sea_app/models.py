@@ -1,4 +1,4 @@
-from django.contrib.auth.base_user import AbstractBaseUser
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 # Create your models here.
@@ -30,9 +30,9 @@ class Role(models.Model):
         db_table = 'role'
 
 
-class User(AbstractBaseUser):
+class User(AbstractUser):
     """系统用户表"""
-    username = models.CharField(max_length=64, verbose_name="用户名")
+    username = models.CharField(max_length=64, verbose_name="账户名", unique=True)
     nickname = models.CharField(max_length=45, blank=True, null=True, verbose_name="昵称")
     password = models.CharField(max_length=32, verbose_name="密码")
     site_name = models.CharField(max_length=45, blank=True, null=True, verbose_name="站点名称")
