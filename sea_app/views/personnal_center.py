@@ -27,9 +27,9 @@ class LoginView(generics.CreateAPIView):
             user = auth.authenticate(username=username, password=password)
             if user is not None and user.is_active:
                 request = {}
-                request["user"] = user.LoginSerializer(instance=user, many=False).data
+                request["user"] = personnal_center.LoginSerializer(instance=user, many=False).data
                 payload = jwt_payload_handler(user)
-                request["token"] = jwt_encode_handler(payload)
+                request["token"] = "jwt {}".format(jwt_encode_handler(payload))
                 # 生成菜单
                 menu_tree = MenuTree(user).crate_menu_tree()
                 request["menu_tree"] = menu_tree
@@ -66,17 +66,17 @@ class UserOperView(generics.RetrieveUpdateDestroyAPIView):
 
 class RoleView(generics.ListCreateAPIView):
     """角色 增 列表展示"""
-    queryset = models.User.objects.all()
-    serializer_class = personnal_center.UserSerializer
+    queryset = models.Role.objects.all()
+    serializer_class = personnal_center.RoleSerializer
     pagination_class = PNPagination
-    filter_backends = (filters.UserFilter,)
+    filter_backends = (filters.RoleFilter,)
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 
 
 class RoleOperView(generics.RetrieveUpdateDestroyAPIView):
-    """角色 删 该 查"""
-    queryset = models.User.objects.all()
-    serializer_class = personnal_center.UserOperSerializer
-    permission_classes = (IsAuthenticated, UserPermission)
+    """角色 删 改 查"""
+    queryset = models.Role.objects.all()
+    serializer_class = personnal_center.RoleSerializer
+    permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)

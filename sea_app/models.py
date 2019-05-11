@@ -30,6 +30,7 @@ class Role(models.Model):
     class Meta:
         # managed = False
         db_table = 'role'
+        unique_together = ('name', 'user_id',)
 
 
 class User(AbstractUser):

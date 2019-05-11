@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator
+from rest_framework.validators import UniqueValidator,UniqueTogetherValidator
 
 from sea_app import models
 
@@ -58,6 +58,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """用户增加 显示列表"""
     username = serializers.CharField(required=True, min_length=5, error_messages={
         "blank": "请输入账户",
         "required": "请携带该参数",
@@ -100,6 +101,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserOperSerializer(serializers.ModelSerializer):
+    """用户删 改 查"""
     password2 = serializers.CharField(write_only=True)
 
     class Meta:
@@ -116,3 +118,22 @@ class UserOperSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("两次密码不一致，请重新输入")
         del attrs["password2"]
         return attrs
+
+
+class RoleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.Role
+        fields = ("id", "name", "menu_list")
+
+    def validate(self, attrs):
+        is_exit = models.Role.objects.filter(user_id=self.context["request"].user.id, name=attrs["name"])
+        if is_exit:
+            raise serializers.ValidationError("角色名已经存在")
+        return attrs
+
+    def create(self, validated_data):
+        role = super(RoleSerializer, self).create(validated_data=validated_data)
+        role.user_id = self.context["request"].user.id
+        role.save()
+        return role
