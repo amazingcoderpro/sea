@@ -14,7 +14,7 @@ class Menu(models.Model):
     menu_num = models.FloatField(blank=True, null=True, verbose_name="菜单排序")
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'menu'
 
 
@@ -28,7 +28,7 @@ class Role(models.Model):
     menu_list = models.CharField(max_length=45, blank=True, null=True, verbose_name="菜单权限")  # 格式："[1,2,3]"
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'role'
         unique_together = ('name', 'user_id',)
 
