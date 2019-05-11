@@ -1,6 +1,5 @@
 from django.contrib import auth
-from django.db.models import Q
-from rest_framework import generics, viewsets ,status
+from rest_framework import generics,status
 from rest_framework.response import Response
 from rest_framework_jwt.serializers import jwt_encode_handler, jwt_payload_handler
 from rest_framework.permissions import IsAuthenticated
@@ -8,15 +7,17 @@ from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 from rest_framework.authentication import SessionAuthentication
 
 from sea_app import models
-from sea_app.serializers import userinfo_serializers, app_serializers
+from sea_app.serializers import personnal_center
 from sea_app.utils.menu_tree import MenuTree
 from sea_app.pageNumber.pageNumber import PNPagination
+from sea_app.filters import filters
+from sea_app.permission.permission import UserPermission
 
 
 class LoginView(generics.CreateAPIView):
     """登陆"""
     queryset = models.User.objects.all()
-    serializer_class = userinfo_serializers.LoginSerializer
+    serializer_class = personnal_center.LoginSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -26,7 +27,7 @@ class LoginView(generics.CreateAPIView):
             user = auth.authenticate(username=username, password=password)
             if user is not None and user.is_active:
                 request = {}
-                request["user"] = userinfo_serializers.LoginSerializer(instance=user, many=False).data
+                request["user"] = user.LoginSerializer(instance=user, many=False).data
                 payload = jwt_payload_handler(user)
                 request["token"] = jwt_encode_handler(payload)
                 # 生成菜单
@@ -42,30 +43,40 @@ class LoginView(generics.CreateAPIView):
 class RegisterView(generics.CreateAPIView):
     """注册"""
     queryset = models.User.objects.all()
-    serializer_class = userinfo_serializers.RegisterSerializer
+    serializer_class = personnal_center.RegisterSerializer
 
 
-class UserViewSet(viewsets.ModelViewSet):
-    """用户的增删该查"""
+class UserView(generics.ListCreateAPIView):
+    """用户 增 列表展示"""
     queryset = models.User.objects.all()
-    serializer_class = userinfo_serializers.UserSerializer
+    serializer_class = personnal_center.UserSerializer
     pagination_class = PNPagination
+    filter_backends = (filters.UserFilter,)
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 
-    def get_queryset(self):
-        parent_id = self.request.user.parent_id
-        if parent_id:
-            return models.User.objects.filter(Q(parent_id=parent_id) | Q(id=parent_id))
-        return models.User.objects.filter(id=self.request.user.id)
+
+class UserOperView(generics.RetrieveUpdateDestroyAPIView):
+    """用户 删 该 查"""
+    queryset = models.User.objects.all()
+    serializer_class = personnal_center.UserOperSerializer
+    permission_classes = (IsAuthenticated, UserPermission)
+    authentication_classes = (JSONWebTokenAuthentication,)
 
 
-class StoreView(generics.ListAPIView):
-    """电商"""
-    queryset = models.Store.objects.all()
-    serializer_class = app_serializers.StoreSerializer
+class RoleView(generics.ListCreateAPIView):
+    """角色 增 列表展示"""
+    queryset = models.User.objects.all()
+    serializer_class = personnal_center.UserSerializer
+    pagination_class = PNPagination
+    filter_backends = (filters.UserFilter,)
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 
-    def get_queryset(self):
-        return models.Store.objects.filter(user=self.request.user)
+
+class RoleOperView(generics.RetrieveUpdateDestroyAPIView):
+    """角色 删 该 查"""
+    queryset = models.User.objects.all()
+    serializer_class = personnal_center.UserOperSerializer
+    permission_classes = (IsAuthenticated, UserPermission)
+    authentication_classes = (JSONWebTokenAuthentication,)

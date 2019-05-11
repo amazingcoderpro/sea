@@ -1,21 +1,23 @@
 from django.conf.urls import url, include
-from rest_framework import routers
 
-from sea_app import views
+from sea_app.views import personnal_center
 
 
-router = routers.DefaultRouter()
-router.register(r'v1/users', views.UserViewSet)
+v1_urlpatterns = [
+    # 注册 登陆
+    url(r'^account/login/$', personnal_center.LoginView.as_view()),
+    url(r'^account/register/$', personnal_center.RegisterView.as_view()),
+
+    # 用户管理
+    url(r'users/$', personnal_center.UserView.as_view()),
+    url(r'users/(?P<pk>[0-9]+)/$', personnal_center.UserOperView.as_view()),
+
+    # 角色管理
+    url(r'role/$', personnal_center.RoleView.as_view()),
+    url(r'role/$', personnal_center.RoleOperView.as_view()),
+]
 
 
 urlpatterns = [
-    url(r'^', include(router.urls)),
-    # 注册 登陆
-    url(r'^account/login/$', views.LoginView.as_view()),
-    url(r'^account/register/$', views.RegisterView.as_view()),
-
-
-    # 获取电商
-    url(r'v1/store', views.StoreView.as_view())
-
+    url(r'^v1/', include(v1_urlpatterns)),
 ]

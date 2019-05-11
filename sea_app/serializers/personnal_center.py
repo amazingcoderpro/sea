@@ -94,5 +94,25 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = super(UserSerializer, self).create(validated_data=validated_data)
         user.set_password(validated_data["password"])
+        user.parent_id = self.context["request"].user.id
         user.save()
         return user
+
+
+class UserOperSerializer(serializers.ModelSerializer):
+    password2 = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = models.User
+        fields = ("id", "username", "password", "password2", "email", "role", "create_time", "nickname")
+        extra_kwargs = {
+            'username': {'write_only': False, 'read_only': True},
+            'password': {'write_only': True, 'read_only': False},
+            'email': {'write_only': False, 'read_only': True},
+        }
+
+    def validate(self, attrs):
+        if not attrs["password"] == attrs["password2"]:
+            raise serializers.ValidationError("两次密码不一致，请重新输入")
+        del attrs["password2"]
+        return attrs
