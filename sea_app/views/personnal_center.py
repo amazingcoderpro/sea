@@ -33,9 +33,9 @@ class LoginView(generics.CreateAPIView):
                 # 生成菜单
                 menu_tree = MenuTree(user).crate_menu_tree()
                 request["menu_tree"] = menu_tree
-                return Response(request, status=status.HTTP_200_OK)
+                return Response({"data": request, "code": 1}, status=status.HTTP_200_OK)
             else:
-                return Response({"message": "用户名密码错误"}, status=status.HTTP_401_UNAUTHORIZED)
+                return Response({"data": "用户名密码错误", "code": 0}, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
