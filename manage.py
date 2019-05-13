@@ -2,7 +2,7 @@
 import os
 import sys
 from config import logger
-from task.task_processor import TaskProcessor
+#from task.task_processor import TaskProcessor
 if __name__ == '__main__':
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sea.settings')
     try:
