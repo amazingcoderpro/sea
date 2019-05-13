@@ -8,6 +8,7 @@ verify_ssl = true
 [packages]
 django = "==2.1.0"
 log-config = "*"
+apscheduler = "*"
 
 [requires]
 python_version = "3.6"
