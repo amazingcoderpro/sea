@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 import os
 import sys
-import logging
-from log_config import log_config
-
-log_config.init_log_config("logs", "sea")
-logger = logging.getLogger()
-
+from config import logger
+from task.task_processor import TaskProcessor
 if __name__ == '__main__':
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sea.settings')
     try:
@@ -19,4 +15,6 @@ if __name__ == '__main__':
         ) from exc
 
     logger.info("---start run---")
+    # tsp = TaskProcessor(6)
+    # tsp.start()
     execute_from_command_line(sys.argv)
