@@ -102,6 +102,7 @@ class Product(models.Model):
 
 class Account(models.Model):
     """Pin账户表"""
+    accountID = models.CharField(max_length=32, verbose_name="Account唯一标识码")
     name = models.CharField(max_length=64, verbose_name="账户名称")
     email = models.CharField(max_length=255, verbose_name="登陆邮箱")
     create_time = models.DateTimeField(verbose_name="账号创建时间")
@@ -121,6 +122,7 @@ class Account(models.Model):
 
 class Board(models.Model):
     """Pin Board表"""
+    boardID = models.CharField(max_length=32, verbose_name="Board唯一标识码")
     name = models.CharField(max_length=64, verbose_name="Board名称")
     follower = models.IntegerField(default=0, verbose_name="粉丝")
     create_time = models.DateTimeField(verbose_name="Board创建时间")
@@ -135,16 +137,22 @@ class Board(models.Model):
 
 class Pin(models.Model):
     """Pin 表"""
+    pinID = models.CharField(max_length=32, verbose_name="Pin唯一标识码")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="Pin URL")
     description = models.TextField(verbose_name="Pin 描述")
     like = models.IntegerField(default=0, verbose_name="喜欢量")
     comment = models.IntegerField(default=0, verbose_name="评论量")
     repin = models.IntegerField(default=0, verbose_name="转发量")
+    visitors = models.IntegerField(default=0, verbose_name="访问量")
+    new_visitors = models.IntegerField(default=0, verbose_name="新增访问量")
+    views = models.IntegerField(default=0, verbose_name="视图量")
+    clicks = models.IntegerField(default=0, verbose_name="点击量")
     site_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
     thumbnail = models.TextField(verbose_name="缩略图")
     publish_time = models.DateTimeField(auto_now_add=True, verbose_name="发布时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     board = models.ForeignKey(Board, on_delete=models.DO_NOTHING, blank=True, null=True)
+    product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -155,7 +163,7 @@ class Rule(models.Model):
     """规则表"""
     start_time = models.DateTimeField(verbose_name="发布开始时间")
     end_time = models.DateTimeField(verbose_name="发布结束时间")
-    delta_time = models.FloatField(verbose_name="发布间隔时间（秒）")
+    interval_time = models.FloatField(verbose_name="发布间隔时间（秒）")
     low_scan = models.IntegerField(default=0, verbose_name="低浏览量")
     high_scan = models.IntegerField(default=0, verbose_name="高浏览量")
     low_sale = models.IntegerField(default=0, verbose_name="低销售额")
@@ -164,6 +172,8 @@ class Rule(models.Model):
     category02 = models.CharField(max_length=64, blank=True, null=True, verbose_name="产品类目02")
     category03 = models.CharField(max_length=64, blank=True, null=True, verbose_name="产品类目03")
     tag = models.CharField(max_length=64, blank=True, null=True, verbose_name="规则标签")
+    state_choices = ((0, '未开始'), (1, '执行中'), (2, '已完成'))
+    state = models.SmallIntegerField(choices=state_choices, default=0, verbose_name="规则执行状态")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     board = models.ManyToManyField(Board)
@@ -177,10 +187,12 @@ class PublishRecord(models.Model):
     """发布记录表"""
     board = models.ForeignKey(Board, on_delete=models.DO_NOTHING)
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
+    rule = models.ForeignKey(Rule, on_delete=models.DO_NOTHING)
     state = models.BooleanField(default=True, verbose_name="是否发布")
     finished = models.BooleanField(default=True, verbose_name="是否发布成功")
     remark = models.TextField(blank=True, null=True, verbose_name="备注")
-    execute_time = models.DateTimeField(auto_now_add=True, verbose_name="执行时间")
+    execute_time = models.DateTimeField(verbose_name="执行时间")
+    finished_time = models.DateTimeField(null=True, verbose_name="完成时间")
 
     class Meta:
         managed = False
