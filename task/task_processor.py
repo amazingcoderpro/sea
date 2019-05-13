@@ -5,7 +5,7 @@
 import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from config import logger
-from sea_app.models import PublishRecord
+from sea_app.models import PublishRecord, Pin, Board, Account
 
 
 class TaskProcessor:
@@ -24,16 +24,19 @@ class TaskProcessor:
         all_jobs = PublishRecord.objects.filter(state=False, execute_time__lte=gte_time, execute_time__gte=lte_time).all()
         return all_jobs
 
-    def processor(self):
+    def scan_new_pins(self):
         waiting_pins = self.get_all_new_pins()
-        logger.info("processor be triggered.")
+        logger.info("scan_new_pins be triggered.")
         for wp in waiting_pins:
             logger.info("create pin info={}".format(wp))
             # self.pinterest.create_pin(wp)
 
+    def update_pins(self):
+        all_pins = Pin.objects.filter().all()
+
     def start(self):
         logger.info("TaskProcessor start work.")
-        self.scan_job = self.bk_scheduler.add_job(self.processor, 'interval', seconds=self.scan_interval)
+        self.scan_job = self.bk_scheduler.add_job(self.scan_new_pins, 'interval', seconds=self.scan_interval)
 
     def stop(self):
         logger.warning("TaskProcessor stop work.")
