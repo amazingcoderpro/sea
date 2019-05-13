@@ -8,6 +8,9 @@ verify_ssl = true
 [packages]
 django = "==2.1.0"
 log-config = "*"
+apscheduler = "*"
+pymysql = "*"
+django-rest-framework = "*"
 
 [requires]
 python_version = "3.6"
