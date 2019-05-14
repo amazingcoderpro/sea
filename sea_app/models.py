@@ -14,7 +14,7 @@ class Menu(models.Model):
     menu_num = models.FloatField(blank=True, null=True, verbose_name="菜单排序")
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'menu'
 
 
@@ -28,7 +28,7 @@ class Role(models.Model):
     menu_list = models.CharField(max_length=45, blank=True, null=True, verbose_name="菜单权限")  # 格式："[1,2,3]"
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'role'
         unique_together = ('name', 'user_id',)
 
@@ -50,7 +50,7 @@ class User(AbstractUser):
     role = models.ForeignKey(Role, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'user'
         ordering = ["-id"]
 
@@ -61,7 +61,7 @@ class Platform(models.Model):
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="平台URL")
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'platform'
 
 
@@ -75,7 +75,7 @@ class Store(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'store'
 
 
@@ -98,7 +98,7 @@ class Product(models.Model):
     store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'product'
 
 
@@ -118,7 +118,7 @@ class PinterestAccount(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'pinterest_account'
 
 
@@ -133,7 +133,7 @@ class Board(models.Model):
     pinterest_account = models.ForeignKey(PinterestAccount, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'board'
 
 
@@ -157,7 +157,7 @@ class Pin(models.Model):
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'pin'
 
 
@@ -181,7 +181,7 @@ class Rule(models.Model):
     board = models.ManyToManyField(Board)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'rule'
 
 
@@ -198,6 +198,6 @@ class PublishRecord(models.Model):
     finished_time = models.DateTimeField(null=True, verbose_name="完成时间")
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'publish_record'
 

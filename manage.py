@@ -15,6 +15,6 @@ if __name__ == '__main__':
 
     logger.info("---start run---")
     execute_from_command_line(sys.argv)
-    from task.task_processor import TaskProcessor
+    #from task.task_processor import TaskProcessor
     # tsp = TaskProcessor(6)
     # tsp.start()
