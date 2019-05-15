@@ -16,7 +16,7 @@ class MenuTree(object):
         for row in menu_list:
             if "/" in row["menu_url"]:
                 print(row)
-                self.route_list.append({"path": row["menu_url"], "name": row["menu_name"], "component": row["menu_name"]})
+                self.route_list.append(row["menu_url"])
             row["childs"] = []
             if row['parent_id']:
                 self.menu_dict[row['parent_id']]['childs'].append(row)

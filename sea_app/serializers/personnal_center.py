@@ -76,7 +76,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.User
-        fields = ("id", "username", "password", "password2", "email", "role", "create_time", "nickname")
+        fields = ("id", "username", "password", "password2", "email", "role", "create_time", "nickname", "update_time")
         extra_kwargs = {
             'password': {'write_only': True},
         }
@@ -124,7 +124,7 @@ class RoleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Role
-        fields = ("id", "name", "menu_list")
+        fields = ("id", "name", "menu_list", "create_time", "update_time")
 
     def validate(self, attrs):
         is_exit = models.Role.objects.filter(user_id=self.context["request"].user.id, name=attrs["name"])

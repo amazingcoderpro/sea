@@ -82,8 +82,8 @@ DATABASES = {
     'NAME':'sea',
     'USER': 'sea',
     'PASSWORD': 'sea@orderplus.com',
-    # 'HOST': '47.112.113.252',
-    'HOST': '127.0.0.1',
+    'HOST': '47.112.113.252',
+    # 'HOST': '127.0.0.1',
     'PORT': '3306',
     }
 }
