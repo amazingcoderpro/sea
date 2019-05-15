@@ -12,6 +12,7 @@ class Menu(models.Model):
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     menu_num = models.FloatField(blank=True, null=True, verbose_name="菜单排序")
+    icon = models.CharField(blank=True, null=True, max_length=255, verbose_name="菜单主题")
 
     class Meta:
         #managed = False
