@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+
 # Create your models here.
 
 
@@ -15,7 +16,7 @@ class Menu(models.Model):
     icon = models.CharField(blank=True, null=True, max_length=255, verbose_name="菜单主题")
 
     class Meta:
-        #managed = False
+        # managed = False
         db_table = 'menu'
 
 
@@ -25,11 +26,10 @@ class Role(models.Model):
     user_id = models.IntegerField(blank=True, null=True, verbose_name="创建者")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-
     menu_list = models.CharField(max_length=255, blank=True, null=True, verbose_name="菜单权限")  # 格式："[1,2,3]"
 
     class Meta:
-        #managed = False
+        # managed = False
         db_table = 'role'
         unique_together = ('name', 'user_id',)
 
@@ -51,7 +51,7 @@ class User(AbstractUser):
     role = models.ForeignKey(Role, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        #managed = False
+        # managed = False
         db_table = 'user'
         ordering = ["-id"]
 
@@ -62,7 +62,7 @@ class Platform(models.Model):
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="平台URL")
 
     class Meta:
-        #managed = False
+        # managed = False
         db_table = 'platform'
 
 
@@ -76,7 +76,7 @@ class Store(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        #managed = False
+        # managed = False
         db_table = 'store'
 
 
@@ -84,8 +84,7 @@ class Product(models.Model):
     """产品表"""
     sku = models.CharField(max_length=64, verbose_name="产品标识符")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
-    sale = models.FloatField(verbose_name="销售额")
-    revenue = models.FloatField(verbose_name="收益")
+
     image_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="图片URL")
     thumbnail = models.TextField(verbose_name="缩略图")
     scan = models.IntegerField(default=0, verbose_name="浏览量")
@@ -99,7 +98,7 @@ class Product(models.Model):
     store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        #managed = False
+        # managed = False
         db_table = 'product'
 
 
@@ -110,8 +109,7 @@ class PinterestAccount(models.Model):
     email = models.CharField(max_length=255, verbose_name="登陆邮箱")
     create_time = models.DateTimeField(verbose_name="账号创建时间")
     type = models.CharField(max_length=64, verbose_name="账户类型")
-    following = models.IntegerField(default=0, verbose_name="关注量")
-    follower = models.IntegerField(default=0, verbose_name="粉丝")
+
     state = models.BooleanField(default=True, verbose_name="账号状态")
     token = models.CharField(max_length=255, verbose_name="账号使用标识")
     add_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
@@ -119,7 +117,7 @@ class PinterestAccount(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        #managed = False
+        # managed = False
         db_table = 'pinterest_account'
 
 
@@ -127,14 +125,13 @@ class Board(models.Model):
     """Pin Board表"""
     board_uri = models.CharField(max_length=32, verbose_name="Board唯一标识码")
     name = models.CharField(max_length=64, verbose_name="Board名称")
-    follower = models.IntegerField(default=0, verbose_name="粉丝")
     create_time = models.DateTimeField(verbose_name="Board创建时间")
     add_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="修改时间")
     pinterest_account = models.ForeignKey(PinterestAccount, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        #managed = False
+        # managed = False
         db_table = 'board'
 
 
@@ -143,13 +140,7 @@ class Pin(models.Model):
     pin_uri = models.CharField(max_length=32, verbose_name="Pin唯一标识码")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="Pin URL")
     description = models.TextField(verbose_name="Pin 描述")
-    like = models.IntegerField(default=0, verbose_name="喜欢量")
-    comment = models.IntegerField(default=0, verbose_name="评论量")
-    repin = models.IntegerField(default=0, verbose_name="转发量")
-    visitors = models.IntegerField(default=0, verbose_name="访问量")
-    new_visitors = models.IntegerField(default=0, verbose_name="新增访问量")
-    views = models.IntegerField(default=0, verbose_name="视图量")
-    clicks = models.IntegerField(default=0, verbose_name="点击量")
+
     site_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
     thumbnail = models.TextField(verbose_name="缩略图")
     publish_time = models.DateTimeField(auto_now_add=True, verbose_name="发布时间")
@@ -158,8 +149,42 @@ class Pin(models.Model):
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        #managed = False
+        # managed = False
         db_table = 'pin'
+
+
+class HistoryData(models.Model):
+    """历史数据表"""
+    pinterest_account_uri = models.CharField(max_length=32, blank=True, null=True, verbose_name="PinterestAccount唯一标识码")
+    account_following = models.IntegerField(default=0, verbose_name="账户关注量")
+    account_follower = models.IntegerField(default=0, verbose_name="账户粉丝")
+
+    board_uri = models.CharField(max_length=32, blank=True, null=True, verbose_name="Board唯一标识码")
+    board_follower = models.IntegerField(default=0, verbose_name="board粉丝")
+    board_name = models.CharField(max_length=64, blank=True, null=True, verbose_name="Board名称")
+
+    pin_uri = models.CharField(max_length=32, blank=True, null=True, verbose_name="Pin唯一标识码")
+    pin_like = models.IntegerField(default=0, verbose_name="喜欢量")
+    pin_comment = models.IntegerField(default=0, verbose_name="评论量")
+    pin_repin = models.IntegerField(default=0, verbose_name="转发量")
+    pin_views = models.IntegerField(default=0, verbose_name="视图量")
+    pin_clicks = models.IntegerField(default=0, verbose_name="点击量")
+    pin_description = models.TextField(blank=True, null=True, verbose_name="Pin 描述")
+
+    store_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="店铺URL")
+    store_visitors = models.IntegerField(default=0, verbose_name="访问量")
+    store_new_visitors = models.IntegerField(default=0, verbose_name="新增访问量")
+
+    product_sku = models.CharField(max_length=64, blank=True, null=True, verbose_name="产品标识符")
+    product_sale = models.FloatField(default=0.00, verbose_name="销售额")
+    product_revenue = models.FloatField(default=0.00, verbose_name="收益")
+
+    update_time = models.DateTimeField(auto_now=True, db_index=True, verbose_name="数据更新时间")
+
+    class Meta:
+        # managed = False
+        db_table = 'history_data'
+        ordering = ["-update_time"]
 
 
 class Rule(models.Model):
@@ -182,7 +207,7 @@ class Rule(models.Model):
     board = models.ManyToManyField(Board)
 
     class Meta:
-        #managed = False
+        # managed = False
         db_table = 'rule'
 
 
@@ -199,6 +224,5 @@ class PublishRecord(models.Model):
     finished_time = models.DateTimeField(null=True, verbose_name="完成时间")
 
     class Meta:
-        #managed = False
+        # managed = False
         db_table = 'publish_record'
-

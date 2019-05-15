@@ -4,9 +4,10 @@ from rest_framework import serializers
 from sea_app import models
 
 
-class SunAccountSerializer(serializers.ModelSerializer):
+class DailyReportSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = models.PinterestAccount
+        model = models.HistoryData
         depth = 1
-        fields = ("id", "following", "follower", "state", "updateTime")
+        fields = "__all__"
+
