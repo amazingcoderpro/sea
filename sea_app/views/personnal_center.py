@@ -31,8 +31,9 @@ class LoginView(generics.CreateAPIView):
                 payload = jwt_payload_handler(user)
                 request["token"] = "jwt {}".format(jwt_encode_handler(payload))
                 # 生成菜单
-                menu_tree = MenuTree(user).crate_menu_tree()
+                menu_tree, route_list = MenuTree(user).crate_menu_tree()
                 request["menu_tree"] = menu_tree
+                request["router_list"] = route_list
                 return Response({"data": request, "code": 1}, status=status.HTTP_200_OK)
             else:
                 return Response({"data": "用户名密码错误", "code": 0}, status=status.HTTP_200_OK)
