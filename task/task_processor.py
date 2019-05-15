@@ -5,7 +5,7 @@
 import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from config import logger
-from sea_app.models import PublishRecord, Pin, Board, Account
+from sea_app.models import PublishRecord, Pin, Board, PinterestAccount
 
 
 class TaskProcessor:

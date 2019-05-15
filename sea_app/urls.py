@@ -1,5 +1,6 @@
 from django.conf.urls import url, include
 
+from sea_app.views import report
 from sea_app.views import personnal_center
 
 
@@ -15,6 +16,11 @@ v1_urlpatterns = [
     # 角色管理
     url(r'role/$', personnal_center.RoleView.as_view()),
     url(r'role/(?P<pk>[0-9]+)/$', personnal_center.RoleOperView.as_view()),
+
+    # 报告
+    url(r'subaccountdailyreport/$', report.SubAccountDailyReportView.as_view()),
+    url(r'pinsdailyreport/$', report.PinsDailyReportView.as_view()),
+
 ]
 
 
