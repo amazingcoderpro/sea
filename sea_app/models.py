@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+
 # Create your models here.
 
 
@@ -15,7 +16,7 @@ class Menu(models.Model):
     icon = models.CharField(blank=True, null=True, max_length=255, verbose_name="菜单主题")
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'menu'
 
 
@@ -28,7 +29,7 @@ class Role(models.Model):
     menu_list = models.CharField(max_length=255, blank=True, null=True, verbose_name="菜单权限")  # 格式："[1,2,3]"
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'role'
         unique_together = ('name', 'user_id',)
 
@@ -50,7 +51,7 @@ class User(AbstractUser):
     role = models.ForeignKey(Role, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'user'
         ordering = ["-id"]
 
@@ -61,7 +62,7 @@ class Platform(models.Model):
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="平台URL")
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'platform'
 
 
@@ -75,7 +76,7 @@ class Store(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'store'
 
 
@@ -83,7 +84,6 @@ class Product(models.Model):
     """产品表"""
     sku = models.CharField(max_length=64, verbose_name="产品标识符")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
-
 
     image_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="图片URL")
     thumbnail = models.TextField(verbose_name="缩略图")
@@ -98,7 +98,7 @@ class Product(models.Model):
     store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'product'
 
 
@@ -110,7 +110,6 @@ class PinterestAccount(models.Model):
     create_time = models.DateTimeField(verbose_name="账号创建时间")
     type = models.CharField(max_length=64, verbose_name="账户类型")
 
-
     state = models.BooleanField(default=True, verbose_name="账号状态")
     token = models.CharField(max_length=255, verbose_name="账号使用标识")
     add_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
@@ -118,7 +117,7 @@ class PinterestAccount(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'pinterest_account'
 
 
@@ -126,14 +125,13 @@ class Board(models.Model):
     """Pin Board表"""
     board_uri = models.CharField(max_length=32, verbose_name="Board唯一标识码")
     name = models.CharField(max_length=64, verbose_name="Board名称")
-
     create_time = models.DateTimeField(verbose_name="Board创建时间")
     add_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="修改时间")
     pinterest_account = models.ForeignKey(PinterestAccount, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'board'
 
 
@@ -151,7 +149,7 @@ class Pin(models.Model):
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'pin'
 
 
@@ -186,6 +184,7 @@ class HistoryData(models.Model):
         db_table = 'history_data'
         ordering = ["-update_time"]
 
+
 class Rule(models.Model):
     """规则表"""
     start_time = models.DateTimeField(verbose_name="发布开始时间")
@@ -206,7 +205,7 @@ class Rule(models.Model):
     board = models.ManyToManyField(Board)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'rule'
 
 
@@ -223,5 +222,5 @@ class PublishRecord(models.Model):
     finished_time = models.DateTimeField(null=True, verbose_name="完成时间")
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'publish_record'
