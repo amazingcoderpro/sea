@@ -179,9 +179,12 @@ class HistoryData(models.Model):
     product_sale = models.FloatField(default=0.00, verbose_name="销售额")
     product_revenue = models.FloatField(default=0.00, verbose_name="收益")
 
+    update_time = models.DateTimeField(auto_now=True, db_index=True, verbose_name="数据更新时间")
+
     class Meta:
         # managed = False
         db_table = 'history_data'
+        ordering = ["-update_time"]
 
 class Rule(models.Model):
     """规则表"""
