@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.db.models import Q
 from rest_framework import generics
@@ -100,7 +100,7 @@ class SubAccountReportView(generics.ListAPIView):
         queryset = self.filter_queryset(self.get_queryset())
         # 取最新一天的数据
         end_time = request.query_params.dict().get('end_time', datetime.now().date())
-        queryset = queryset.filter(Q(update_time__lte=end_time))
+        queryset = queryset.filter(Q(update_time__range=(end_time + timedelta(days=-1), end_time)))
         data_list = []
         type = request.parser_context['kwargs']['type']
         if type == 'pins':
@@ -285,3 +285,79 @@ class SubAccountReportView(generics.ListAPIView):
             data_list.append(data)
         return data_list
 
+
+class DashBoardView(generics.ListAPIView):
+    queryset = models.HistoryData.objects.all()
+    serializer_class = report.DailyReportSerializer
+    # pagination_class = PNPagination
+    filter_backends = (filters.DashBoardFilter,)
+
+    # permission_classes = (IsAuthenticated,)
+    # authentication_classes = (JSONWebTokenAuthentication,)
+
+    def get_num(self, queryset, fieldname):
+        # 通过queryset获取计数
+        lst = []
+        for item in queryset:
+            lst.append(getattr(item, fieldname))
+        return len(set(lst))
+
+    def count_num(self, queryset, fieldname):
+        # 获取fieldname的总数
+        fieldname_num = 0
+        for item in queryset:
+            fieldname_num += getattr(item, fieldname)
+        return fieldname_num
+
+    def account_overview(self, queryset, request):
+        # 按天循环时间范围内，获取当天数据
+        condtions = request.query_params.dict()
+        start_time = condtions.get('start_time', datetime.now() + timedelta(days=-7))
+        end_time = condtions.get('end_time', datetime.now())
+        pass
+
+    def site_count(self, queryset, oneday):
+        # 获取截止到oneday最新的数据
+        queryset = queryset.filter(Q(update_time__range=(oneday + timedelta(days=-1), oneday)))
+        # 获取站点总数
+        site_num = self.get_num(queryset, "store_url")
+        # 获取帐号总数
+        subaccount_set = queryset.filter(Q(board_uri=None) | Q(board_uri=""),Q(pin_uri=None) | Q(pin_uri=""))
+        subaccount_num = self.get_num(subaccount_set, "pinterest_account_uri")
+        # 获取Board总数
+        board_set = queryset.filter(~Q(board_uri=None), ~Q(board_uri=""),Q(pin_uri=None) | Q(pin_uri=""))
+        board_num = self.get_num(board_set, "board_uri")
+        # 获取pin总数
+        pin_set = queryset.filter(~Q(pin_uri=None), ~Q(pin_uri=""))
+        pin_num = self.get_num(pin_set, "pin_uri")
+
+        # 获取visitor总数
+        visitor_num = self.count_num(pin_set, "store_visitors")
+        # 获取click总数
+        click_num = self.count_num(pin_set, "pin_clicks")
+        # 获取sales总数
+        sales_num = self.count_num(pin_set, "product_sale")
+        # 获取revenue总数
+        revenue_num = self.count_num(pin_set, "product_revenue")
+        return {
+            "site_num": site_num,
+            "subaccount_num": subaccount_num,
+            "board_num": board_num,
+            "pin_num": pin_num,
+            "visitor_num": visitor_num,
+            "click_num": click_num,
+            "sales_num": sales_num,
+            "revenue_num": revenue_num
+        }
+
+    def latest_updates(self):
+        pass
+
+    def top_pins(self):
+        pass
+
+    def top_board(self):
+        pass
+
+    def activity_log(self):
+        pass

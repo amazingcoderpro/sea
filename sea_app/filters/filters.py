@@ -36,8 +36,8 @@ class DailyReportFilter(BaseFilterBackend):
         # start_time, end_time, account=all, board = all, pin=all
         condtions = request.query_params.dict()
         # Setting default query values
-        start_time = condtions.get('start_time', datetime.now().date() + timedelta(days=-7))
-        end_time = condtions.get('end_time', datetime.now().date())
+        start_time = condtions.get('start_time', datetime.now() + timedelta(days=-7))
+        end_time = condtions.get('end_time', datetime.now())
         store_url = condtions.get('store_url')
         if store_url:
             store_url = store_url.strip()
@@ -66,3 +66,17 @@ class DailyReportFilter(BaseFilterBackend):
         return set_list
 
 
+class DashBoardFilter(BaseFilterBackend):
+    """DashBoard 时间过滤"""
+
+    def filter_queryset(self, request, queryset, view):
+        condtions = request.query_params.dict()
+        start_time = condtions.get('start_time', datetime.now() + timedelta(days=-7))
+        end_time = condtions.get('end_time', datetime.now())
+        store_url = condtions.get('store_url')
+        if store_url:
+            store_url = store_url.strip()
+            set_list = queryset.filter(Q(update_time__range=(start_time, end_time)), Q(store_url=store_url))
+        else:
+            set_list = queryset.filter(Q(update_time__range=(start_time, end_time)))
+        return set_list
