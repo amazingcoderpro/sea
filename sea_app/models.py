@@ -26,7 +26,7 @@ class Role(models.Model):
     user_id = models.IntegerField(blank=True, null=True, verbose_name="创建者")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    menu_list = models.CharField(max_length=255, blank=True, null=True, verbose_name="菜单权限")  # 格式："[1,2,3]"
+    menu_list = models.CharField(max_length=255, verbose_name="菜单权限")  # 格式："[1,2,3]"
 
     class Meta:
         # managed = False
@@ -48,7 +48,7 @@ class User(AbstractUser):
     parent = models.ForeignKey("self", on_delete=models.DO_NOTHING, blank=True, null=True)
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    role = models.ForeignKey(Role, on_delete=models.DO_NOTHING, blank=True, null=True)
+    role = models.ForeignKey(Role, on_delete=models.DO_NOTHING)
 
     class Meta:
         # managed = False

@@ -15,7 +15,6 @@ class MenuTree(object):
         menu_list = models.Menu.objects.filter(id__in=menuid_list).values("id", "menu_name", "menu_url", "parent_id", "icon").order_by("menu_num")
         for row in menu_list:
             if "/" in row["menu_url"]:
-                print(row)
                 self.route_list.append(row["menu_url"])
             row["childs"] = []
             if row['parent_id']:
