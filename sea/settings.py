@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'sea_app'
+    'sea_app',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -83,7 +84,6 @@ DATABASES = {
     'USER': 'sea',
     'PASSWORD': 'sea@orderplus.com',
     'HOST': '47.112.113.252',
-    # 'HOST': '127.0.0.1',
     'PORT': '3306',
     'OPTIONS': {"init_command": "SET foreign_key_checks = 0;",}
     }

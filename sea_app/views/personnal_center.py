@@ -1,17 +1,18 @@
 from django.contrib import auth
-from rest_framework import generics,status
+from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework_jwt.serializers import jwt_encode_handler, jwt_payload_handler
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 from rest_framework.authentication import SessionAuthentication
+from django_filters.rest_framework import DjangoFilterBackend
 
 from sea_app import models
 from sea_app.serializers import personnal_center
 from sea_app.utils.menu_tree import MenuTree
 from sea_app.pageNumber.pageNumber import PNPagination
 from sea_app.filters import filters
-from sea_app.permission.permission import UserPermission
+from sea_app.permission.permission import UserPermission, RolePermission
 
 
 class LoginView(generics.CreateAPIView):
@@ -52,9 +53,10 @@ class UserView(generics.ListCreateAPIView):
     queryset = models.User.objects.all()
     serializer_class = personnal_center.UserSerializer
     pagination_class = PNPagination
-    filter_backends = (filters.UserFilter,)
+    filter_backends = (filters.UserFilter, DjangoFilterBackend)
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
+    filterset_fields = ("nickname",)
 
 
 class UserOperView(generics.RetrieveUpdateDestroyAPIView):
@@ -79,5 +81,13 @@ class RoleOperView(generics.RetrieveUpdateDestroyAPIView):
     """角色 删 改 查"""
     queryset = models.Role.objects.all()
     serializer_class = personnal_center.RoleSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, RolePermission)
     authentication_classes = (JSONWebTokenAuthentication,)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        is_exit = models.User.objects.filter(role=instance)
+        if is_exit:
+            return Response({"message": "The role also has user binding"}, status=status.HTTP_403_FORBIDDEN)
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
