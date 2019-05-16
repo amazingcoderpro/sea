@@ -158,6 +158,7 @@ class HistoryData(models.Model):
     pinterest_account_uri = models.CharField(max_length=32, blank=True, null=True, verbose_name="PinterestAccount唯一标识码")
     account_following = models.IntegerField(default=0, verbose_name="账户关注量")
     account_follower = models.IntegerField(default=0, verbose_name="账户粉丝")
+    account_name = models.CharField(max_length=64, blank=True, null=True, verbose_name="账户名称")
 
     board_uri = models.CharField(max_length=32, blank=True, null=True, verbose_name="Board唯一标识码")
     board_follower = models.IntegerField(default=0, verbose_name="board粉丝")
@@ -170,6 +171,7 @@ class HistoryData(models.Model):
     pin_views = models.IntegerField(default=0, verbose_name="视图量")
     pin_clicks = models.IntegerField(default=0, verbose_name="点击量")
     pin_description = models.TextField(blank=True, null=True, verbose_name="Pin 描述")
+    pin_thumbnail = models.TextField(blank=True, null=True, verbose_name="缩略图")
 
     store_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="店铺URL")
     store_visitors = models.IntegerField(default=0, verbose_name="访问量")

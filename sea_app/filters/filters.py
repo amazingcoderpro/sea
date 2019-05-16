@@ -38,10 +38,14 @@ class DailyReportFilter(BaseFilterBackend):
         # Setting default query values
         start_time = condtions.get('start_time', datetime.now().date() + timedelta(days=-7))
         end_time = condtions.get('end_time', datetime.now().date())
-
-        set_list = queryset.filter(Q(update_time__range=(start_time, end_time)))
-
+        store_url = condtions.get('store_url')
+        if store_url:
+            store_url = store_url.strip()
+            set_list = queryset.filter(Q(update_time__range=(start_time, end_time)), Q(store_url=store_url))
+        else:
+            set_list = queryset.filter(Q(update_time__range=(start_time, end_time)))
         search_word = condtions.get('search', '').strip()
+
         if search_word:
             # 查询pin_uri or board_uri or pin_description or board_nam
             set_list = set_list.filter(

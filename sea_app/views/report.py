@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime
+
+from django.db.models import Q
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -85,5 +88,200 @@ class DailyReportView(generics.ListAPIView):
         return Response(data_list)
 
 
+class SubAccountReportView(generics.ListAPIView):
+    queryset = models.HistoryData.objects.all()
+    serializer_class = report.DailyReportSerializer
+    pagination_class = PNPagination
+    filter_backends = (filters.DailyReportFilter,)
+    # permission_classes = (IsAuthenticated,)
+    # authentication_classes = (JSONWebTokenAuthentication,)
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        # 取最新一天的数据
+        end_time = request.query_params.dict().get('end_time', datetime.now().date())
+        queryset = queryset.filter(Q(update_time__lte=end_time))
+        data_list = []
+        type = request.parser_context['kwargs']['type']
+        if type == 'pins':
+            # pins report
+            data_list = self.pins_report(queryset)
+        elif type == 'board':
+            # boards report
+            data_list = self.board_report(queryset)
+        elif type == 'subaccount':
+            # subaccount report
+            data_list = self.subaccount_report(queryset)
+
+        page = self.paginate_queryset(data_list)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(data_list)
+        return Response(data_list)
+        
+    def pins_report(self, queryset):
+        # pins report
+        data_list = []
+        group_dict = {}      
+        set_list = queryset.filter(~Q(pin_uri=None), ~Q(pin_uri=""))
+        # 取时间范围内最新的pin数据
+        for item in set_list:
+            pin_uri = item.pin_uri
+            if pin_uri not in group_dict:
+                group_dict[pin_uri] = {
+                    "update_time": item.update_time,
+                    "pin_thumbnail": item.pin_thumbnail,
+                    "pin_repin": item.pin_repin,
+                    "pin_like": item.pin_like,
+                    "pin_comments": item.pin_comment,
+                    "store_visitors": item.store_visitors,
+                    "store_new_visitors": item.store_new_visitors,
+                    "pin_view": item.pin_views,
+                    "pin_clicks": item.pin_clicks,
+                    "product_sales": item.product_sale,
+                    "product_revenue": item.product_revenue
+                }
+            else:
+                if item.update_time > group_dict[pin_uri]["update_time"]:
+                    group_dict[pin_uri] = {
+                        "update_time": item.update_time,
+                        "pin_thumbnail": item.pin_thumbnail,
+                        "pin_repin": item.pin_repin,
+                        "pin_like": item.pin_like,
+                        "pin_comments": item.pin_comment,
+                        "store_visitors": item.store_visitors,
+                        "store_new_visitors": item.store_new_visitors,
+                        "pin_view": item.pin_views,
+                        "pin_clicks": item.pin_clicks,
+                        "product_sales": item.product_sale,
+                        "product_revenue": item.product_revenue
+                    }
+        for pin_uri, info in group_dict.items():
+            data = {
+                "pin_uri": pin_uri,
+                "pin_thumbnail": info["pin_thumbnail"],
+                "pin_repin": info["pin_repin"],
+                "pin_like": info["pin_like"],
+                "pin_comments": info["pin_comments"],
+                "store_visitors": info["store_visitors"],
+                "store_new_visitors": info["store_new_visitors"],
+                "pin_view": info["pin_view"],
+                "pin_clicks": info["pin_clicks"],
+                "product_sales": info["product_sales"],
+                "product_revenue": info["product_revenue"]
+            }
+            data_list.append(data)
+        return data_list
+
+    def board_report(self, queryset):
+        # board report
+        data_list = []
+        group_dict = {}
+        set_list = queryset.filter(~Q(board_uri=None), ~Q(board_uri=""))
+        # 取时间范围内最新board数据及board下所有pin总数
+        for item in set_list:
+            board_id = models.Board.objects.filter(id=item.board_uri).first().id
+            if board_id not in group_dict:
+                group_dict[board_id] = {
+                    # "update_time": item.update_time,
+                    "board_name": item.board_name,
+                    "board_follower": item.board_follower,
+                    "pins": [] if not item.pin_uri else [item.pin_uri],  # pin数
+                    "pin_repin": item.pin_repin,
+                    "pin_like": item.pin_like,
+                    "pin_comments": item.pin_comment,
+                    "store_visitors": item.store_visitors,
+                    "store_new_visitors": item.store_new_visitors,
+                    "pin_view": item.pin_views,
+                    "pin_clicks": item.pin_clicks,
+                    "product_sales": item.product_sale,
+                    "product_revenue": item.product_revenue
+                }
+            else:
+                group_dict[board_id]["pins"].append(item.pin_uri)  # pin数
+                group_dict[board_id]["pin_repin"] += item.pin_repin
+                group_dict[board_id]["pin_like"] += item.pin_like
+                group_dict[board_id]["pin_comments"] += item.pin_comment
+                group_dict[board_id]["store_visitors"] += item.store_visitors
+                group_dict[board_id]["store_new_visitors"] += item.store_new_visitors
+                group_dict[board_id]["pin_view"] += item.pin_views
+                group_dict[board_id]["pin_clicks"] += item.pin_clicks
+                group_dict[board_id]["product_sales"] += item.product_sale
+                group_dict[board_id]["product_revenue"] += item.product_revenue
+        for board_id, info in group_dict.items():
+            data = {
+                "board_id": board_id,
+                "board_name": info["board_name"],
+                "board_follower": info["board_follower"],
+                "pins": len(info["pins"]),
+                "pin_repin": info["pin_repin"],
+                "pin_like": info["pin_like"],
+                "pin_comments": info["pin_comments"],
+                "store_visitors": info["store_visitors"],
+                "store_new_visitors": info["store_new_visitors"],
+                "pin_view": info["pin_view"],
+                "pin_clicks": info["pin_clicks"],
+                "product_sales": info["product_sales"],
+                "product_revenue": info["product_revenue"]
+            }
+            data_list.append(data)
+        return data_list
+
+    def subaccount_report(self, queryset):
+        # subaccount report
+        data_list = []
+        group_dict = {}
+        set_list = queryset.filter(~Q(pinterest_account_uri=None), ~Q(pinterest_account_uri=""))
+        # 取时间范围内最新subaccount数据及subaccount下所有board数和pin信息总数
+        for item in set_list:
+            subaccount_id = models.PinterestAccount.objects.filter(id=item.pinterest_account_uri).first().id
+            if subaccount_id not in group_dict:
+                group_dict[subaccount_id] = {
+                    "account_name": item.account_name,
+                    "boards": [] if not item.board_uri else [item.board_uri],  # board数
+                    "account_following": item.account_following,
+                    "account_follower": item.account_follower,
+                    "pins": [] if not item.pin_uri else [item.pin_uri],  # pin数
+                    "pin_repin": item.pin_repin,
+                    "pin_like": item.pin_like,
+                    "pin_comments": item.pin_comment,
+                    "store_visitors": item.store_visitors,
+                    "store_new_visitors": item.store_new_visitors,
+                    "pin_view": item.pin_views,
+                    "pin_clicks": item.pin_clicks,
+                    "product_sales": item.product_sale,
+                    "product_revenue": item.product_revenue
+                }
+            else:
+                group_dict[subaccount_id]["boards"].append(item.board_uri)  # board数
+                group_dict[subaccount_id]["pins"].append(item.pin_uri)  # pin数
+                group_dict[subaccount_id]["pin_repin"] += item.pin_repin
+                group_dict[subaccount_id]["pin_like"] += item.pin_like
+                group_dict[subaccount_id]["pin_comments"] += item.pin_comment
+                group_dict[subaccount_id]["store_visitors"] += item.store_visitors
+                group_dict[subaccount_id]["store_new_visitors"] += item.store_new_visitors
+                group_dict[subaccount_id]["pin_view"] += item.pin_views
+                group_dict[subaccount_id]["pin_clicks"] += item.pin_clicks
+                group_dict[subaccount_id]["product_sales"] += item.product_sale
+                group_dict[subaccount_id]["product_revenue"] += item.product_revenue
+        for subaccount_id, info in group_dict.items():
+            data = {
+                "subaccount_id": subaccount_id,
+                "account_name": info["account_name"],
+                "account_following": info["account_following"],
+                "account_follower": info["account_follower"],
+                "boards": len(info["boards"]),
+                "pins": len(info["pins"]),
+                "pin_repin": info["pin_repin"],
+                "pin_like": info["pin_like"],
+                "pin_comments": info["pin_comments"],
+                "store_visitors": info["store_visitors"],
+                "store_new_visitors": info["store_new_visitors"],
+                "pin_view": info["pin_view"],
+                "pin_clicks": info["pin_clicks"],
+                "product_sales": info["product_sales"],
+                "product_revenue": info["product_revenue"]
+            }
+            data_list.append(data)
+        return data_list
 

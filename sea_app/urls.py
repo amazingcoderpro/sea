@@ -19,6 +19,7 @@ v1_urlpatterns = [
 
     # 报告
     url(r'dailyreport/$', report.DailyReportView.as_view()),
+    url(r'subaccountreport/(?P<type>[a-zA-Z]+)/$', report.SubAccountReportView.as_view()),
 
 ]
 
