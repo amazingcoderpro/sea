@@ -9,8 +9,8 @@ class UserFilter(BaseFilterBackend):
 
     def filter_queryset(self, request, queryset, view):
         parent_id = request.user.parent_id
-        if parent_id:
-            return queryset.filter(Q(parent_id=parent_id) | Q(id=parent_id))
+        if not parent_id:
+            return queryset.filter(Q(parent_id=request.user.id) | Q(id=request.user.id))
         return queryset.filter(id=request.user.id)
 
 
