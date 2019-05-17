@@ -11,6 +11,7 @@ log-config = "*"
 apscheduler = "*"
 pymysql = "*"
 django-rest-framework = "*"
+django-filter = "*"
 
 [requires]
 python_version = "3.6"
