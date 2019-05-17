@@ -1,7 +1,6 @@
 from django.conf.urls import url, include
 
-from sea_app.views import report
-from sea_app.views import personnal_center
+from sea_app.views import personnal_center, report, rule
 
 
 v1_urlpatterns = [
@@ -21,6 +20,9 @@ v1_urlpatterns = [
     url(r'dashboard/$', report.DashBoardView.as_view()),
     url(r'dailyreport/$', report.DailyReportView.as_view()),
     url(r'subaccountreport/(?P<type>[a-zA-Z]+)/$', report.SubAccountReportView.as_view()),
+
+    # 规则管理
+    url(r'rule/$', rule.RuleView.as_view()),
 
 ]
 

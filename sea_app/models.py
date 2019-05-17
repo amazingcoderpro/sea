@@ -219,10 +219,14 @@ class Rule(models.Model):
     start_time = models.DateTimeField(verbose_name="发布开始时间")
     end_time = models.DateTimeField(verbose_name="发布结束时间")
     interval_time = models.FloatField(verbose_name="发布间隔时间（秒）")
-    low_scan = models.IntegerField(default=0, verbose_name="低浏览量")
-    high_scan = models.IntegerField(default=0, verbose_name="高浏览量")
-    low_sale = models.IntegerField(default=0, verbose_name="低销售额")
-    high_sale = models.IntegerField(default=0, verbose_name="高销售额")
+    weekday_choices = ((0, "Monday"), (1, "Tuesday"), (2, "Wednesday"), (3, "Thursday"), (4, "Friday"), (5, "Saturday"), (6, "Sunday"))
+    weekday = models.SmallIntegerField(choices=weekday_choices, default=0, verbose_name="周几发布")
+    scan_sign_choices = ((0, '='), (1, '>'), (2, '<'))
+    scan_sign = models.SmallIntegerField(choices=scan_sign_choices, default=0, verbose_name="浏览量符号")
+    scan = models.IntegerField(default=0, verbose_name="浏览量")
+    sale_sign_choices = ((0, '='), (1, '>'), (2, '<'))
+    sale_sign = models.SmallIntegerField(choices=sale_sign_choices, default=0, verbose_name="销售额符号")
+    sale = models.CharField(max_length=255, blank=True, null=True, default=0, verbose_name="销售额")
     product_list = models.CharField(max_length=255, default="", verbose_name="产品列表")
     tag = models.CharField(max_length=64, blank=True, null=True, verbose_name="规则标签")
     state_choices = ((0, '未开始'), (1, '执行中'), (2, '已完成'))
@@ -232,7 +236,7 @@ class Rule(models.Model):
     board = models.ForeignKey(Board, on_delete=models.DO_NOTHING)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'rule'
 
 

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator,UniqueTogetherValidator
+from rest_framework.validators import UniqueValidator
 
 from sea_app import models
 import json
@@ -84,7 +84,7 @@ class UserSerializer(serializers.ModelSerializer):
             'password': {'write_only': True},
         }
 
-    def get_role_name(self,row):
+    def get_role_name(self, row):
         return row.role.name
 
     def validate(self, attrs):
