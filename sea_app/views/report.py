@@ -9,9 +9,10 @@ from rest_framework.response import Response
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 
 from sea_app import models
-from sea_app.filters import filters
+from sea_app.filters import personal_center
 from sea_app.pageNumber.pageNumber import PNPagination
 from sea_app.serializers import report
+from sea_app.filters import report as report_filters
 
 
 class DailyReportView(generics.ListAPIView):
@@ -19,7 +20,7 @@ class DailyReportView(generics.ListAPIView):
     queryset = models.PinterestHistoryData.objects.all()
     serializer_class = report.DailyReportSerializer
     pagination_class = PNPagination
-    filter_backends = (filters.DailyReportFilter,)
+    filter_backends = (report_filters.DailyReportFilter,)
 
     # permission_classes = (IsAuthenticated,)
     # authentication_classes = (JSONWebTokenAuthentication,)
@@ -94,7 +95,7 @@ class SubAccountReportView(generics.ListAPIView):
     queryset = models.PinterestHistoryData.objects.all()
     serializer_class = report.DailyReportSerializer
     pagination_class = PNPagination
-    filter_backends = (filters.DailyReportFilter,)
+    filter_backends = (report_filters.DailyReportFilter,)
 
     # permission_classes = (IsAuthenticated,)
     # authentication_classes = (JSONWebTokenAuthentication,)
@@ -293,7 +294,7 @@ class DashBoardView(generics.ListAPIView):
     queryset = models.PinterestHistoryData.objects.all()
     serializer_class = report.DailyReportSerializer
     # pagination_class = PNPagination
-    filter_backends = (filters.DashBoardFilter,)
+    filter_backends = (report_filters.DashBoardFilter,)
 
     # permission_classes = (IsAuthenticated,)
     # authentication_classes = (JSONWebTokenAuthentication,)
