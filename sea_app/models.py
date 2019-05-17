@@ -87,7 +87,6 @@ class Product(models.Model):
 
     image_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="图片URL")
     thumbnail = models.TextField(verbose_name="缩略图")
-    scan = models.IntegerField(default=0, verbose_name="浏览量")
     category01 = models.CharField(max_length=32, verbose_name="类目01")
     category02 = models.CharField(max_length=32, verbose_name="类目02")
     category03 = models.CharField(max_length=32, verbose_name="类目03")
@@ -109,7 +108,6 @@ class PinterestAccount(models.Model):
     email = models.CharField(max_length=255, verbose_name="登陆邮箱")
     create_time = models.DateTimeField(verbose_name="账号创建时间")
     type = models.CharField(max_length=64, verbose_name="账户类型")
-
     state = models.BooleanField(default=True, verbose_name="账号状态")
     token = models.CharField(max_length=255, verbose_name="账号使用标识")
     add_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
@@ -153,33 +151,26 @@ class Pin(models.Model):
         db_table = 'pin'
 
 
-class HistoryData(models.Model):
-    """历史数据表"""
-    pinterest_account_uri = models.CharField(max_length=32, blank=True, null=True, verbose_name="PinterestAccount唯一标识码")
+class PinterestHistoryData(models.Model):
+    """Pinterest历史数据表"""
+    pinterest_account_uri = models.CharField(max_length=32, blank=True, null=True, db_index=True, verbose_name="PinterestAccount唯一标识码")
+    account_name = models.CharField(max_length=64, blank=True, null=True, verbose_name="账户名称")
     account_following = models.IntegerField(default=0, verbose_name="账户关注量")
     account_follower = models.IntegerField(default=0, verbose_name="账户粉丝")
-    account_name = models.CharField(max_length=64, blank=True, null=True, verbose_name="账户名称")
 
-    board_uri = models.CharField(max_length=32, blank=True, null=True, verbose_name="Board唯一标识码")
-    board_follower = models.IntegerField(default=0, verbose_name="board粉丝")
+    board_uri = models.CharField(max_length=32, blank=True, null=True, db_index=True, verbose_name="Board唯一标识码")
     board_name = models.CharField(max_length=64, blank=True, null=True, verbose_name="Board名称")
+    board_follower = models.IntegerField(default=0, verbose_name="board粉丝")
 
-    pin_uri = models.CharField(max_length=32, blank=True, null=True, verbose_name="Pin唯一标识码")
+    pin_uri = models.CharField(max_length=32, blank=True, null=True, db_index=True, verbose_name="Pin唯一标识码")
+    pin_description = models.TextField(blank=True, null=True, verbose_name="Pin 描述")
+    pin_thumbnail = models.TextField(blank=True, null=True, verbose_name="缩略图")
     pin_like = models.IntegerField(default=0, verbose_name="喜欢量")
     pin_comment = models.IntegerField(default=0, verbose_name="评论量")
     pin_repin = models.IntegerField(default=0, verbose_name="转发量")
     pin_views = models.IntegerField(default=0, verbose_name="视图量")
     pin_clicks = models.IntegerField(default=0, verbose_name="点击量")
-    pin_description = models.TextField(blank=True, null=True, verbose_name="Pin 描述")
-    pin_thumbnail = models.TextField(blank=True, null=True, verbose_name="缩略图")
-
-    store_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="店铺URL")
-    store_visitors = models.IntegerField(default=0, verbose_name="访问量")
-    store_new_visitors = models.IntegerField(default=0, verbose_name="新增访问量")
-
-    product_sku = models.CharField(max_length=64, blank=True, null=True, verbose_name="产品标识符")
-    product_sale = models.FloatField(default=0.00, verbose_name="销售额")
-    product_revenue = models.FloatField(default=0.00, verbose_name="收益")
+    product_sku = models.CharField(max_length=64, blank=True, null=True, db_index=True, verbose_name="产品标识符")
 
     update_time = models.DateTimeField(auto_now=True, db_index=True, verbose_name="数据更新时间")
 
@@ -187,6 +178,22 @@ class HistoryData(models.Model):
         # managed = False
         db_table = 'history_data'
         ordering = ["-update_time"]
+
+
+class ProductHistoryData(models.Model):
+    """Product历史数据表"""
+    platform_url = models.CharField(max_length=255, blank=True, null=True, db_index=True, verbose_name="平台URL")
+
+    store_url = models.CharField(max_length=255, blank=True, null=True, db_index=True, verbose_name="店铺URL")
+    store_visitors = models.IntegerField(default=0, verbose_name="访问量")
+    store_new_visitors = models.IntegerField(default=0, verbose_name="新增访问量")
+
+    product_sku = models.CharField(max_length=64, blank=True, null=True, db_index=True, verbose_name="产品标识符")
+    product_scan = models.IntegerField(default=0, verbose_name="浏览量")
+    product_sale = models.FloatField(default=0.00, verbose_name="销售额")
+    product_revenue = models.FloatField(default=0.00, verbose_name="收益")
+
+    update_time = models.DateTimeField(auto_now=True, db_index=True, verbose_name="数据更新时间")
 
 
 class Rule(models.Model):
