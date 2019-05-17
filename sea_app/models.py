@@ -176,7 +176,7 @@ class PinterestHistoryData(models.Model):
 
     class Meta:
         # managed = False
-        db_table = 'history_data'
+        db_table = 'pinterest_history_data'
         ordering = ["-update_time"]
 
 
@@ -195,6 +195,10 @@ class ProductHistoryData(models.Model):
 
     update_time = models.DateTimeField(auto_now=True, db_index=True, verbose_name="数据更新时间")
 
+    class Meta:
+        # managed = False
+        db_table = 'product_history_data'
+        ordering = ["-update_time"]
 
 class Rule(models.Model):
     """规则表"""
