@@ -80,11 +80,24 @@ class Store(models.Model):
         db_table = 'store'
 
 
+class ProductCategory(models.Model):
+    """产品类型表"""
+    name = models.CharField(max_length=255, verbose_name="名称")
+    uid = models.IntegerField(db_index=True, blank=True, null=True, verbose_name="类型标识")
+    store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, blank=True, null=True)
+    parent_id = models.IntegerField(db_index=True, blank=True, null=True, verbose_name="产品父ID")
+    create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+
+    class Meta:
+        # managed = False
+        db_table = 'product_category'
+
+
 class Product(models.Model):
     """产品表"""
     sku = models.CharField(max_length=64, verbose_name="产品标识符")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
-
     image_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="图片URL")
     thumbnail = models.TextField(verbose_name="缩略图")
     category01 = models.CharField(max_length=32, verbose_name="类目01")
