@@ -18,6 +18,7 @@ v1_urlpatterns = [
     url(r'role/(?P<pk>[0-9]+)/$', personnal_center.RoleOperView.as_view()),
 
     # 报告
+    url(r'dashboard/$', report.DashBoardView.as_view()),
     url(r'dailyreport/$', report.DailyReportView.as_view()),
     url(r'subaccountreport/(?P<type>[a-zA-Z]+)/$', report.SubAccountReportView.as_view()),
 

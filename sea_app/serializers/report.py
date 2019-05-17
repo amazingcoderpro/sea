@@ -7,7 +7,7 @@ from sea_app import models
 class DailyReportSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = models.HistoryData
+        model = models.PinterestHistoryData
         depth = 1
         fields = "__all__"
 
