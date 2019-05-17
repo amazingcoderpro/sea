@@ -16,7 +16,7 @@ class Menu(models.Model):
     icon = models.CharField(blank=True, null=True, max_length=255, verbose_name="菜单主题")
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'menu'
 
 
@@ -29,7 +29,7 @@ class Role(models.Model):
     menu_list = models.CharField(max_length=255, verbose_name="菜单权限")  # 格式："[1,2,3]"
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'role'
         unique_together = ('name', 'user_id',)
 
@@ -51,7 +51,7 @@ class User(AbstractUser):
     role = models.ForeignKey(Role, on_delete=models.DO_NOTHING)
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'user'
         ordering = ["-id"]
 
@@ -64,7 +64,7 @@ class Platform(models.Model):
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'platform'
 
 
@@ -78,7 +78,7 @@ class Store(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'store'
 
 
@@ -92,7 +92,7 @@ class ProductCategory(models.Model):
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'product_category'
 
 
@@ -101,6 +101,7 @@ class Product(models.Model):
     sku = models.CharField(max_length=64, verbose_name="产品标识符")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
     image_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="图片URL")
+    thumbnail = models.TextField(verbose_name="缩略图")
     price = models.FloatField(verbose_name="产品价格")
     category = models.ForeignKey(ProductCategory, on_delete=models.DO_NOTHING, blank=True, null=True)
     tag = models.CharField(max_length=64, verbose_name="所属标签")
@@ -109,7 +110,7 @@ class Product(models.Model):
     store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'product'
 
 
@@ -127,7 +128,7 @@ class PinterestAccount(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'pinterest_account'
 
 
@@ -141,7 +142,7 @@ class Board(models.Model):
     pinterest_account = models.ForeignKey(PinterestAccount, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'board'
 
 
@@ -159,7 +160,7 @@ class Pin(models.Model):
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'pin'
 
 
@@ -187,7 +188,7 @@ class PinterestHistoryData(models.Model):
     update_time = models.DateTimeField(auto_now=True, db_index=True, verbose_name="数据更新时间")
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'pinterest_history_data'
         ordering = ["-update_time"]
 
@@ -208,7 +209,7 @@ class ProductHistoryData(models.Model):
     update_time = models.DateTimeField(auto_now=True, db_index=True, verbose_name="数据更新时间")
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'product_history_data'
         ordering = ["-update_time"]
 
@@ -231,7 +232,7 @@ class Rule(models.Model):
     board = models.ForeignKey(Board, on_delete=models.DO_NOTHING)
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'rule'
 
 
@@ -248,5 +249,5 @@ class PublishRecord(models.Model):
     finished_time = models.DateTimeField(null=True, verbose_name="完成时间")
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'publish_record'

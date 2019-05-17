@@ -16,7 +16,7 @@ from sea_app.serializers import report
 
 class DailyReportView(generics.ListAPIView):
     """日报列表展示"""
-    queryset = models.ProductHistoryData.objects.all()
+    queryset = models.PinterestHistoryData.objects.all()
     serializer_class = report.DailyReportSerializer
     pagination_class = PNPagination
     filter_backends = (filters.DailyReportFilter,)
@@ -91,7 +91,7 @@ class DailyReportView(generics.ListAPIView):
 
 
 class SubAccountReportView(generics.ListAPIView):
-    queryset = models.ProductHistoryData.objects.all()
+    queryset = models.PinterestHistoryData.objects.all()
     serializer_class = report.DailyReportSerializer
     pagination_class = PNPagination
     filter_backends = (filters.DailyReportFilter,)
