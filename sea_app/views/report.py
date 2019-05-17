@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import datetime
 from datetime import datetime, timedelta
 
 from django.db.models import Q
@@ -19,6 +20,7 @@ class DailyReportView(generics.ListAPIView):
     serializer_class = report.DailyReportSerializer
     pagination_class = PNPagination
     filter_backends = (filters.DailyReportFilter,)
+
     # permission_classes = (IsAuthenticated,)
     # authentication_classes = (JSONWebTokenAuthentication,)
 
@@ -93,6 +95,7 @@ class SubAccountReportView(generics.ListAPIView):
     serializer_class = report.DailyReportSerializer
     pagination_class = PNPagination
     filter_backends = (filters.DailyReportFilter,)
+
     # permission_classes = (IsAuthenticated,)
     # authentication_classes = (JSONWebTokenAuthentication,)
 
@@ -118,11 +121,11 @@ class SubAccountReportView(generics.ListAPIView):
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(data_list)
         return Response(data_list)
-        
+
     def pins_report(self, queryset):
         # pins report
         data_list = []
-        group_dict = {}      
+        group_dict = {}
         set_list = queryset.filter(~Q(pin_uri=None), ~Q(pin_uri=""))
         # 取时间范围内最新的pin数据
         for item in set_list:
@@ -295,6 +298,11 @@ class DashBoardView(generics.ListAPIView):
     # permission_classes = (IsAuthenticated,)
     # authentication_classes = (JSONWebTokenAuthentication,)
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        # self.account_overview(queryset, request)
+        self.site_count(queryset)
+
     def get_num(self, queryset, fieldname):
         # 通过queryset获取计数
         lst = []
@@ -309,23 +317,39 @@ class DashBoardView(generics.ListAPIView):
             fieldname_num += getattr(item, fieldname)
         return fieldname_num
 
+    def time_range_list(self, start_time, end_time):
+        time_list = []
+        for i in range((end_time.date() - start_time.date()).days + 1):
+            day = start_time + timedelta(days=i)
+            time_list.append(day)
+        return time_list
+
     def account_overview(self, queryset, request):
         # 按天循环时间范围内，获取当天数据
         condtions = request.query_params.dict()
         start_time = condtions.get('start_time', datetime.now() + timedelta(days=-7))
         end_time = condtions.get('end_time', datetime.now())
-        pass
+        time_list = self.time_range_list(start_time, end_time)
+        overview_dict = {}
+        for day in time_list:
+            day_count = self.site_count(queryset, day)
+            overview_dict[day] = day_count
+        return overview_dict
 
-    def site_count(self, queryset, oneday):
-        # 获取截止到oneday最新的数据
+    def site_count(self, queryset, oneday=datetime.now()):
+        # ???如果有一天没更新，就没办法取昨天得数据
+        # 获取截止到oneday最新的数据，默认取昨天更新的数据
         queryset = queryset.filter(Q(update_time__range=(oneday + timedelta(days=-1), oneday)))
+        if not queryset:
+            return {"site_num": 0, "subaccount_num": 0, "board_num": 0, "pin_num": 0,
+                    "visitor_num": 0, "click_num": 0, "sales_num": 0, "revenue_num": 0}
         # 获取站点总数
         site_num = self.get_num(queryset, "store_url")
         # 获取帐号总数
-        subaccount_set = queryset.filter(Q(board_uri=None) | Q(board_uri=""),Q(pin_uri=None) | Q(pin_uri=""))
+        subaccount_set = queryset.filter(Q(board_uri=None) | Q(board_uri=""), Q(pin_uri=None) | Q(pin_uri=""))
         subaccount_num = self.get_num(subaccount_set, "pinterest_account_uri")
         # 获取Board总数
-        board_set = queryset.filter(~Q(board_uri=None), ~Q(board_uri=""),Q(pin_uri=None) | Q(pin_uri=""))
+        board_set = queryset.filter(~Q(board_uri=None), ~Q(board_uri=""), Q(pin_uri=None) | Q(pin_uri=""))
         board_num = self.get_num(board_set, "board_uri")
         # 获取pin总数
         pin_set = queryset.filter(~Q(pin_uri=None), ~Q(pin_uri=""))
