@@ -163,16 +163,16 @@ class Pin(models.Model):
 
 class PinterestHistoryData(models.Model):
     """Pinterest历史数据表"""
-    pinterest_account_uri = models.CharField(max_length=32, blank=True, null=True, db_index=True, verbose_name="PinterestAccount唯一标识码")
+    pinterest_account = models.ForeignKey(PinterestAccount, on_delete=models.DO_NOTHING, blank=True, null=True)
     account_name = models.CharField(max_length=64, blank=True, null=True, verbose_name="账户名称")
     account_following = models.IntegerField(default=0, verbose_name="账户关注量")
     account_follower = models.IntegerField(default=0, verbose_name="账户粉丝")
 
-    board_uri = models.CharField(max_length=32, blank=True, null=True, db_index=True, verbose_name="Board唯一标识码")
+    board = models.ForeignKey(Board, on_delete=models.DO_NOTHING, blank=True, null=True)
     board_name = models.CharField(max_length=64, blank=True, null=True, verbose_name="Board名称")
     board_follower = models.IntegerField(default=0, verbose_name="board粉丝")
 
-    pin_uri = models.CharField(max_length=32, blank=True, null=True, db_index=True, verbose_name="Pin唯一标识码")
+    pin = models.ForeignKey(Pin, on_delete=models.DO_NOTHING, blank=True, null=True)
     pin_description = models.TextField(blank=True, null=True, verbose_name="Pin 描述")
     pin_thumbnail = models.TextField(blank=True, null=True, verbose_name="缩略图")
     pin_like = models.IntegerField(default=0, verbose_name="喜欢量")
@@ -194,7 +194,7 @@ class ProductHistoryData(models.Model):
     """Product历史数据表"""
     Platform = models.ForeignKey(Platform, on_delete=models.DO_NOTHING, blank=True, null=True)
 
-    board = models.ForeignKey(Board, on_delete=models.DO_NOTHING, blank=True, null=True)
+    store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, blank=True, null=True)
     store_visitors = models.IntegerField(default=0, verbose_name="访问量")
     store_new_visitors = models.IntegerField(default=0, verbose_name="新增访问量")
 
