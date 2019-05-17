@@ -192,13 +192,13 @@ class PinterestHistoryData(models.Model):
 
 class ProductHistoryData(models.Model):
     """Product历史数据表"""
-    platform_url = models.CharField(max_length=255, blank=True, null=True, db_index=True, verbose_name="平台URL")
+    Platform = models.ForeignKey(Platform, on_delete=models.DO_NOTHING, blank=True, null=True)
 
-    store_url = models.CharField(max_length=255, blank=True, null=True, db_index=True, verbose_name="店铺URL")
+    board = models.ForeignKey(Board, on_delete=models.DO_NOTHING, blank=True, null=True)
     store_visitors = models.IntegerField(default=0, verbose_name="访问量")
     store_new_visitors = models.IntegerField(default=0, verbose_name="新增访问量")
 
-    product_sku = models.CharField(max_length=64, blank=True, null=True, db_index=True, verbose_name="产品标识符")
+    product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
     product_scan = models.IntegerField(default=0, verbose_name="浏览量")
     product_sale = models.FloatField(default=0.00, verbose_name="销售额")
     product_revenue = models.FloatField(default=0.00, verbose_name="收益")
