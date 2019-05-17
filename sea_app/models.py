@@ -210,6 +210,7 @@ class ProductHistoryData(models.Model):
         db_table = 'product_history_data'
         ordering = ["-update_time"]
 
+
 class Rule(models.Model):
     """规则表"""
     start_time = models.DateTimeField(verbose_name="发布开始时间")
@@ -219,15 +220,13 @@ class Rule(models.Model):
     high_scan = models.IntegerField(default=0, verbose_name="高浏览量")
     low_sale = models.IntegerField(default=0, verbose_name="低销售额")
     high_sale = models.IntegerField(default=0, verbose_name="高销售额")
-    category01 = models.CharField(max_length=64, blank=True, null=True, verbose_name="产品类目01")
-    category02 = models.CharField(max_length=64, blank=True, null=True, verbose_name="产品类目02")
-    category03 = models.CharField(max_length=64, blank=True, null=True, verbose_name="产品类目03")
+    product_list = models.CharField(max_length=255, verbose_name="产品列表")
     tag = models.CharField(max_length=64, blank=True, null=True, verbose_name="规则标签")
     state_choices = ((0, '未开始'), (1, '执行中'), (2, '已完成'))
     state = models.SmallIntegerField(choices=state_choices, default=0, verbose_name="规则执行状态")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    board = models.ManyToManyField(Board)
+    board = models.ForeignKey(Board, on_delete=models.DO_NOTHING)
 
     class Meta:
         # managed = False
