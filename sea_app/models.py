@@ -60,6 +60,8 @@ class Platform(models.Model):
     """平台表"""
     name = models.CharField(max_length=64, unique=True, verbose_name="平台名称")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="平台URL")
+    add_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
+    update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
     class Meta:
         # managed = False
@@ -80,17 +82,27 @@ class Store(models.Model):
         db_table = 'store'
 
 
+class ProductCategory(models.Model):
+    """产品类型表"""
+    name = models.CharField(max_length=255, verbose_name="名称")
+    uid = models.IntegerField(db_index=True, blank=True, null=True, verbose_name="类型标识")
+    store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, blank=True, null=True)
+    parent_id = models.IntegerField(db_index=True, blank=True, null=True, verbose_name="产品父ID")
+    create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+
+    class Meta:
+        # managed = False
+        db_table = 'product_category'
+
+
 class Product(models.Model):
     """产品表"""
     sku = models.CharField(max_length=64, verbose_name="产品标识符")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
-
     image_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="图片URL")
-    thumbnail = models.TextField(verbose_name="缩略图")
-    category01 = models.CharField(max_length=32, verbose_name="类目01")
-    category02 = models.CharField(max_length=32, verbose_name="类目02")
-    category03 = models.CharField(max_length=32, verbose_name="类目03")
     price = models.FloatField(verbose_name="产品价格")
+    category = models.ForeignKey(ProductCategory, on_delete=models.DO_NOTHING, blank=True, null=True)
     tag = models.CharField(max_length=64, verbose_name="所属标签")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
@@ -153,16 +165,16 @@ class Pin(models.Model):
 
 class PinterestHistoryData(models.Model):
     """Pinterest历史数据表"""
-    pinterest_account_uri = models.CharField(max_length=32, blank=True, null=True, db_index=True, verbose_name="PinterestAccount唯一标识码")
+    pinterest_account = models.ForeignKey(PinterestAccount, on_delete=models.DO_NOTHING, blank=True, null=True)
     account_name = models.CharField(max_length=64, blank=True, null=True, verbose_name="账户名称")
     account_following = models.IntegerField(default=0, verbose_name="账户关注量")
     account_follower = models.IntegerField(default=0, verbose_name="账户粉丝")
 
-    board_uri = models.CharField(max_length=32, blank=True, null=True, db_index=True, verbose_name="Board唯一标识码")
+    board = models.ForeignKey(Board, on_delete=models.DO_NOTHING, blank=True, null=True)
     board_name = models.CharField(max_length=64, blank=True, null=True, verbose_name="Board名称")
     board_follower = models.IntegerField(default=0, verbose_name="board粉丝")
 
-    pin_uri = models.CharField(max_length=32, blank=True, null=True, db_index=True, verbose_name="Pin唯一标识码")
+    pin = models.ForeignKey(Pin, on_delete=models.DO_NOTHING, blank=True, null=True)
     pin_description = models.TextField(blank=True, null=True, verbose_name="Pin 描述")
     pin_thumbnail = models.TextField(blank=True, null=True, verbose_name="缩略图")
     pin_like = models.IntegerField(default=0, verbose_name="喜欢量")
@@ -182,13 +194,13 @@ class PinterestHistoryData(models.Model):
 
 class ProductHistoryData(models.Model):
     """Product历史数据表"""
-    platform_url = models.CharField(max_length=255, blank=True, null=True, db_index=True, verbose_name="平台URL")
+    Platform = models.ForeignKey(Platform, on_delete=models.DO_NOTHING, blank=True, null=True)
 
-    store_url = models.CharField(max_length=255, blank=True, null=True, db_index=True, verbose_name="店铺URL")
+    store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, blank=True, null=True)
     store_visitors = models.IntegerField(default=0, verbose_name="访问量")
     store_new_visitors = models.IntegerField(default=0, verbose_name="新增访问量")
 
-    product_sku = models.CharField(max_length=64, blank=True, null=True, db_index=True, verbose_name="产品标识符")
+    product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
     product_scan = models.IntegerField(default=0, verbose_name="浏览量")
     product_sale = models.FloatField(default=0.00, verbose_name="销售额")
     product_revenue = models.FloatField(default=0.00, verbose_name="收益")
@@ -200,6 +212,7 @@ class ProductHistoryData(models.Model):
         db_table = 'product_history_data'
         ordering = ["-update_time"]
 
+
 class Rule(models.Model):
     """规则表"""
     start_time = models.DateTimeField(verbose_name="发布开始时间")
@@ -209,15 +222,13 @@ class Rule(models.Model):
     high_scan = models.IntegerField(default=0, verbose_name="高浏览量")
     low_sale = models.IntegerField(default=0, verbose_name="低销售额")
     high_sale = models.IntegerField(default=0, verbose_name="高销售额")
-    category01 = models.CharField(max_length=64, blank=True, null=True, verbose_name="产品类目01")
-    category02 = models.CharField(max_length=64, blank=True, null=True, verbose_name="产品类目02")
-    category03 = models.CharField(max_length=64, blank=True, null=True, verbose_name="产品类目03")
+    product_list = models.CharField(max_length=255, default="", verbose_name="产品列表")
     tag = models.CharField(max_length=64, blank=True, null=True, verbose_name="规则标签")
     state_choices = ((0, '未开始'), (1, '执行中'), (2, '已完成'))
     state = models.SmallIntegerField(choices=state_choices, default=0, verbose_name="规则执行状态")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    board = models.ManyToManyField(Board)
+    board = models.ForeignKey(Board, on_delete=models.DO_NOTHING)
 
     class Meta:
         # managed = False
