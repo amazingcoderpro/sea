@@ -16,7 +16,7 @@ class Menu(models.Model):
     icon = models.CharField(blank=True, null=True, max_length=255, verbose_name="菜单主题")
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'menu'
 
 
@@ -29,7 +29,7 @@ class Role(models.Model):
     menu_list = models.CharField(max_length=255, verbose_name="菜单权限")  # 格式："[1,2,3]"
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'role'
         unique_together = ('name', 'user_id',)
 
@@ -51,7 +51,7 @@ class User(AbstractUser):
     role = models.ForeignKey(Role, on_delete=models.DO_NOTHING)
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'user'
         ordering = ["-id"]
 
@@ -60,9 +60,11 @@ class Platform(models.Model):
     """平台表"""
     name = models.CharField(max_length=64, unique=True, verbose_name="平台名称")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="平台URL")
+    add_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
+    update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'platform'
 
 
@@ -76,7 +78,7 @@ class Store(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'store'
 
 
@@ -90,7 +92,7 @@ class ProductCategory(models.Model):
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'product_category'
 
 
@@ -99,6 +101,7 @@ class Product(models.Model):
     sku = models.CharField(max_length=64, verbose_name="产品标识符")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
     image_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="图片URL")
+    thumbnail = models.TextField(verbose_name="缩略图")
     price = models.FloatField(verbose_name="产品价格")
     category = models.ForeignKey(ProductCategory, on_delete=models.DO_NOTHING, blank=True, null=True)
     tag = models.CharField(max_length=64, verbose_name="所属标签")
@@ -107,7 +110,7 @@ class Product(models.Model):
     store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'product'
 
 
@@ -125,7 +128,7 @@ class PinterestAccount(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'pinterest_account'
 
 
@@ -136,7 +139,7 @@ class Board(models.Model):
     create_time = models.DateTimeField(verbose_name="Board创建时间")
     add_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="修改时间")
-    pinterest_account = models.ForeignKey(PinterestAccount, on_delete=models.DO_NOTHING, blank=True, null=True)
+    pinterest_account = models.ForeignKey(PinterestAccount, related_name='board_pinterest_account', on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
         # managed = False
@@ -148,7 +151,6 @@ class Pin(models.Model):
     pin_uri = models.CharField(max_length=32, verbose_name="Pin唯一标识码")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="Pin URL")
     description = models.TextField(verbose_name="Pin 描述")
-
     site_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
     thumbnail = models.TextField(verbose_name="缩略图")
     publish_time = models.DateTimeField(auto_now_add=True, verbose_name="发布时间")
@@ -157,22 +159,20 @@ class Pin(models.Model):
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'pin'
 
 
 class PinterestHistoryData(models.Model):
     """Pinterest历史数据表"""
-    pinterest_account_uri = models.CharField(max_length=32, blank=True, null=True, db_index=True, verbose_name="PinterestAccount唯一标识码")
+    pinterest_account = models.ForeignKey(PinterestAccount, on_delete=models.DO_NOTHING, blank=True, null=True)
     account_name = models.CharField(max_length=64, blank=True, null=True, verbose_name="账户名称")
     account_following = models.IntegerField(default=0, verbose_name="账户关注量")
     account_follower = models.IntegerField(default=0, verbose_name="账户粉丝")
-
-    board_uri = models.CharField(max_length=32, blank=True, null=True, db_index=True, verbose_name="Board唯一标识码")
+    board = models.ForeignKey(Board, on_delete=models.DO_NOTHING, blank=True, null=True)
     board_name = models.CharField(max_length=64, blank=True, null=True, verbose_name="Board名称")
     board_follower = models.IntegerField(default=0, verbose_name="board粉丝")
-
-    pin_uri = models.CharField(max_length=32, blank=True, null=True, db_index=True, verbose_name="Pin唯一标识码")
+    pin = models.ForeignKey(Pin, on_delete=models.DO_NOTHING, blank=True, null=True)
     pin_description = models.TextField(blank=True, null=True, verbose_name="Pin 描述")
     pin_thumbnail = models.TextField(blank=True, null=True, verbose_name="缩略图")
     pin_like = models.IntegerField(default=0, verbose_name="喜欢量")
@@ -181,48 +181,44 @@ class PinterestHistoryData(models.Model):
     pin_views = models.IntegerField(default=0, verbose_name="视图量")
     pin_clicks = models.IntegerField(default=0, verbose_name="点击量")
     product_sku = models.CharField(max_length=64, blank=True, null=True, db_index=True, verbose_name="产品标识符")
-
     update_time = models.DateTimeField(auto_now=True, db_index=True, verbose_name="数据更新时间")
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'pinterest_history_data'
         ordering = ["-update_time"]
 
 
 class ProductHistoryData(models.Model):
     """Product历史数据表"""
-    platform_url = models.CharField(max_length=255, blank=True, null=True, db_index=True, verbose_name="平台URL")
+    Platform = models.ForeignKey(Platform, on_delete=models.DO_NOTHING, blank=True, null=True)
 
-    store_url = models.CharField(max_length=255, blank=True, null=True, db_index=True, verbose_name="店铺URL")
+    store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, blank=True, null=True)
     store_visitors = models.IntegerField(default=0, verbose_name="访问量")
     store_new_visitors = models.IntegerField(default=0, verbose_name="新增访问量")
-
-    product_sku = models.CharField(max_length=64, blank=True, null=True, db_index=True, verbose_name="产品标识符")
+    product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
     product_scan = models.IntegerField(default=0, verbose_name="浏览量")
     product_sale = models.FloatField(default=0.00, verbose_name="销售额")
     product_revenue = models.FloatField(default=0.00, verbose_name="收益")
-
     update_time = models.DateTimeField(auto_now=True, db_index=True, verbose_name="数据更新时间")
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'product_history_data'
         ordering = ["-update_time"]
 
 
 class Rule(models.Model):
     """规则表"""
-    start_time = models.DateTimeField(verbose_name="发布开始时间")
-    end_time = models.DateTimeField(verbose_name="发布结束时间")
-    interval_time = models.FloatField(verbose_name="发布间隔时间（秒）")
-    low_scan = models.IntegerField(default=0, verbose_name="低浏览量")
-    high_scan = models.IntegerField(default=0, verbose_name="高浏览量")
-    low_sale = models.IntegerField(default=0, verbose_name="低销售额")
-    high_sale = models.IntegerField(default=0, verbose_name="高销售额")
-    product_list = models.CharField(max_length=255, verbose_name="产品列表")
+    scan_sign_choices = ((0, '='), (1, '>'), (2, '<'))
+    scan_sign = models.SmallIntegerField(choices=scan_sign_choices, default=0, verbose_name="浏览量符号")
+    scan = models.IntegerField(default=0, verbose_name="产品浏览量")
+    sale_sign_choices = ((0, '='), (1, '>'), (2, '<'))
+    sale_sign = models.SmallIntegerField(choices=sale_sign_choices, default=0, verbose_name="销量符号")
+    sale = models.CharField(max_length=255, blank=True, null=True, default=0, verbose_name="产品销量")
+    product_list = models.CharField(max_length=255, default="", verbose_name="产品列表")
     tag = models.CharField(max_length=64, blank=True, null=True, verbose_name="规则标签")
-    state_choices = ((0, '未开始'), (1, '执行中'), (2, '已完成'))
+    state_choices = ((0, '未开始'), (1, '未执行'), (2, '执行中'), (2, '已完成'))
     state = models.SmallIntegerField(choices=state_choices, default=0, verbose_name="规则执行状态")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
@@ -231,6 +227,24 @@ class Rule(models.Model):
     class Meta:
         # managed = False
         db_table = 'rule'
+
+
+class RuleSchedule(models.Model):
+    """规则时间表"""
+    start_datetime = models.DateTimeField(verbose_name="发布开始时间")
+    end_datetime = models.DateTimeField(verbose_name="发布结束时间")
+    weekday_choices = ((0, "Monday"), (1, "Tuesday"), (2, "Wednesday"), (3, "Thursday"), (4, "Friday"), (5, "Saturday"), (6, "Sunday"))
+    weekday = models.SmallIntegerField(choices=weekday_choices, default=0, verbose_name="周几发布")
+    start_time = models.TimeField(verbose_name="每天开始时间")
+    end_time = models.TimeField(verbose_name="每天结束时间")
+    create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+    interval_time = models.FloatField(verbose_name="发布间隔时间（秒）")
+    rule = models.ForeignKey(Rule, related_name="schedule_rule", on_delete=models.DO_NOTHING)
+
+    class Meta:
+        # managed = False
+        db_table = 'rule_schedule'
 
 
 class PublishRecord(models.Model):
@@ -246,5 +260,5 @@ class PublishRecord(models.Model):
     finished_time = models.DateTimeField(null=True, verbose_name="完成时间")
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = 'publish_record'
