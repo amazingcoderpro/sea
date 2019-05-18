@@ -18,7 +18,7 @@ v1_urlpatterns = [
     # 报告
     # url(r'dashboard/$', report.DashBoardView.as_view()),
     url(r'dailyreport/$', reports.daily_report_view),
-    # url(r'subaccountreport/(?P<type>[a-zA-Z]+)/$', report.SubAccountReportView.as_view()),
+    url(r'subaccountreport/(?P<type>[a-zA-Z]+)/$', reports.subaccount_report_view),
 
     # 规则管理
     url(r'rule/$', account_manager.RuleView.as_view()),
