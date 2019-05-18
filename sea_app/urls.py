@@ -23,9 +23,14 @@ v1_urlpatterns = [
 
     # 规则管理
     url(r'rule/$', account_manager.RuleView.as_view()),
+    url(r'rule/(?P<pk>[0-9]+)/$', account_manager.RuleOperView.as_view()),
 
     # 获取pin账号
     url(r'pinterestaccount/$', account_manager.PinterestAccountView.as_view()),
+
+    # 获取产品
+    url(r'product/$', account_manager.ProductView.as_view()),
+
 
 ]
 

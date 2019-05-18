@@ -100,6 +100,7 @@ class Product(models.Model):
     """产品表"""
     sku = models.CharField(max_length=64, verbose_name="产品标识符")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
+    name = models.CharField(max_length=255, blank=True, null=True,  verbose_name="产品名称")
     image_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="图片URL")
     thumbnail = models.TextField(verbose_name="缩略图")
     price = models.FloatField(verbose_name="产品价格")
@@ -110,7 +111,7 @@ class Product(models.Model):
     store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'product'
 
 
@@ -218,11 +219,14 @@ class Rule(models.Model):
     sale = models.CharField(max_length=255, blank=True, null=True, default=0, verbose_name="产品销量")
     product_list = models.CharField(max_length=255, default="", verbose_name="产品列表")
     tag = models.CharField(max_length=64, blank=True, null=True, verbose_name="规则标签")
-    state_choices = ((0, '未开始'), (1, '未执行'), (2, '执行中'), (2, '已完成'))
-    state = models.SmallIntegerField(choices=state_choices, default=0, verbose_name="规则执行状态")
+    board = models.ForeignKey(Board, on_delete=models.DO_NOTHING)
+    state_choices = ((0, '待执行'), (1, '删除'), (2, '过期'), (3, '运行'), (4, '暂停'), (5,"已完成"))
+    state = models.SmallIntegerField(choices=state_choices, default=0, verbose_name="规则状态")
+    start_time = models.DateTimeField(verbose_name="发布开始时间")
+    end_time = models.DateTimeField(verbose_name="发布结束时间")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    board = models.ForeignKey(Board, on_delete=models.DO_NOTHING)
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
 
     class Meta:
         # managed = False
@@ -231,9 +235,7 @@ class Rule(models.Model):
 
 class RuleSchedule(models.Model):
     """规则时间表"""
-    start_datetime = models.DateTimeField(verbose_name="发布开始时间")
-    end_datetime = models.DateTimeField(verbose_name="发布结束时间")
-    weekday_choices = ((0, "Monday"), (1, "Tuesday"), (2, "Wednesday"), (3, "Thursday"), (4, "Friday"), (5, "Saturday"), (6, "Sunday"))
+    weekday_choices = ((0, "Sunday"), (1, "Monday"), (2, "Tuesday"), (3, "Wednesday"), (4, "Thursday"), (5, "Friday"), (6, "Saturday"))
     weekday = models.SmallIntegerField(choices=weekday_choices, default=0, verbose_name="周几发布")
     start_time = models.TimeField(verbose_name="每天开始时间")
     end_time = models.TimeField(verbose_name="每天结束时间")
