@@ -8,6 +8,7 @@ from sea_app import models
 from sea_app.serializers import account_manager
 from sea_app.filters import account_manager as account_manager_filters
 from sea_app.pageNumber.pageNumber import PNPagination
+from sea_app.permission.permission import RolePermission
 
 
 class PinterestAccountView(generics.ListAPIView):
@@ -30,10 +31,9 @@ class RuleView(generics.ListCreateAPIView):
 
 
 class RuleOperView(generics.UpdateAPIView):
-    queryset = models.PinterestAccount.objects.all()
-    serializer_class = account_manager.PinterestAccountSerializer
-    filter_backends = (account_manager_filters.PinterestAccountFilter,)
-    permission_classes = (IsAuthenticated,)
+    queryset = models.Rule.objects.all()
+    serializer_class = account_manager.RuleSerializer
+    permission_classes = (IsAuthenticated, RolePermission)
     authentication_classes = (JSONWebTokenAuthentication,)
 
 

@@ -73,6 +73,18 @@ class RuleSerializer(serializers.ModelSerializer):
                 models.RuleSchedule.objects.create(**row)
         return rule_instance
 
+    def update(self, instance, validated_data):
+        print(instance)
+        print(validated_data)
+        schedule_rule_list = eval(self.context["request"].data["schedule_rule"])
+        with transaction.atomic():
+            rule_instance = super(RuleSerializer, self).update(instance, validated_data)
+            models.RuleSchedule.objects.filter(rule=instance).delete()
+            for row in schedule_rule_list:
+                row["rule"] = rule_instance
+                models.RuleSchedule.objects.create(**row)
+        return instance
+
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
