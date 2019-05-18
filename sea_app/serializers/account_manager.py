@@ -74,8 +74,6 @@ class RuleSerializer(serializers.ModelSerializer):
         return rule_instance
 
     def update(self, instance, validated_data):
-        print(instance)
-        print(validated_data)
         schedule_rule_list = eval(self.context["request"].data["schedule_rule"])
         with transaction.atomic():
             rule_instance = super(RuleSerializer, self).update(instance, validated_data)

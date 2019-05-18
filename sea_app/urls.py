@@ -30,6 +30,9 @@ v1_urlpatterns = [
     # 获取产品
     url(r'product/$', account_manager.ProductView.as_view()),
 
+    # 授权回调
+    url(r'shopify/callback/$', personal_center.ShopifyCallback.as_view()),
+    url(r'pinterest/callback/$', personal_center.PinterestCallback.as_view()),
 
 ]
 
