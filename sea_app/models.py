@@ -102,7 +102,8 @@ class Product(models.Model):
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
     name = models.CharField(max_length=255, blank=True, null=True,  verbose_name="产品名称")
     image_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="图片URL")
-    thumbnail = models.TextField(verbose_name="缩略图")
+
+    thumbnail = models.TextField(verbose_name="缩略图", default="")
     price = models.FloatField(verbose_name="产品价格")
     category = models.ForeignKey(ProductCategory, on_delete=models.DO_NOTHING, blank=True, null=True)
     tag = models.CharField(max_length=64, verbose_name="所属标签")
@@ -140,10 +141,11 @@ class Board(models.Model):
     create_time = models.DateTimeField(verbose_name="Board创建时间")
     add_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="修改时间")
+
     pinterest_account = models.ForeignKey(PinterestAccount, related_name='board_pinterest_account', on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        # managed = False
+
         db_table = 'board'
 
 
@@ -171,9 +173,11 @@ class PinterestHistoryData(models.Model):
     account_following = models.IntegerField(default=0, verbose_name="账户关注量")
     account_follower = models.IntegerField(default=0, verbose_name="账户粉丝")
     board = models.ForeignKey(Board, on_delete=models.DO_NOTHING, blank=True, null=True)
+    board_uri = models.CharField(max_length=32, blank=True, null=True, verbose_name="Board唯一标识码")
     board_name = models.CharField(max_length=64, blank=True, null=True, verbose_name="Board名称")
     board_follower = models.IntegerField(default=0, verbose_name="board粉丝")
     pin = models.ForeignKey(Pin, on_delete=models.DO_NOTHING, blank=True, null=True)
+    pin_uri = models.CharField(max_length=32, blank=True, null=True, verbose_name="Pin唯一标识码")
     pin_description = models.TextField(blank=True, null=True, verbose_name="Pin 描述")
     pin_thumbnail = models.TextField(blank=True, null=True, verbose_name="缩略图")
     pin_like = models.IntegerField(default=0, verbose_name="喜欢量")
@@ -181,7 +185,9 @@ class PinterestHistoryData(models.Model):
     pin_repin = models.IntegerField(default=0, verbose_name="转发量")
     pin_views = models.IntegerField(default=0, verbose_name="视图量")
     pin_clicks = models.IntegerField(default=0, verbose_name="点击量")
-    product_sku = models.CharField(max_length=64, blank=True, null=True, db_index=True, verbose_name="产品标识符")
+
+    product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
+
     update_time = models.DateTimeField(auto_now=True, db_index=True, verbose_name="数据更新时间")
 
     class Meta:
@@ -229,7 +235,7 @@ class Rule(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
 
     class Meta:
-        # managed = False
+
         db_table = 'rule'
 
 

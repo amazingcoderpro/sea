@@ -19,12 +19,10 @@ class DailyReportView(generics.ListAPIView):
     """日报列表展示"""
     queryset = models.PinterestHistoryData.objects.all()
     serializer_class = report.DailyReportSerializer
-    pagination_class = PNPagination
-    filter_backends = (report_filters.DailyReportFilter,)
 
-    # permission_classes = (IsAuthenticated,)
-    # authentication_classes = (JSONWebTokenAuthentication,)
-
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+    '''
     def list(self, request, *args, **kwargs):
         data_list = []
         queryset = self.filter_queryset(self.get_queryset())
@@ -89,7 +87,7 @@ class DailyReportView(generics.ListAPIView):
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(data_list)
         return Response(data_list)
-
+    '''
 
 class SubAccountReportView(generics.ListAPIView):
     queryset = models.PinterestHistoryData.objects.all()

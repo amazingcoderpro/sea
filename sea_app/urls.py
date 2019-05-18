@@ -1,7 +1,6 @@
 from django.conf.urls import url, include
 
-from sea_app.views import personal_center, report, account_manager
-
+from sea_app.views import reports, personal_center, account_manager
 
 v1_urlpatterns = [
     # 注册 登陆
@@ -17,9 +16,9 @@ v1_urlpatterns = [
     url(r'role/(?P<pk>[0-9]+)/$', personal_center.RoleOperView.as_view()),
 
     # 报告
-    url(r'dashboard/$', report.DashBoardView.as_view()),
-    url(r'dailyreport/$', report.DailyReportView.as_view()),
-    url(r'subaccountreport/(?P<type>[a-zA-Z]+)/$', report.SubAccountReportView.as_view()),
+    # url(r'dashboard/$', report.DashBoardView.as_view()),
+    url(r'dailyreport/$', reports.daily_report_view),
+    url(r'subaccountreport/(?P<type>[a-zA-Z]+)/$', reports.subaccount_report_view),
 
     # 规则管理
     url(r'rule/$', account_manager.RuleView.as_view()),
