@@ -101,7 +101,7 @@ class Product(models.Model):
     sku = models.CharField(max_length=64, verbose_name="产品标识符")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
     image_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="图片URL")
-    thumbnail = models.TextField(verbose_name="缩略图")
+    thumbnail = models.TextField(verbose_name="缩略图", default="")
     price = models.FloatField(verbose_name="产品价格")
     category = models.ForeignKey(ProductCategory, on_delete=models.DO_NOTHING, blank=True, null=True)
     tag = models.CharField(max_length=64, verbose_name="所属标签")
@@ -172,10 +172,12 @@ class PinterestHistoryData(models.Model):
     account_follower = models.IntegerField(default=0, verbose_name="账户粉丝")
 
     board = models.ForeignKey(Board, on_delete=models.DO_NOTHING, blank=True, null=True)
+    board_uri = models.CharField(max_length=32, blank=True, null=True, verbose_name="Board唯一标识码")
     board_name = models.CharField(max_length=64, blank=True, null=True, verbose_name="Board名称")
     board_follower = models.IntegerField(default=0, verbose_name="board粉丝")
 
     pin = models.ForeignKey(Pin, on_delete=models.DO_NOTHING, blank=True, null=True)
+    pin_uri = models.CharField(max_length=32, blank=True, null=True, verbose_name="Pin唯一标识码")
     pin_description = models.TextField(blank=True, null=True, verbose_name="Pin 描述")
     pin_thumbnail = models.TextField(blank=True, null=True, verbose_name="缩略图")
     pin_like = models.IntegerField(default=0, verbose_name="喜欢量")
@@ -183,7 +185,8 @@ class PinterestHistoryData(models.Model):
     pin_repin = models.IntegerField(default=0, verbose_name="转发量")
     pin_views = models.IntegerField(default=0, verbose_name="视图量")
     pin_clicks = models.IntegerField(default=0, verbose_name="点击量")
-    product_sku = models.CharField(max_length=64, blank=True, null=True, db_index=True, verbose_name="产品标识符")
+
+    product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     update_time = models.DateTimeField(auto_now=True, db_index=True, verbose_name="数据更新时间")
 
