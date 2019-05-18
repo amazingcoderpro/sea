@@ -24,7 +24,7 @@ v1_urlpatterns = [
     # 规则管理
     url(r'rule/$', account_manager.RuleView.as_view()),
 
-    # 获取pin账号和board
+    # 获取pin账号
     url(r'pinterestaccount/$', account_manager.PinterestAccountView.as_view()),
 
 ]

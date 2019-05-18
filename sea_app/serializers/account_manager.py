@@ -1,4 +1,6 @@
+from django.db import transaction
 from rest_framework import serializers
+
 from sea_app import models
 
 
@@ -28,21 +30,30 @@ class PinterestAccountSerializer(serializers.ModelSerializer):
         )
 
 
+class RuleSchedule(serializers.ModelSerializer):
+    class Meta:
+        model = models.PinterestAccount
+        fields = "__all__"
+
+
 class RuleSerializer(serializers.ModelSerializer):
+    schedule_rule = RuleSchedule(many=True,read_only=True)
+    scan_sign_name = serializers.CharField(source="get_scan_sign_display",read_only=True)
+    sale_sign_name = serializers.CharField(source="get_sale_sign_display",read_only=True)
 
     class Meta:
         model = models.Rule
-        fields = ("id",
-                  "start_time",
-                  "end_time",
-                  "interval_time",
-                  "scan_sign",
-                  "scan",
-                  "sale_sign",
-                  "sale",
-                  "tag",
-                  "state",
-                  "state",
-                  "create_time",
-                  "update_time"
-        )
+        fields = ("id", "scan_sign", "scan_sign_name", "sale_sign_name", "scan", "sale_sign", "sale", "product_list", "tag", "state", "schedule_rule", "board")
+
+    def create(self, validated_data):
+        with transaction.atomic():
+            print(self.context["request"].data.pop("schedule_rule"))
+            print(self.context["request"].data.pop("schedule_rule"))
+            xx = super(RuleSerializer, self).create(validated_data)
+            return xx
+
+    # def get_scan_sign(self, row):
+    #     return 11
+    #
+    # def get_sale_sign(self, row):
+    #     return 22

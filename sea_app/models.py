@@ -212,10 +212,10 @@ class Rule(models.Model):
     """规则表"""
     scan_sign_choices = ((0, '='), (1, '>'), (2, '<'))
     scan_sign = models.SmallIntegerField(choices=scan_sign_choices, default=0, verbose_name="浏览量符号")
-    scan = models.IntegerField(default=0, verbose_name="浏览量")
+    scan = models.IntegerField(default=0, verbose_name="产品浏览量")
     sale_sign_choices = ((0, '='), (1, '>'), (2, '<'))
-    sale_sign = models.SmallIntegerField(choices=sale_sign_choices, default=0, verbose_name="销售额符号")
-    sale = models.CharField(max_length=255, blank=True, null=True, default=0, verbose_name="销售额")
+    sale_sign = models.SmallIntegerField(choices=sale_sign_choices, default=0, verbose_name="销量符号")
+    sale = models.CharField(max_length=255, blank=True, null=True, default=0, verbose_name="产品销量")
     product_list = models.CharField(max_length=255, default="", verbose_name="产品列表")
     tag = models.CharField(max_length=64, blank=True, null=True, verbose_name="规则标签")
     state_choices = ((0, '未开始'), (1, '未执行'), (2, '执行中'), (2, '已完成'))
@@ -240,7 +240,7 @@ class RuleSchedule(models.Model):
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     interval_time = models.FloatField(verbose_name="发布间隔时间（秒）")
-    rule = models.ForeignKey(Rule, on_delete=models.DO_NOTHING)
+    rule = models.ForeignKey(Rule, related_name="schedule_rule", on_delete=models.DO_NOTHING)
 
     class Meta:
         # managed = False
