@@ -267,6 +267,9 @@ class PublishRecord(models.Model):
     execute_time = models.DateTimeField(verbose_name="执行时间")
     finished_time = models.DateTimeField(null=True, verbose_name="完成时间")
 
+    create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+
     class Meta:
         managed = False
         db_table = 'publish_record'

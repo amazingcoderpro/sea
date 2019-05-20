@@ -23,13 +23,14 @@ v1_urlpatterns = [
     # 规则管理
     url(r'rule/$', account_manager.RuleView.as_view()),
     url(r'rule/(?P<pk>[0-9]+)/$', account_manager.RuleOperView.as_view()),
+    # 增加规则获取账号列表
     url(r'product_count/$', account_manager.ProductCount.as_view()),
-
     # 获取pin账号
     url(r'pinterest_account/$', account_manager.PinterestAccountView.as_view()),
-
     # 获取产品
     url(r'product/$', account_manager.ProductView.as_view()),
+    # 发布记录
+    url(r'report/$', account_manager.ReportView.as_view()),
 
     # 授权回调
     url(r'shopify/callback/$', personal_center.ShopifyCallback.as_view()),

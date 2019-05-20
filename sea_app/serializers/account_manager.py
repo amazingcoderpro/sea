@@ -88,3 +88,10 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Product
         fields = "__all__"
+
+
+class PublishRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.PublishRecord
+        depth = 1
+        fields = "__all__"

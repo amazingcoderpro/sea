@@ -78,3 +78,11 @@ class ProductCount(generics.ListAPIView):
                     res.append(item["product"])
         return Response(res)
 
+
+class ReportView(generics.ListAPIView):
+    queryset = models.PublishRecord.objects.all()
+    serializer_class = account_manager.PublishRecordSerializer
+    pagination_class = PNPagination
+    # filter_backends = (account_manager_filters.ProductCountFilter,)
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
