@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # Created by: Leemon7
 # Created on: 2019/5/17
+import json
+
 from django.db.models import Q
 from django.http import JsonResponse
 from rest_framework import status
@@ -51,8 +53,11 @@ def get_common_data(request):
             pin_set_list = pin_set_list.filter(Q(pin_id=pin_id))
 
     # 开始过滤ProductHistoryData数据
-    product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)),
-                                                                Q(store_id=store_id))
+    if store_id:
+        product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)),
+                                                                    Q(store_id=store_id))
+    else:
+        product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)))
     return pin_set_list, product_set_list
 
 
@@ -344,3 +349,312 @@ def pins_report(pin_set_list, product_set_list):
 
         data_list.append(data)
     return data_list
+
+
+def dash_board_view(request):
+    """DashBoard视图"""
+    pin_set_list, product_set_list = get_common_data(request)
+    # 账户总览图数据
+    # overview_list = account_overview_chart(pin_set_list, product_set_list, request)
+    # 账户总览表数据
+    # total_data = account_overview_table(overview_list)
+    # 最新新增数据
+    # latest_update = latest_updates(pin_set_list, product_set_list, request)
+    # top pins
+    top_5_pins = top_pins(request, period=7)
+    # top board
+    top_5_board = top_board(request, period=7)
+    return JsonResponse({"overview_dict": "hello"})
+
+
+def get_num(queryset, fieldname):
+    # 通过queryset获取计数
+    lst = []
+    for item in queryset:
+        lst.append(getattr(item, fieldname))
+    return len(set(lst))
+
+
+def count_num(queryset, fieldname):
+    # 获取fieldname的总数
+    fieldname_num = 0
+    for item in queryset:
+        fieldname_num += getattr(item, fieldname)
+    return fieldname_num
+
+
+def site_count(pin_set_list, product_set_list, oneday=datetime.datetime.now()):
+    # 获取oneday的数据，默认取昨天更新的数据
+    # 获取站点总数
+    site_num = get_num(product_set_list, "store_id")
+    pin_queryset = pin_set_list.filter(Q(update_time__range=(oneday + datetime.timedelta(days=-1), oneday)))
+    if not pin_queryset:
+        return {"site_num": site_num, "subaccount_num": 0, "board_num": 0, "pin_num": 0,
+                "visitor_num": 0, "click_num": 0, "sales_num": 0, "revenue_num": 0,
+                "board_followers": 0, "pin_repins": 0}
+    # 获取帐号总数
+    subaccount_set = pin_queryset.filter(Q(board_id=None), Q(pin_id=None))
+    subaccount_num = get_num(subaccount_set, "pinterest_account_id")
+    # 获取Board总数
+    board_set = pin_queryset.filter(~Q(board_id=None), Q(pin_id=None))
+    board_num = get_num(board_set, "board_id")
+    board_followers = count_num(board_set, 'board_follower')
+    # 获取pin总数
+    pin_set = pin_queryset.filter(~Q(pin_id=None))
+    pin_num = get_num(pin_set, "pin_id")
+    # 获取click总数
+    click_num = count_num(pin_set, "pin_clicks")
+    pin_repins = count_num(pin_set, "pin_repin")
+
+    # 获取product_id_list
+    product_id_list = []
+    for pin in pin_set:
+        product_id_list.append(pin.product_id)
+    product_id_list = set(product_id_list)
+
+    # 获取sales总数
+    product_set = product_set_list.filter(Q(product_id__in=product_id_list))
+    sales_num = count_num(product_set, "product_sale")
+    # 获取revenue总数
+    revenue_num = count_num(product_set, "product_revenue")
+    # 获取visitor总数,需要关联pin中的product_id,通过product_set获取store_set
+    store_id_list = []
+    for product in product_set:
+        store_id_list.append(product.store_id)
+    store_id_list = set(store_id_list)
+    store_set = product_set_list.filter(Q(store_id__in=store_id_list), Q(product_id=None))
+    visitor_num = count_num(store_set, "store_visitors")
+
+    return {
+        "site_num": site_num,
+        "subaccount_num": subaccount_num,
+        "board_num": board_num,
+        "pin_num": pin_num,
+        "visitor_num": visitor_num,
+        "click_num": click_num,
+        "sales_num": sales_num,
+        "revenue_num": revenue_num,
+        "board_followers": board_followers,
+        "pin_repins": pin_repins
+    }
+
+
+def time_range_list(start_time, end_time):
+    time_list = []
+    for i in range((end_time.date() - start_time.date()).days + 1):
+        day = start_time + datetime.timedelta(days=i)
+        time_list.append(day)
+    return time_list
+
+
+def account_overview_chart(pin_set_list, product_set_list, request, reslut_num=None):
+    """账户总览 图"""
+    # 按天循环时间范围内，获取当天数据
+    start_time = request.GET.get("start_time", datetime.datetime.now() + datetime.timedelta(days=-7))
+    end_time = request.GET.get("end_time", datetime.datetime.now())
+    if isinstance(start_time, str):
+        start_time = datetime.datetime(*map(int, start_time.split('-')))
+    if isinstance(end_time, str):
+        end_time = datetime.datetime(*map(int, end_time.split('-')))
+    time_list = time_range_list(start_time, end_time)
+    overview_list = []
+    for day in time_list[::-1]:
+        day_count = site_count(pin_set_list, product_set_list, day)
+        overview_list.append({day: day_count})
+        if reslut_num and len(overview_list) >= reslut_num:
+            break
+    return overview_list
+
+
+def account_overview_table(overview_list):
+    """账户总览 表"""
+    # pin数据取最新，product数据全部叠加
+    total_data = {}
+    for overview_dict in overview_list:
+        day, data = list(overview_dict.items())[0]
+        if not total_data:
+            total_data = {
+                "date": day,
+                "site_num": data["site_num"],
+                "subaccount_num": data["subaccount_num"],
+                "board_num": data["board_num"],
+                "pin_num": data["pin_num"],
+                "visitor_num": data["visitor_num"],
+                "click_num": data["click_num"],
+                "sales_num": data["sales_num"],
+                "revenue_num": data["revenue_num"]
+            }
+        else:
+            if day > total_data["date"]:
+                total_data["date"] = day
+                total_data["site_num"] = data["site_num"]
+                total_data["subaccount_num"] = data["subaccount_num"]
+                total_data["board_num"] = data["board_num"]
+                total_data["pin_num"] = data["pin_num"]
+            total_data["visitor_num"] += data["visitor_num"]
+            total_data["click_num"] += data["click_num"]
+            total_data["sales_num"] += data["sales_num"]
+            total_data["revenue_num"] += data["revenue_num"]
+    total_data.pop("date")
+    return total_data
+
+
+def latest_updates(pin_set_list, product_set_list, request):
+    """最近更新视图"""
+    new_data, old_data = account_overview_chart(pin_set_list, product_set_list, request, reslut_num=2)
+    old_key, old_value = list(old_data.items())[0]
+    new_key, new_value = list(new_data.items())[0]
+    return {
+        "datetime": new_key,
+        "new_accounts": new_value["subaccount_num"] - old_value["subaccount_num"],
+        "new_board": new_value["board_num"] - old_value["board_num"],
+        "new_pins": new_value["pin_num"] - old_value["pin_num"],
+        "new_followers": new_value["board_followers"] - old_value["board_followers"],
+        "new_repins": new_value["pin_repins"] - old_value["pin_repins"]}
+
+
+def top_pins(request, period=7):
+    """pins排行榜视图"""
+    start_time = datetime.datetime.now() + datetime.timedelta(days=-period)
+    end_time = datetime.datetime.now()
+    prev_start_time = datetime.datetime.now() + datetime.timedelta(days=-period * 2)
+    store_id = request.GET.get("store_id")
+    # 开始过滤ProductHistoryData数据
+    if store_id:
+        product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)),
+                                                                    Q(store_id=store_id))
+    else:
+        product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)))
+    product_id_list = []
+    for product in product_set_list:
+        product_id_list.append(product.product_id)
+    product_id_list = list(set(filter(lambda x: x, product_id_list)))
+    # 过滤PinterestHistoryData数据
+    old_queryset = models.PinterestHistoryData.objects.filter(Q(update_time__range=(start_time + datetime.timedelta(days=-1), start_time)),
+                                                              Q(product_id__in=product_id_list))
+    new_queryset = models.PinterestHistoryData.objects.filter(Q(update_time__range=(end_time + datetime.timedelta(days=-1), end_time)),
+                                                              Q(product_id__in=product_id_list))
+
+    pin_dict = pins_period(new_queryset,old_queryset)
+    prev_old_queryset = models.PinterestHistoryData.objects.filter(Q(update_time__range=(prev_start_time + datetime.timedelta(days=-1), prev_start_time)),
+                                                                   Q(product_id__in=product_id_list))
+    prev_new_queryset = models.PinterestHistoryData.objects.filter(Q(update_time__range=(start_time + datetime.timedelta(days=-1), start_time)),
+                                                                   Q(product_id__in=product_id_list))
+    prev_pin_dict = pins_period(prev_new_queryset, prev_old_queryset)
+    # 计算trends
+    for pin_id, pin in pin_dict.items():
+        prev_pin = prev_pin_dict.get(pin_id)
+        if not prev_pin:
+            prev_repins = 0
+        else:
+            prev_repins = prev_pin.get("increment",0)
+        if prev_repins == 0:
+            trends = pin.get("increment",0)
+        else:
+            trends = (pin.get("increment",0) - prev_repins) * 1.0 / prev_repins
+        pin["trends"] = trends
+    # 计算前5名
+    top_5_pins = sorted(pin_dict.values(), key=lambda v: v["repins"], reverse=True)[0:5]
+    return top_5_pins
+
+
+def pins_period(new_queryset,old_queryset):
+    # 计算同一个pin在一个周期的增量（最后一天的数据，减去第一天的数据)
+
+    pin_dict = {}
+    for pin_obj in new_queryset:
+        if pin_obj.pin_id not in pin_dict:
+            old_repin = old_queryset.filter(Q(pin_id=pin_obj.pin_id)).first()
+            old_repin = old_repin.pin_repin if old_repin else 0
+            pin_dict[pin_obj.pin_id] = {
+                "SKU": pin_obj.product.sku,
+                "image": pin_obj.pin_thumbnail,
+                "pin_date": pin_obj.pin.publish_time,
+                "repins": pin_obj.pin_repin,
+                "increment": pin_obj.pin_repin - old_repin
+            }
+    return pin_dict
+
+
+def top_board(request, period=7):
+    """board排行版视图"""
+    start_time = datetime.datetime.now() + datetime.timedelta(days=-period)
+    end_time = datetime.datetime.now()
+    prev_start_time = datetime.datetime.now() + datetime.timedelta(days=-period * 2)
+    store_id = request.GET.get("store_id")
+    # 开始过滤ProductHistoryData数据
+    if store_id:
+        product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)),
+                                                                    Q(store_id=store_id))
+    else:
+        product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)))
+    # 获取board_id_list
+    board_id_list = []
+    for product_obj in product_set_list:
+        if not product_obj.product_id:
+            continue
+        pin_set_all = product_obj.product.pin_set.all()
+        for pin_set in pin_set_all:
+            board_id_list.append(pin_set.board_id)
+    board_id_list = list(set(filter(lambda x: x, board_id_list)))
+    # 过滤PinterestHistoryData数据
+    old_queryset = models.PinterestHistoryData.objects.filter(
+        Q(update_time__range=(start_time + datetime.timedelta(days=-1), start_time)),
+        Q(board_id__in=board_id_list))
+    new_queryset = models.PinterestHistoryData.objects.filter(
+        Q(update_time__range=(end_time + datetime.timedelta(days=-1), end_time)),
+        Q(board_id__in=board_id_list))
+    board_dict = board_period(new_queryset, old_queryset)
+
+    prev_old_queryset = models.PinterestHistoryData.objects.filter(
+        Q(update_time__range=(prev_start_time + datetime.timedelta(days=-1), prev_start_time)),
+        Q(board_id__in=board_id_list))
+    prev_new_queryset = models.PinterestHistoryData.objects.filter(
+        Q(update_time__range=(start_time + datetime.timedelta(days=-1), start_time)),
+        Q(board_id__in=board_id_list))
+    prev_pin_dict = board_period(prev_new_queryset, prev_old_queryset)
+    # 计算trends
+    for b_id, data in board_dict.items():
+        prev_board = prev_pin_dict.get(b_id)
+        if not prev_board:
+            prev_increment = 0
+        else:
+            prev_increment = prev_board.get("increment", 0)
+        if prev_increment == 0:
+            trends = data.get("increment", 0)
+        else:
+            trends = (data.get("increment", 0) - prev_increment) * 1.0 / prev_increment
+        data["trends"] = trends
+    # 计算前5名
+    top_5_board = sorted(board_dict.values(), key=lambda v: v["followers"], reverse=True)[0:5]
+    return top_5_board
+
+
+def board_period(new_queryset,old_queryset):
+    new_board_dict = board_period_part(new_queryset)
+    old_board_dict = board_period_part(old_queryset)
+    for b_id, data in new_board_dict.items():
+        old_followers = old_board_dict.get(b_id)
+        old_followers = old_followers.get("followers",0) if old_followers else 0
+        data["pins"] = len(set(filter(lambda x: x, data["pins"])))
+        data["increment"] = data.get("followers", 0) - old_followers
+    return new_board_dict
+
+
+def board_period_part(queryset):
+    board_dict = {}
+    for board_obj in queryset:
+        if board_obj.board_id not in board_dict:
+            board_dict[board_obj.board_id] = {
+                "board_name": board_obj.board_name,
+                "pins": [] if not board_obj.pin_id else [board_obj.pin_id],  # pin数
+                "repins": board_obj.pin_repin,
+                "create_date": board_obj.board.create_time,
+                "followers": board_obj.board_follower
+            }
+        else:
+            board_dict[board_obj.board_id]["pins"].append(board_obj.pin_id)
+            board_dict[board_obj.board_id]["repins"] += board_obj.pin_repin
+            board_dict[board_obj.board_id]["followers"] += board_obj.board_follower
+    return board_dict
+
