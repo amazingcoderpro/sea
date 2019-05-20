@@ -16,13 +16,14 @@ v1_urlpatterns = [
     url(r'role/(?P<pk>[0-9]+)/$', personal_center.RoleOperView.as_view()),
 
     # 报告
-    url(r'dashboard/$', reports.dash_board_view),
+    #url(r'dashboard/$', reports.dash_board_view),
     url(r'dailyreport/$', reports.daily_report_view),
     url(r'subaccountreport/(?P<type>[a-zA-Z]+)/$', reports.subaccount_report_view),
 
     # 规则管理
     url(r'rule/$', account_manager.RuleView.as_view()),
     url(r'rule/(?P<pk>[0-9]+)/$', account_manager.RuleOperView.as_view()),
+    url(r'productcount/$', account_manager.ProductCount.as_view()),
 
     # 获取pin账号
     url(r'pinterestaccount/$', account_manager.PinterestAccountView.as_view()),

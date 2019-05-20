@@ -37,3 +37,23 @@ class RuleFilter(BaseFilterBackend):
                 filte_kwargs[self.filter_keys[filter_key]] = val
         queryset = queryset.filter(**filte_kwargs)
         return queryset
+
+
+class ProductCountFilter(BaseFilterBackend):
+    """pinterest账号列表过滤"""
+
+    filter_keys = {
+        "begin_time": "update_time__gte",
+        "end_time": "update_time__lte",
+        "product__name": "product__name__contains",
+        "store": "store"
+    }
+
+    def filter_queryset(self, request, queryset, view):
+        filte_kwargs = {}
+        for filter_key in self.filter_keys.keys():
+            val = request.query_params.get(filter_key, '')
+            if val is not '':
+                filte_kwargs[self.filter_keys[filter_key]] = val
+        queryset = queryset.filter(**filte_kwargs)
+        return queryset

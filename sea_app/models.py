@@ -100,7 +100,7 @@ class Product(models.Model):
     """产品表"""
     sku = models.CharField(max_length=64, verbose_name="产品标识符")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
-    name = models.CharField(max_length=255, blank=True, null=True,  verbose_name="产品名称")
+    name = models.CharField(max_length=255, verbose_name="产品名称")
     image_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="图片URL")
 
     thumbnail = models.TextField(verbose_name="缩略图", default="")
@@ -203,7 +203,7 @@ class ProductHistoryData(models.Model):
     store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, blank=True, null=True)
     store_visitors = models.IntegerField(default=0, verbose_name="访问量")
     store_new_visitors = models.IntegerField(default=0, verbose_name="新增访问量")
-    product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
+    product = models.ForeignKey(Product, on_delete=models.DO_NOTHING)
     product_scan = models.IntegerField(default=0, verbose_name="浏览量")
     product_sale = models.FloatField(default=0.00, verbose_name="销售额")
     product_revenue = models.FloatField(default=0.00, verbose_name="收益")

@@ -3,6 +3,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
+from rest_framework.response import Response
+from django.db.models import Sum
 
 from sea_app import models
 from sea_app.serializers import account_manager
@@ -45,3 +47,34 @@ class ProductView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
     search_fields = ("name",)
+
+
+class ProductCount(generics.ListAPIView):
+    """获取符合条件的产品"""
+    queryset = models.ProductHistoryData.objects.all()
+    serializer_class = account_manager.ProductSerializer
+    filter_backends = (account_manager_filters.ProductCountFilter,)
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def list(self, request, *args, **kwargs):
+        scan_sign = request.query_params.get("scan_sign", '')
+        scan = request.query_params.get("scan", '')
+        sale_sign = request.query_params.get("sale_sign", '')
+        sale = request.query_params.get("sale", '')
+        res = []
+        queryset = self.filter_queryset(self.get_queryset())
+        result = queryset.values("product").annotate(scan=Sum("product_scan"), sale=Sum("product_sale"))
+        if scan and sale:
+            for item in result:
+                scan_codition = "{} {} {}".format(item["scan"], scan_sign, scan)
+                sale_codition = "{} {} {}".format(item["sale"], sale_sign, sale)
+                if eval(scan_codition) and eval(sale_codition):
+                    res.append(item["product"])
+        else:
+            for item in result:
+                scan_codition = "{} {} {}".format(item["scan"], scan_sign, scan)
+                if eval(scan_codition):
+                    res.append(item["product"])
+        return Response(res)
+
