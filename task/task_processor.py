@@ -7,6 +7,30 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from config import logger
 from sea_app.models import PublishRecord, Pin, Board, PinterestAccount
 
+class DBUtil:
+    pass
+
+
+class PinterestOpt:
+    def get_records(self, status=0):
+        """
+        获取所有待发布的pins记录, 数据来源PublishRecord表
+        :param status: 发布状态　0－－未发布，１－－已发布
+        :return: list
+        """
+        pass
+
+    def create_record_by_rule(self):
+        """
+        根据发布规则生成待发布数据
+        :return:
+        """
+
+
+class ShopifyOpt:
+    def update_products(self):
+        pass
+
 
 class TaskProcessor:
     def __init__(self, scan_interval):

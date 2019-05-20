@@ -1,5 +1,6 @@
 from django.contrib import auth
 from rest_framework import generics, status
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_jwt.serializers import jwt_encode_handler, jwt_payload_handler
 from rest_framework.permissions import IsAuthenticated
@@ -91,3 +92,16 @@ class RoleOperView(generics.RetrieveUpdateDestroyAPIView):
             return Response({"message": "The role also has user binding"}, status=status.HTTP_403_FORBIDDEN)
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ShopifyCallback(APIView):
+
+    def get(self, request, *args, **kwargs):
+
+        return Response({"code":1,"message":"shopify_outh"})
+
+
+class PinterestCallback(APIView):
+
+    def get(self, request, *args, **kwargs):
+        return Response({"code": 1, "message": "shopify_outh"})
