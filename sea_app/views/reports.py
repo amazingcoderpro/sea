@@ -354,9 +354,9 @@ def pins_report(pin_set_list, product_set_list):
 def dash_board_view(request):
     """DashBoard视图"""
     pin_set_list, product_set_list = get_common_data(request)
-    # 账户总览图数据
+    # 账户总览 图数据
     # overview_list = account_overview_chart(pin_set_list, product_set_list, request)
-    # 账户总览表数据
+    # 账户总览 表数据
     # total_data = account_overview_table(overview_list)
     # 最新新增数据
     # latest_update = latest_updates(pin_set_list, product_set_list, request)

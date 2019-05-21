@@ -273,3 +273,14 @@ class PublishRecord(models.Model):
     class Meta:
         # managed = False
         db_table = 'publish_record'
+
+
+class OperationRecord(models.Model):
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    action = models.CharField(max_length=64, verbose_name="操作行为")
+    record = models.TextField(blank=True, null=True, verbose_name="操作记录")
+    operation_time = models.DateTimeField(auto_now_add=True, verbose_name="操作时间")
+
+    class Meta:
+        # managed = False
+        db_table = 'operation_record'
