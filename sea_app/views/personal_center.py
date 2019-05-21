@@ -94,6 +94,16 @@ class RoleOperView(generics.RetrieveUpdateDestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class StoreOuthView(APIView):
+    """店铺授权接口"""
+    permission_classes = (IsAuthenticated, RolePermission)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def post(self, request, *args,**kwargs):
+
+        return Response({"code": 1, "message": "shopify_outh"})
+
+
 class ShopifyCallback(APIView):
 
     def get(self, request, *args, **kwargs):
