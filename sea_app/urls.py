@@ -37,6 +37,8 @@ v1_urlpatterns = [
     url(r'shopify/callback/$', personal_center.ShopifyCallback.as_view()),
     url(r'pinterest/callback/$', personal_center.PinterestCallback.as_view()),
 
+    # 账户管理
+    url(r'account_list/$', account_manager.AccountListView.as_view()),
 ]
 
 
