@@ -10,13 +10,14 @@ v1_urlpatterns = [
     # 用户管理
     url(r'users/$', personal_center.UserView.as_view()),
     url(r'users/(?P<pk>[0-9]+)/$', personal_center.UserOperView.as_view()),
+    url(r'users/operationrecord/$', reports.operation_record_listview),
 
     # 角色管理
     url(r'role/$', personal_center.RoleView.as_view()),
     url(r'role/(?P<pk>[0-9]+)/$', personal_center.RoleOperView.as_view()),
 
     # 报告
-    # url(r'dashboard/$', reports.dash_board_view),
+    url(r'dashboard/$', reports.dash_board_view),
     url(r'dailyreport/$', reports.daily_report_view),
     url(r'subaccountreport/(?P<type>[a-zA-Z]+)/$', reports.subaccount_report_view),
 
