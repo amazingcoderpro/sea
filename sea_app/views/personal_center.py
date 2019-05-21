@@ -16,6 +16,7 @@ from sea_app.utils.menu_tree import MenuTree
 from sea_app.pageNumber.pageNumber import PNPagination
 from sea_app.filters import personal_center as personal_center_filters
 from sea_app.permission.permission import UserPermission, RolePermission
+from shopify.oauth_info import ShopifyBase
 
 
 class LoginView(generics.CreateAPIView):
@@ -104,7 +105,6 @@ class StoreOuthView(APIView):
     def post(self, request):
         store_name = request.data.get("store_name",None)
         permission_list = request.data.get("permission_list", None)
-        from shopify.oauth_info import ShopifyBase
         status, html = ShopifyBase(store_name).ask_permission(store_name, scopes=permission_list)
         if status == 200:
             return Response({"code": 1, "message": html})
@@ -113,8 +113,12 @@ class StoreOuthView(APIView):
 
 class ShopifyCallback(APIView):
     """shopify 回调接口"""
-    def get(self, request, *args, **kwargs):
-
+    def get(self, request):
+        code = request.data.get("code", None)
+        store_name = request.data.get("status", None)
+        status, token = ShopifyBase(store_name).get_token(code)
+        if status:
+            models.Store.objects.filter(platform=1).update(token=token)
         return HttpResponseRedirect(redirect_to="http://www.baidu.com")
 
 
