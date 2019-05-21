@@ -37,3 +37,13 @@ INSERT INTO `user` (`id`, `last_login`, `is_superuser`, `first_name`, `last_name
 VALUES
     (2, NULL, 0, '', '', 'admin@163.com', 0, 1, '2019-05-17 07:10:35.433454', 'admin', 'admin', 'pbkdf2_sha256$120000$kdMrvlFpMYri$7JLZQldPVEixS9BA+qslsJLSZdppvzKU+QFCknMfrug=', NULL, NULL, NULL, 0, '2019-05-17 07:10:35.472266', '2019-05-17 07:10:36.022218', NULL, 1);
 ```
+
+## 服务启动
+
+```
+yum install supervisor
+systemctl enable supervisord
+systemctl start supervisord
+systemctl stop supervisord
+systemctl restart supervisord
+```
