@@ -261,8 +261,8 @@ class PublishRecord(models.Model):
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
     rule = models.ForeignKey(Rule, on_delete=models.DO_NOTHING)
     pin = models.ForeignKey(Pin, on_delete=models.DO_NOTHING, blank=True, null=True)
-    state = models.BooleanField(default=True, verbose_name="是否发布")
-    finished = models.BooleanField(default=True, verbose_name="是否发布成功")
+    state_choices = ((0, '待发布'), (1, '已发布'), (2, '发布失败'), )
+    state = models.SmallIntegerField(choices=state_choices, default=0, verbose_name="发布状态")
     remark = models.TextField(blank=True, null=True, verbose_name="备注")
     execute_time = models.DateTimeField(verbose_name="执行时间")
     finished_time = models.DateTimeField(null=True, verbose_name="完成时间")
@@ -271,5 +271,5 @@ class PublishRecord(models.Model):
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'publish_record'
