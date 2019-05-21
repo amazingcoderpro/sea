@@ -1,12 +1,14 @@
 from django.contrib import auth
+from django_filters.rest_framework import DjangoFilterBackend
+from django.http import HttpResponseRedirect
+
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_jwt.serializers import jwt_encode_handler, jwt_payload_handler
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
-from rest_framework.authentication import SessionAuthentication
-from django_filters.rest_framework import DjangoFilterBackend
+
 
 from sea_app import models
 from sea_app.serializers import personal_center
@@ -96,22 +98,27 @@ class RoleOperView(generics.RetrieveUpdateDestroyAPIView):
 
 class StoreOuthView(APIView):
     """店铺授权接口"""
-    permission_classes = (IsAuthenticated, RolePermission)
+    permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 
-    def post(self, request, *args,**kwargs):
-
-        return Response({"code": 1, "message": "shopify_outh"})
+    def post(self, request):
+        store_name = request.data.get("store_name",None)
+        permission_list = request.data.get("permission_list", None)
+        from shopify.oauth_info import ShopifyBase
+        status, html = ShopifyBase(store_name).ask_permission(store_name, scopes=permission_list)
+        if status == 200:
+            return Response({"code": 1, "message": html})
+        return Response({"code": 0, "message": "outh failed"})
 
 
 class ShopifyCallback(APIView):
-
+    """shopify 回调接口"""
     def get(self, request, *args, **kwargs):
 
-        return Response({"code":1,"message":"shopify_outh"})
+        return HttpResponseRedirect(redirect_to="http://www.baidu.com")
 
 
 class PinterestCallback(APIView):
-
+    """pinterest 回调接口"""
     def get(self, request, *args, **kwargs):
         return Response({"code": 1, "message": "shopify_outh"})
