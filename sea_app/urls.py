@@ -7,19 +7,18 @@ v1_urlpatterns = [
     url(r'^account/login/$', personal_center.LoginView.as_view()),
     url(r'^account/register/$', personal_center.RegisterView.as_view()),
 
-    # 用户管理
+
+    # 用户 角色管理
     url(r'users/$', personal_center.UserView.as_view()),
     url(r'users/(?P<pk>[0-9]+)/$', personal_center.UserOperView.as_view()),
-    url(r'users/operationrecord/$', reports.operation_record_listview),
-
-    # 角色管理
+    url(r'users/operation_record/$', reports.operation_record_listview),
     url(r'role/$', personal_center.RoleView.as_view()),
     url(r'role/(?P<pk>[0-9]+)/$', personal_center.RoleOperView.as_view()),
 
     # 报告
     url(r'dashboard/$', reports.dash_board_view),
-    url(r'dailyreport/$', reports.daily_report_view),
-    url(r'subaccountreport/(?P<type>[a-zA-Z]+)/$', reports.subaccount_report_view),
+    url(r'daily_report/$', reports.daily_report_view),
+    url(r'subaccount_report/(?P<type>[a-zA-Z]+)/$', reports.subaccount_report_view),
 
     # 规则管理
     url(r'rule/$', account_manager.RuleView.as_view()),
@@ -34,6 +33,7 @@ v1_urlpatterns = [
     url(r'report/$', account_manager.ReportView.as_view()),
 
     # 授权回调
+    url(r'store_outh/$', personal_center.StoreOuthView.as_view()),
     url(r'shopify/callback/$', personal_center.ShopifyCallback.as_view()),
     url(r'pinterest/callback/$', personal_center.PinterestCallback.as_view()),
 
