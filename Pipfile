@@ -15,6 +15,7 @@ django-filter = "*"
 djangorestframework-jwt = "*"
 gevent = "*"
 gunicorn = "*"
+supervisor = "*"
 
 [requires]
 python_version = "3.6"
