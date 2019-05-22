@@ -107,3 +107,11 @@ class AccountListView(generics.ListAPIView):
             return self.get_paginated_response(queryset)
         return Response(queryset)
 
+
+class PinterestAccountCreateView(generics.CreateAPIView):
+    """增加Pinterest 账号"""
+    queryset = models.PinterestAccount.objects.all()
+    serializer_class = account_manager.PinterestAccountCreateSerializer
+    # filter_backends = (account_manager_filters.ProductCountFilter,)
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)

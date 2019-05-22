@@ -26,7 +26,7 @@ v1_urlpatterns = [
     # 增加规则获取账号列表
     url(r'product_count/$', account_manager.ProductCount.as_view()),
     # 获取pin账号
-    url(r'pinterest_account/$', account_manager.PinterestAccountView.as_view()),
+    url(r'pinterest_account_board/$', account_manager.PinterestAccountView.as_view()),
     # 获取产品
     url(r'product/$', account_manager.ProductView.as_view()),
     # 发布记录
@@ -39,6 +39,8 @@ v1_urlpatterns = [
 
     # 账户管理
     url(r'account_list/$', account_manager.AccountListView.as_view()),
+    # 增加账户
+    url(r'pinterest_account/$', account_manager.PinterestAccountCreateView.as_view()),
 ]
 
 

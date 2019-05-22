@@ -16,7 +16,7 @@ from sea_app.utils.menu_tree import MenuTree
 from sea_app.pageNumber.pageNumber import PNPagination
 from sea_app.filters import personal_center as personal_center_filters
 from sea_app.permission.permission import UserPermission, RolePermission
-from shopify.oauth_info import ShopifyBase
+from sdk.shopify.oauth_info import ShopifyBase
 
 
 class LoginView(generics.CreateAPIView):
