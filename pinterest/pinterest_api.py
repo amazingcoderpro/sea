@@ -6,14 +6,15 @@ class PinterestApi():
     """
     pinterest api接口
     """
-    def __init__(self, access_token, host=None):
+    def __init__(self, host=None):
+        "id,Cname,Curl,Ccounts,Ccreated_at,Ccreator,Cdescription,Cimage,Cprivacy,Creason"
         self.access_token = access_token
         self.pinterest_host = "https://api.pinterest.com/v1" if not host else host
         self.get_user_info_fields = ["first_name", "Cid", "Clast_name", "Curl", "Caccount_type", "Cbio", "Ccounts", "Ccreated_at", "Cimage", "Cusername"]
         self.create_board_fields = ["id", "Cname", "Curl", "Ccounts", "Ccreated_at", "Ccreator", "Cdescription", "Cimage", "Cprivacy", "Creason"]
         self.get_board_id_fields = ["id", "Cname", "Curl", "Ccounts", "Ccreated_at", "Ccreator", "Cdescription", "Cimage", "Cprivacy", "Creason"]
         self.get_user_boards_fields = ["id", "Cname", "url", "created_at", "description", "image", "privacy", "Creason"]
-        self.get_user_suggested_fields = ["id", "Cname", "Curl", "Ccounts", "Ccreated_at", "Ccreator", "Cdescription", "Cimage", "Cprivacy", "Creason"]
+        self.get_user_suggested_fields = ["id","Cname","Curl","Ccounts","Ccreated_at","Ccreator","Cdescription","Cimage","Cprivacy","Creason"]
         self.create_pin_fields = ["id", "Clink", "Cnote", "Curl", "Cattribution", "Ccolor", "Cboard", "Ccounts", "Ccreated_at", "Ccreator", "Cimage", "Cmedia", "Cmetadata", "Coriginal_link"]
         self.get_pin_id_fields = ["id", "Cnote", "Curl", "Cattribution", "Cboard", "Ccounts", "Ccolor", "Ccreated_at", "Ccreator", "Cimage", "Clink", "Cmedia", "Cmetadata", "Coriginal_link"]
         self.get_user_pins_fields = ["id", "Clink", "Cnote", "Curl", "Cattribution", "Cboard", "Ccolor", "Ccounts", "Ccreated_at", "Ccreator", "Coriginal_link", "Cmedia", "Cmetadata", "Cimage"]
@@ -27,12 +28,23 @@ class PinterestApi():
         :param state: 自定义字段, 这可用于确保重定向回您的网站或应用程序不会被欺骗。
         :return:
         """
-        url = "https://api.pinterest.com/oauth/?response_type=code" \
+        url = f"https://api.pinterest.com/oauth/?response_type=code" \
               "&redirect_uri={}" \
               "&client_id={}" \
               "&scope={}&state= {}".format(redirect_uri, client_id, scope, state)
         code = requests.get(url)
+        print(code.status_code, code.text)
         return code
+
+    def get_token(self, client_id, client_secret, code):
+        url = "https://api.pinterest.com/v1/oauth/token" \
+              "?grant_type=authorization_code" \
+              "&client_id={}" \
+              "&client_secret={}" \
+              "&code={}".format(client_id, client_secret, code)
+        token_info = requests.post(url)
+        print(token_info.status_code, token_info.text)
+
 
     def get_user_info(self, fields=[]):
         """
@@ -70,7 +82,7 @@ class PinterestApi():
         :return:
         """
         if not fields:
-            fields = self.get_user_boards_fields
+            fields = self.get_user_suggested_fields
         str_fields = "%2".join(fields)
         url = f"{self.pinterest_host}/me/boards/?access_token={self.access_token}&fields={str_fields}"
         user_info = requests.get(url)
@@ -86,7 +98,6 @@ class PinterestApi():
         if not fields:
             fields = self.get_board_id_fields
         str_fields = "%2".join(fields)
-        "{}/boards/{}/?access_token={}&fields={}"
         url = f"{self.pinterest_host}/boards/{board_id}/?access_token={self.access_token}&fields={str_fields}"
         user_info = requests.get(url)
         print(user_info.status_code, user_info.text)
@@ -101,6 +112,15 @@ class PinterestApi():
         url = f"{self.pinterest_host}/boards/{board_id}/?access_token={self.access_token}"
         delete_boards = requests.delete(url)
         return delete_boards.status_code
+
+    def edit_doard(self, board_id, fields=[]):
+        if not fields:
+            fields = self.get_board_id_fields
+        str_fields = "%2".join(fields)
+        url = f"{self.pinterest_host}/boards/{board_id}/?access_token={self.access_token}&fields={str_fields}"
+        user_info = requests.get(url)
+        print(user_info.status_code, user_info.text)
+        return user_info.status_code, user_info.text
 
     def create_pin(self, board_id, note, image_url, link, fields=[]):
         """
@@ -167,14 +187,17 @@ class PinterestApi():
 
 
 if __name__ == '__main__':
-    access_token = "AtsPh53aHL__3xdZbsGmJon87XsrFZ1-0tDJSSBF0n-lswCyYAp2ADAAAk1KRdOSuUEgxv0AAAAA"
-    all_pinterest_api = PinterestApi(access_token=access_token)
-    # all_pinterest_api.get_code()
-    # all_pinterest_api.get_token(code="1ced3e0fcf90f53d")
-    # all_pinterest_api.get_user_boards()
+    access_token = "ArVPxolYdQAXgzr0-FFoRGAF682xFaDsz-o3I1FF0n-lswCyYAp2ADAAAk1KRdOSuUEgxv0AAAAA"
+    api_key = "5031224083375764064"
+    api_password = "c3ed769d9c5802a98f7c4b949f234c482a19e5bf3a3ac491a0d20e44d7f7556e"
+    code = "ae7fde7811cf4f17"
+    all_pinterest_api = PinterestApi()
+    # all_pinterest_api.get_pinterest_code(redirect_uri="http://orderplus.com/index.html", client_id=api_key, scope="read_public,write_public,read_relationships,write_relationships", state="123")
+    # all_pinterest_api.get_token(client_id=api_key, client_secret=api_password, code=code)
+    all_pinterest_api.get_user_boards()
     # all_pinterest_api.create_board(name="xiaowawa", description=u"时间可以将最好的产物输出")
     # all_pinterest_api.delete_board(board_id="753790125070473979")
-    all_pinterest_api.get_board_id(board_id="753790125070473940")
+    # all_pinterest_api.get_board_id(board_id="753790125070473940")
 
 
 
