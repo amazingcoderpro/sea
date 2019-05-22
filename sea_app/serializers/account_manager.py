@@ -101,6 +101,7 @@ class PinterestAccountCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.PinterestAccount
         fields = (
+            "id",
             "account_uri",
             "nickname",
             "email",

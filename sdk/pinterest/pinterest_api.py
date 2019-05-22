@@ -30,7 +30,7 @@ class PinterestApi():
             f"&scope={self.scope}&state= {state}"
         code = requests.get(url)
         print(code.status_code, code.text)
-        return code
+        return code.status_code, code.text
 
     def get_token(self, code):
         """

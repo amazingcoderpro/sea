@@ -41,6 +41,8 @@ v1_urlpatterns = [
     url(r'account_list/$', account_manager.AccountListView.as_view()),
     # 增加账户
     url(r'pinterest_account/$', account_manager.PinterestAccountCreateView.as_view()),
+    # 账户授权
+    url(r'pinterest_account/(?P<pk>[0-9]+)/$', account_manager.PinterestAccountOuthView.as_view()),
 ]
 
 
