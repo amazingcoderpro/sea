@@ -28,6 +28,13 @@ class PinterestApi():
         return code
 
     def get_token(self, client_id, client_secret, code):
+        """
+        # 获取token
+        :param client_id: api key
+        :param client_secret: api password
+        :param code:
+        :return:
+        """
         url = "https://api.pinterest.com/v1/oauth/token" \
               "?grant_type=authorization_code" \
               "&client_id={}" \
@@ -52,7 +59,9 @@ class PinterestApi():
     def create_board(self, name, description):
         """
         创建board
-        :return: board的发送状态
+        :param name:
+        :param description:
+        :return:
         """
         create_board_fields = ["id", "Cname", "Curl", "Ccounts", "Ccreated_at", "Ccreator", "Cdescription",
                                "Cimage", "Cprivacy", "Creason"]
@@ -80,7 +89,7 @@ class PinterestApi():
         print(user_info.status_code, user_info.text)
         return user_info.status_code, user_info.text
 
-    def get_board_id(self, board_id, fields=[]):
+    def get_board_id(self, board_id):
         """
         查询指定ID的board
         :param fields:
@@ -104,7 +113,7 @@ class PinterestApi():
         delete_boards = requests.delete(url)
         return delete_boards.status_code
 
-    def edit_doard(self, board_id, fields=[]):
+    def edit_doard(self, board_id):
         edit_board_id_fields = ["id", "Cname", "Curl", "Ccounts", "Ccreated_at", "Ccreator", "Cdescription", "Cimage",
                                "Cprivacy", "Creason"]
         str_fields = "%2".join(edit_board_id_fields)
@@ -136,7 +145,7 @@ class PinterestApi():
         print(new_pin.status_code, new_pin.text)
         return new_pin.status_code, new_pin.text
 
-    def get_user_pins(self, fields=[]):
+    def get_user_pins(self):
         """
         获取当前用户的 pins
         :param fields:
