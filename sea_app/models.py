@@ -246,7 +246,7 @@ class Rule(models.Model):
 
 class RuleSchedule(models.Model):
     """规则时间表"""
-    weekday_choices = ((0, "Sunday"), (1, "Monday"), (2, "Tuesday"), (3, "Wednesday"), (4, "Thursday"), (5, "Friday"), (6, "Saturday"))
+    weekday_choices = ((0, "Monday"), (1, "Tuesday"), (2, "Wednesday"), (3, "Thursday"), (4, "Friday"), (5, "Saturday"), (6, "Sunday"))
     weekday = models.SmallIntegerField(choices=weekday_choices, default=0, verbose_name="周几发布")
     start_time = models.TimeField(verbose_name="每天开始时间")
     end_time = models.TimeField(verbose_name="每天结束时间")

@@ -8,10 +8,7 @@ verify_ssl = true
 [packages]
 django = "==2.1.0"
 log-config = "*"
-<<<<<<< HEAD
 requests = "*"
-chilkat = "*"
-=======
 apscheduler = "*"
 pymysql = "*"
 django-rest-framework = "*"
@@ -20,7 +17,6 @@ djangorestframework-jwt = "*"
 gevent = "*"
 gunicorn = "*"
 supervisor = "*"
->>>>>>> 43f743a2787d48ecb15cf9ea19c4a4715debd6a6
 
 [requires]
 python_version = "3.6"
