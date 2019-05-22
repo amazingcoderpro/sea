@@ -1,7 +1,8 @@
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator,UniqueTogetherValidator
+from rest_framework.validators import UniqueValidator
 
 from sea_app import models
+import json
 
 
 class LoginSerializer(serializers.ModelSerializer):
@@ -59,6 +60,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     """用户增加 显示列表"""
+    role_name = serializers.SerializerMethodField()
     username = serializers.CharField(required=True, min_length=5, error_messages={
         "blank": "请输入账户",
         "required": "请携带该参数",
@@ -76,10 +78,14 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.User
-        fields = ("id", "username", "password", "password2", "email", "role", "create_time", "nickname")
+        fields = ("id", "username", "password", "password2", "email", "role", "create_time", "nickname", "update_time", "role_name")
+        # depth = 1
         extra_kwargs = {
             'password': {'write_only': True},
         }
+
+    def get_role_name(self, row):
+        return row.role.name
 
     def validate(self, attrs):
         # 检查角色,如果是站长不能创建
@@ -124,7 +130,18 @@ class RoleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Role
-        fields = ("id", "name", "menu_list")
+        fields = ("id", "name", "menu_list", "create_time", "update_time")
+
+    def validate_menu_list(self, data):
+        data = json.loads(data)
+        if type(data) != list:
+            raise serializers.ValidationError("格式不正确")
+        if not list:
+            raise serializers.ValidationError("格式不正确")
+        for item in data:
+            if type(item) != int:
+                raise serializers.ValidationError("格式不正确")
+        return data
 
     def validate(self, attrs):
         is_exit = models.Role.objects.filter(user_id=self.context["request"].user.id, name=attrs["name"])

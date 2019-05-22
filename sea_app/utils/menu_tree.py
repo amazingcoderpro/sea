@@ -8,11 +8,14 @@ class MenuTree(object):
         self.memu_str = ""
         self.menu_dict = {}
         self.menu_list = []
+        self.route_list = []
 
     def crate_menu_tree(self):
         menuid_list = eval(self.user.role.menu_list)
-        menu_list = models.Menu.objects.filter(id__in=menuid_list).values("id", "menu_name", "menu_url", "parent_id").order_by("menu_num")
+        menu_list = models.Menu.objects.filter(id__in=menuid_list).values("id", "menu_name", "menu_url", "parent_id", "icon").order_by("menu_num")
         for row in menu_list:
+            if "/" in row["menu_url"]:
+                self.route_list.append(row["menu_url"])
             row["childs"] = []
             if row['parent_id']:
                 self.menu_dict[row['parent_id']]['childs'].append(row)
@@ -21,4 +24,4 @@ class MenuTree(object):
         for key, val in self.menu_dict.items():
             if not val["parent_id"]:
                 self.menu_list.append(val)
-        return self.menu_list
+        return self.menu_list, self.route_list
