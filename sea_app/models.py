@@ -130,7 +130,7 @@ class PinterestAccount(models.Model):
     token = models.CharField(blank=True, null=True, max_length=255, verbose_name="账号使用标识")
     add_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="修改时间")
-    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
 
     class Meta:
         # managed = False
