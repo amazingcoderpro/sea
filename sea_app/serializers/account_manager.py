@@ -2,6 +2,7 @@ from django.db import transaction
 from rest_framework import serializers
 
 from sea_app import models
+from sdk.pinterest import pinterest_api
 
 
 class BoardSerializer(serializers.ModelSerializer):
@@ -95,3 +96,26 @@ class PublishRecordSerializer(serializers.ModelSerializer):
         model = models.PublishRecord
         depth = 1
         fields = "__all__"
+
+
+class PinterestAccountCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.PinterestAccount
+        fields = (
+            "account_uri",
+            "nickname",
+            "email",
+            "type",
+            # "state",
+            "description",
+            "create_time",
+        )
+
+    def create(self, validated_data):
+        validated_data["user"] = self.context["request"].user
+        instance = super(PinterestAccountCreateSerializer, self).create(validated_data)
+        instance.user = self.context["request"].user
+        instance.save()
+        pinterest_api.PinterestApi()
+
+        return instance
