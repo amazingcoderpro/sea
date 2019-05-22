@@ -1,8 +1,7 @@
 import requests
 
 
-class products_api():
-
+class ProductsApi:
     def __init__(self, client_id, access_token, shop, scopes, callback_uri):
         """
         :param client_id: api key
@@ -18,7 +17,6 @@ class products_api():
         self.callback_uri = callback_uri
         self.id = id
         self.version_url = "/admin/api/2019-04/"
-
 
     def get_shop_info(self):
         shop_url = f"https://{self.client_id}:{self.access_token}@{self.shop}{self.version_url}shop.json"
@@ -48,7 +46,7 @@ if __name__ == '__main__':
     scopes = "write_orders,read_customers"
     callback_uri = "http://www.orderplus.com/index.html"
     id = "3583116148816"
-    products_api = products_api(client_id, access_token, shop, scopes, callback_uri)
+    products_api = ProductsApi(client_id, access_token, shop, scopes, callback_uri)
     products_api.get_all_products()
     products_api.get_shop_info()
     products_api.get_product_id()
