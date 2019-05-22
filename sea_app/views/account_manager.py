@@ -95,8 +95,8 @@ class AccountListView(generics.ListAPIView):
     serializer_class = report.DailyReportSerializer
     pagination_class = PNPagination
     filter_backends = (AccountListFilter,)
-    # permission_classes = (IsAuthenticated,)
-    # authentication_classes = (JSONWebTokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
