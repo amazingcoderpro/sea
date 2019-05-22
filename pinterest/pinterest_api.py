@@ -2,7 +2,7 @@
 import requests
 
 
-class All_Pinterest_Api():
+class PinterestApi():
     """
     pinterest api接口
     """
@@ -168,7 +168,7 @@ class All_Pinterest_Api():
 
 if __name__ == '__main__':
     access_token = "AtsPh53aHL__3xdZbsGmJon87XsrFZ1-0tDJSSBF0n-lswCyYAp2ADAAAk1KRdOSuUEgxv0AAAAA"
-    all_pinterest_api = All_Pinterest_Api(access_token=access_token)
+    all_pinterest_api = PinterestApi(access_token=access_token)
     # all_pinterest_api.get_code()
     # all_pinterest_api.get_token(code="1ced3e0fcf90f53d")
     # all_pinterest_api.get_user_boards()

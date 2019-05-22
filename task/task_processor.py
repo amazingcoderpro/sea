@@ -36,7 +36,7 @@ class DBUtil:
         return self.conn_pool[name]
 
 
-from pinterest.pinterest_api import All_Pinterest_Api
+from pinterest.pinterest_api import PinterestApi
 class PinterestOpt:
     def get_records(self, status=0):
         """
@@ -51,7 +51,7 @@ class PinterestOpt:
                 ''', (0, datetime.datetime.now(), datetime.datetime.now() + datetime.timedelta(seconds=120)))
         records = cursor.fetchall()
 
-        All_Pinterest_Api()
+        PinterestApi()
         for record in records:
             record_id, execute_time, board_id, product_id, rule_id = record
             cursor.execute('''
