@@ -125,6 +125,7 @@ class PinterestAccount(models.Model):
     type = models.CharField(max_length=64, verbose_name="账户类型")
     state = models.BooleanField(default=True, verbose_name="账号状态")
     token = models.CharField(max_length=255, verbose_name="账号使用标识")
+    description = models.TextField(blank=True, null=True, verbose_name="账户描述")
     add_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="修改时间")
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
@@ -139,6 +140,8 @@ class Board(models.Model):
     board_uri = models.CharField(max_length=32, verbose_name="Board唯一标识码")
     name = models.CharField(max_length=64, verbose_name="Board名称")
     create_time = models.DateTimeField(verbose_name="Board创建时间")
+    description = models.TextField(blank=True, null=True, verbose_name="Board 描述")
+    state = models.BooleanField(default=True, verbose_name="账号状态")  # True:Public, False:Private
     add_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="修改时间")
 
@@ -261,7 +264,7 @@ class PublishRecord(models.Model):
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
     rule = models.ForeignKey(Rule, on_delete=models.DO_NOTHING)
     pin = models.ForeignKey(Pin, on_delete=models.DO_NOTHING, blank=True, null=True)
-    state_choices = ((0, '待发布'), (1, '已发布'), (2, '发布失败'), )
+    state_choices = ((0, 'pending'), (1, 'finished'), (2, 'failed'), )
     state = models.SmallIntegerField(choices=state_choices, default=0, verbose_name="发布状态")
     remark = models.TextField(blank=True, null=True, verbose_name="备注")
     execute_time = models.DateTimeField(verbose_name="执行时间")

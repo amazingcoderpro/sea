@@ -586,7 +586,7 @@ def top_pins(request, period=7):
     return top_5_pins
 
 
-def pins_period(new_queryset,old_queryset):
+def pins_period(new_queryset, old_queryset):
     # 计算同一个pin在一个周期的增量（最后一天的数据，减去第一天的数据)
 
     pin_dict = {}

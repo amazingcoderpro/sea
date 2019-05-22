@@ -7,7 +7,8 @@ from rest_framework.response import Response
 from django.db.models import Sum
 
 from sea_app import models
-from sea_app.serializers import account_manager
+from sea_app.filters.report import AccountListFilter
+from sea_app.serializers import account_manager, report
 from sea_app.filters import account_manager as account_manager_filters
 from sea_app.pageNumber.pageNumber import PNPagination
 from sea_app.permission.permission import RolePermission
@@ -87,3 +88,22 @@ class ReportView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
     filterset_fields = ("product__sku", "state")
+
+
+class AccountListView(generics.ListAPIView):
+    queryset = models.PinterestHistoryData.objects.all()
+    serializer_class = report.DailyReportSerializer
+    pagination_class = PNPagination
+    filter_backends = (AccountListFilter,)
+    # permission_classes = (IsAuthenticated,)
+    # authentication_classes = (JSONWebTokenAuthentication,)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(queryset)
+        return Response(queryset)
+
