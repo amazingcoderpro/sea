@@ -20,9 +20,9 @@ class PinterestApi():
         :return:
         """
         url = f"https://api.pinterest.com/oauth/?response_type=code" \
-              "&redirect_uri={}" \
-              "&client_id={}" \
-              "&scope={}&state= {}".format(redirect_uri, client_id, scope, state)
+              f"&redirect_uri={redirect_uri}" \
+              f"&client_id={client_id}" \
+              f"&scope={scope}&state= {state}"
         code = requests.get(url)
         print(code.status_code, code.text)
         return code
@@ -35,11 +35,9 @@ class PinterestApi():
         :param code:
         :return:
         """
-        url = "https://api.pinterest.com/v1/oauth/token" \
-              "?grant_type=authorization_code" \
-              "&client_id={}" \
-              "&client_secret={}" \
-              "&code={}".format(client_id, client_secret, code)
+        url = f"https://api.pinterest.com/v1/oauth/token?" \
+              f"grant_type=authorization_code" \
+              f"&client_id={client_id}&client_secret={client_secret}&code={code}"
         token_info = requests.post(url)
         print(token_info.status_code, token_info.text)
 
@@ -174,6 +172,8 @@ class PinterestApi():
 
     def edit_pin_id(self, pin_id):
         """
+        修改 pin
+        :param pin_id:
         :return:
         """
         edit_pin_id_fields = ["id", "Clink", "Cnote", "Curl", "Cattribution", "Cboard", "Ccolor", "Ccounts", "Ccreated_at", "Ccreator",
