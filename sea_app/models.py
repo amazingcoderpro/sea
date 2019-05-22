@@ -139,6 +139,7 @@ class Board(models.Model):
     board_uri = models.CharField(max_length=32, verbose_name="Board唯一标识码")
     name = models.CharField(max_length=64, verbose_name="Board名称")
     create_time = models.DateTimeField(verbose_name="Board创建时间")
+    description = models.TextField(blank=True, null=True, verbose_name="Board 描述")
     add_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="修改时间")
 
