@@ -16,7 +16,7 @@ class Menu(models.Model):
     icon = models.CharField(blank=True, null=True, max_length=255, verbose_name="菜单主题")
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'menu'
 
 
@@ -29,7 +29,7 @@ class Role(models.Model):
     menu_list = models.CharField(max_length=255, verbose_name="菜单权限")  # 格式："[1,2,3]"
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'role'
         unique_together = ('name', 'user_id',)
 
@@ -51,7 +51,7 @@ class User(AbstractUser):
     role = models.ForeignKey(Role, on_delete=models.DO_NOTHING)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'user'
         ordering = ["-id"]
 
@@ -64,7 +64,7 @@ class Platform(models.Model):
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'platform'
 
 
@@ -78,7 +78,7 @@ class Store(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'store'
 
 
@@ -92,7 +92,7 @@ class ProductCategory(models.Model):
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'product_category'
 
 
@@ -118,20 +118,22 @@ class Product(models.Model):
 
 class PinterestAccount(models.Model):
     """Pin账户表"""
-    account_uri = models.CharField(max_length=32, verbose_name="PinterestAccount唯一标识码")
-    name = models.CharField(max_length=64, verbose_name="账户名称")
-    email = models.CharField(max_length=255, verbose_name="登陆邮箱")
-    create_time = models.DateTimeField(verbose_name="账号创建时间")
-    type = models.CharField(max_length=64, verbose_name="账户类型")
-    state = models.BooleanField(default=True, verbose_name="账号状态")
-    token = models.CharField(max_length=255, verbose_name="账号使用标识")
+    account_uri = models.CharField(max_length=64, unique=True, verbose_name="PinterestAccount唯一标识码")
+    nickname = models.CharField( blank=True, null=True, max_length=64, verbose_name="账户名称")
+    email = models.CharField(blank=True, null=True, max_length=255, verbose_name="登陆邮箱")
+    type_choices = ((0, 'business'), (1, 'individual'))
+    type = models.SmallIntegerField(choices=type_choices, default=0, verbose_name="账号类型")
+    state_choices = ((0, 'normal'), (1, 'forbidden'))
+    state = models.SmallIntegerField(choices=state_choices, default=0, verbose_name="账号状态")
     description = models.TextField(blank=True, null=True, verbose_name="账户描述")
+    create_time = models.DateTimeField(blank=True, null=True, verbose_name="账号创建时间")
+    token = models.CharField(blank=True, null=True, max_length=255, verbose_name="账号使用标识")
     add_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="修改时间")
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'pinterest_account'
 
 
@@ -165,7 +167,7 @@ class Pin(models.Model):
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'pin'
 
 
@@ -194,7 +196,7 @@ class PinterestHistoryData(models.Model):
     update_time = models.DateTimeField(auto_now=True, db_index=True, verbose_name="数据更新时间")
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'pinterest_history_data'
         ordering = ["-update_time"]
 
@@ -213,7 +215,7 @@ class ProductHistoryData(models.Model):
     update_time = models.DateTimeField(auto_now=True, db_index=True, verbose_name="数据更新时间")
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'product_history_data'
         ordering = ["-update_time"]
 
