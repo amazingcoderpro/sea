@@ -240,7 +240,7 @@ class Rule(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
 
     class Meta:
-
+        # managed = False
         db_table = 'rule'
 
 
