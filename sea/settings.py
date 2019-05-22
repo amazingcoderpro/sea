@@ -145,3 +145,11 @@ JWT_AUTH = {
     'JWT_EXPIRATION_DELTA': datetime.timedelta(days=7),
     'JWT_SECRET_KEY': 'sea',
 }
+
+shopify = {
+
+}
+
+pinterest = {
+
+}

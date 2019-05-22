@@ -6,11 +6,15 @@ class PinterestApi():
     """
     pinterest api接口
     """
-    def __init__(self, host=None):
+    def __init__(self, host=None, access_token=None):
         self.access_token = access_token
         self.pinterest_host = "https://api.pinterest.com/v1" if not host else host
+        self.redirect_uri = "http://sns.seamarketings.com/api/v1/pinterest/callback/"
+        self.client_id = "5031224083375764064"
+        self.client_secret = "c3ed769d9c5802a98f7c4b949f234c482a19e5bf3a3ac491a0d20e44d7f7556e"
+        self.scope = "read_public,write_public,read_relationships,write_relationships"
 
-    def get_pinterest_code(self, redirect_uri, client_id, scope, state):
+    def get_pinterest_code(self, state):
         """
         获取授权code
         :param redirect_uri: 重定向的url
@@ -20,26 +24,24 @@ class PinterestApi():
         :return:
         """
         url = f"https://api.pinterest.com/oauth/?response_type=code" \
-              f"&redirect_uri={redirect_uri}" \
-              f"&client_id={client_id}" \
-              f"&scope={scope}&state= {state}"
+              f"&redirect_uri={self.redirect_uri}" \
+              f"&client_id={self.client_id}" \
+              f"&scope={self.scope}&state= {state}"
         code = requests.get(url)
         print(code.status_code, code.text)
         return code
 
-    def get_token(self, client_id, client_secret, code):
+    def get_token(self, code):
         """
         # 获取token
-        :param client_id: api key
-        :param client_secret: api password
         :param code:
         :return:
         """
         url = f"https://api.pinterest.com/v1/oauth/token?" \
               f"grant_type=authorization_code" \
-              f"&client_id={client_id}&client_secret={client_secret}&code={code}"
+              f"&client_id={self.client_id}&client_secret={self.client_secret}&code={code}"
         token_info = requests.post(url)
-        print(token_info.status_code, token_info.text)
+        return token_info.status_code, token_info.text
 
     def get_user_info(self):
         """
@@ -215,7 +217,7 @@ if __name__ == '__main__':
     code = "ae7fde7811cf4f17"
     all_pinterest_api = PinterestApi()
     all_pinterest_api.get_user_boards()
-    all_pinterest_api.create_pin(board_id="753790193789717834", note="你知道我是谁吗", image_url="https://www.pinterest.com/hellomengxiaoning/wahaha/more_ideas/?ideas_referrer=7", link= "")
+
 
 
 

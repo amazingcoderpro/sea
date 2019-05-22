@@ -2,7 +2,6 @@ import requests
 
 
 class products_api():
-
     def __init__(self, client_id, access_token, shop, scopes, callback_uri):
         """
         :param client_id: api key
@@ -18,7 +17,6 @@ class products_api():
         self.callback_uri = callback_uri
         self.id = id
         self.version_url = "/admin/api/2019-04/"
-
 
     def get_shop_info(self):
         shop_url = f"https://{self.client_id}:{self.access_token}@{self.shop}{self.version_url}shop.json"
