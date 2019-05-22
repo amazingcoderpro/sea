@@ -125,4 +125,10 @@ class ShopifyCallback(APIView):
 class PinterestCallback(APIView):
     """pinterest 回调接口"""
     def get(self, request, *args, **kwargs):
+        code = request.data.get("code", None)
+        state = request.data.get("state", None)
+        from sdk.pinterest import pinterest_api
+        status, token = pinterest_api.PinterestApi().get_token(code)
+        if status:
+            models.PinterestAccount.objects.filter(account_uri=state).update(token=token)
         return Response({"code": 1, "message": "shopify_outh"})
