@@ -1,144 +1,121 @@
-import oauth2client.client
-import httplib2
-import apiclient
-import os
+# https://developers.google.com/analytics/solutions/articles/hello-analytics-api
+# https://developers.google.com/api-client-library/python/auth/installed-app
+# https://developers.google.com/api-client-library/python/auth/web-app
+
+import sys
+import json
 import webbrowser
-import datetime
+import logging
 
-"""--------------The Process - Part 2------------
-0. See Part 1 of this tutorial - 
-https://automatemylife.org/use-python-to-automatically-get-your-google-analytics-report/
-1. Get the Analytics service
-2. Get certain fields from the Google Analytics Report API
-3. Print out those pesky fields
-4. Drink an espresso
-5. Make a main function to execute all this
--------------------------------------
-References
--------------------------------------
-Oauth2 2.0 Explained: https://developers.google.com/api-client-library/python/guide/aaa_oauth
-Scopes: https://developers.google.com/identity/protocols/googlescopes
-Analytics Reporting API: https://developers.google.com/analytics/devguides/reporting/core/v4/
--------------------------------------
-"""
+import httplib2
+import os.path
+
+from apiclient import discovery
+from oauth2client import client
+from oauth2client.file import Storage
 
 
-def get_credentials():
-    """Gets google api credentials, or generates new credentials
-    if they don't exist or are invalid."""
-    scope = ['https://www.googleapis.com/auth/adsense.readonly',
-             'https://www.googleapis.com/auth/analytics.readonly']
+def get_first_profile_id(service):
+    """Fetches first profile ID of account."""
+    accounts = service.management().accounts().list().execute()
 
-    # get your client secret file
-    cwd = os.getcwd()
-    pathToFile = os.path.join(cwd,
-                              'YOURCLIENTSECRETPATH.json')
-    print("This is your client secret path:", pathToFile)
+    if accounts.get('items'):
+        first_account_id = accounts.get('items')[0].get('id')
+        webprops = service.management().webproperties()
+        webprops = webprops.list(accountId=first_account_id).execute()
 
-    # first part of the folow process
-    # https://developers.google.com/api-client-library/python/guide/aaa_oauth
-    flow = oauth2client.client.flow_from_clientsecrets(pathToFile, scope,
-                                                       redirect_uri='urn:ietf:wg:oauth:2.0:oob')  # 'urn:ietf:wg:oauth:2.0:oob'
+        if webproperties.get('items'):
+            first_webproperty_id = webproperties.get('items')[0].get('id')
 
-    # check to see if you have something already
-    storage = oauth2client.file.Storage('creds.dat')  # this is a made up file name
-    credentials = storage.get()
+            profiles = service.management().profiles().list(
+                accountId=first_account_id,
+                webPropertyId=first_webproperty_id
+            ).execute()
 
-    # if they dont exist already go ahead and get them
-    if not credentials or credentials.invalid:
-        # get authorization url
-        auth_url = flow.step1_get_authorize_url()
-        # open the url to get a code
-        webbrowser.open(auth_url)
+            if profiles.get('items')[0].get('id'):
+                return profiles.get('items')[0].get('id')
 
-        # enter the code to reauth
-        codeStr = str(input('enter code here:'))
-        credentials = flow.step2_exchange(codeStr)
-        # save the code to the dat
-        storage = oauth2client.file.Storage('creds.dat')
-        storage.put(credentials)
+    return None
 
-        return credentials
 
+def query_analytics(service, profile_id, start_date, end_date, metric):
+    """Performes simple query for profile."""
+    if profile_id == None or profile_id == "0":
+        profile_id = get_first_profile_id(service)
+
+    result = service.data().ga().get(
+        ids='ga:' + profile_id,
+        start_date=start_date,
+        end_date=end_date,
+        metrics='ga:' + metric
+    ).execute()
+
+    return result
+
+
+def read_credentials(fname):
+    """Reads JSON with credentials from file."""
+    if os.path.isfile(fname):
+        f = open(fname, "r")
+        credentials = client.OAuth2Credentials.from_json(f.read())
+        f.close()
     else:
-        return credentials
+        credentials = None
+
+    return credentials
 
 
-def get_Analytics_service():
-    """Returns Google Analytics Report API"""
-    # reference: https://developers.google.com/analytics/devguides/reporting/core/v4/
-    credentials = get_credentials()
+def write_credentials(fname, credentials):
+    """Writes credentials as JSON to file."""
+    f = open(fname, "w")
+    f.write(credentials.to_json())
+    f.close()
 
-    http = httplib2.Http()
-    http = credentials.authorize(http)
-    service = apiclient.discovery.build('analytics', 'v4', http=http)
-    print("Got Analytics service")
+
+def acquire_oauth2_credentials(secrets_file):
+    """Flows through OAuth 2.0 authorization process for credentials."""
+    flow = client.flow_from_clientsecrets(
+        secrets_file,
+        scope='https://www.googleapis.com/auth/analytics.readonly',
+        redirect_uri='urn:ietf:wg:oauth:2.0:oob')
+
+    auth_uri = flow.step1_get_authorize_url()
+    webbrowser.open(auth_uri)
+
+    auth_code = input('Enter the authentication code: ')
+
+    credentials = flow.step2_exchange(auth_code)
+    return credentials
+
+
+def create_service_object(credentials):
+    """Creates Service object for credentials."""
+    http_auth = httplib2.Http()
+    http_auth = credentials.authorize(http_auth)
+    service = discovery.build('analytics', 'v3', http_auth)
     return service
 
 
-def get_report(analytics):
-    """Queries the Analytics Reporting API V4."""
+def oauth2_and_query_analytics(credentials_file, secrets_file, profile_id,start_date, end_date, metric):
+    logging.basicConfig()
+    """Performs authorization and then queries GA."""
 
-    # define what window of time you are most interested in
-    today = datetime.date.today()
-    # im only getting one day in the past
-    timeDelta = today - datetime.timedelta(days=1)
-    print("Checking dates ", timeDelta, " to ", today)
+    credentials = read_credentials(credentials_file)
 
-    # where to get dimensions
-    # https://developers.google.com/analytics/devguides/reporting/core/dimsmets
-    return analytics.reports().batchGet(
-        body={
-            'reportRequests': [
-                {
-                    'viewId': VIEW_ID,
-                    'dateRanges': [{'startDate': str(timeDelta), 'endDate': str(today)}],
-                    'metrics': [{'expression': 'ga:sessions'},
-                                {'expression': 'ga:pageviews'},
-                                {'expression': 'ga:avgSessionDuration'}],
-                    # 'dimensions': [{'name': 'ga:country'}]
-                }]
-        }
-    ).execute()
+    if credentials is None or credentials.invalid:
+        credentials = acquire_oauth2_credentials(secrets_file)
+        write_credentials(credentials_file, credentials)
+
+    service = create_service_object(credentials)
+    results = query_analytics(service, profile_id, start_date, end_date, metric)
+
+    return json.dumps(results, indent=4)
 
 
-def print_response(response):
-    """Parses and prints the Analytics Reporting API V4 response.
-    Args:
-    response: An Analytics Reporting API V4 response object
-    """
-    # fyi this is not my code, i grabbed it from github
-    # forgot to copy the url though
-    for report in response.get('reports', []):
-        columnHeader = report.get('columnHeader', {})
-        dimensionHeaders = columnHeader.get('dimensions', [])
-        metricHeaders = columnHeader.get('metricHeader', {}).get('metricHeaderEntries', [])
+if __name__ == '__main__':
+    profile_id, start_date, end_date, metric = sys.argv[1:5]
 
-    for row in report.get('data', {}).get('rows', []):
-        dimensions = row.get('dimensions', [])
-        dateRangeValues = row.get('metrics', [])
+    credentials_file = "credentials.json"
+    secrets_file = "client_secrets.json"
 
-    for header, dimension in zip(dimensionHeaders, dimensions):
-        print(header + ': ' + dimension)
-
-    for i, values in enumerate(dateRangeValues):
-        print('Date range: ' + str(i))
-        for metricHeader, value in zip(metricHeaders, values.get('values')):
-            print(metricHeader.get('name') + ': ' + value)
-
-
-def runAnalytics():
-    """easy function to run everything"""
-    # gets OAuth from the API
-    analytics = get_Analytics_service()
-    # get the object return from the API
-    # send that object to print out useful fields
-    response = get_report(analytics)
-    print_response(response)
-
-
-# https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#ReportRequest.FIELDS.view_id
-VIEW_ID = 'Your View ID here'
-global VIEW_ID
-
-runAnalytics()
+    print(oauth2_and_query_analytics(credentials_file, secrets_file, profile_id,start_date, end_date, metric))

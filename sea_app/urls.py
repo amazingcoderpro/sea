@@ -44,7 +44,9 @@ v1_urlpatterns = [
     url(r'pinterest/callback/$', personal_center.PinterestCallback.as_view()),
 
     # 账户管理
-    url(r'account_list/$', account_manager.AccountListView.as_view()),
+    url(r'account_list/$', account_manager.AccountListManageView.as_view()),
+    url(r'account_list/(?P<aid>[0-9]+)/$', account_manager.BoardListManageView.as_view()),
+    url(r'account_list/(?P<aid>[0-9]+)/(?P<bid>[0-9]+)/$', account_manager.PinListManageView.as_view()),
     # 增加账户
     url(r'pinterest_account/$', account_manager.PinterestAccountCreateView.as_view()),
 

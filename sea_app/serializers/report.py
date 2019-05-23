@@ -8,7 +8,6 @@ class DailyReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.PinterestHistoryData
         depth = 1
-        # fields = ("pinterest_account", "pin_id", "pin_repin", "pin_like", "pin_comment", "pin")
         fields = "__all__"
 
 
@@ -31,5 +30,4 @@ class PinListSerializer(serializers.ModelSerializer):
         model = models.Pin
         depth = 1
         fields = ("id", "description", "board_id")
-
 
