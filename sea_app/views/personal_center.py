@@ -97,7 +97,7 @@ class RoleOperView(generics.RetrieveUpdateDestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class StoreOuthView(APIView):
+class StoreAuthView(APIView):
     """店铺授权接口"""
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)

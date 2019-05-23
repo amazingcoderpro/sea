@@ -38,8 +38,8 @@ v1_urlpatterns = [
     url(r'report/$', account_manager.ReportView.as_view()),
 
     # 授权回调
-    url(r'store_outh/$', personal_center.StoreOuthView.as_view()),
-    url(r'pinterest_account/(?P<pk>[0-9]+)/$', account_manager.PinterestAccountOuthView.as_view()),
+    url(r'store_auth/$', personal_center.StoreAuthView.as_view()),
+    url(r'pinterest_account_auth/(?P<pk>[0-9]+)/$', account_manager.PinterestAccountAuthView.as_view()),
     url(r'shopify/callback/$', personal_center.ShopifyCallback.as_view()),
     url(r'pinterest/callback/$', personal_center.PinterestCallback.as_view()),
 

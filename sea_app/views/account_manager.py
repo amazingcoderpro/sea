@@ -119,11 +119,11 @@ class PinterestAccountCreateView(generics.CreateAPIView):
     authentication_classes = (JSONWebTokenAuthentication,)
 
 
-class PinterestAccountOuthView(APIView):
+class PinterestAccountAuthView(APIView):
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 
-    def post(self, request,*args, **kwargs):
+    def post(self, request, *args, **kwargs):
         instance = models.PinterestAccount.objects.filter(id=kwargs["pk"]).first()
         url = pinterest_api.PinterestApi().get_pinterest_url(instance.account_uri)
         return Response({"message": url})

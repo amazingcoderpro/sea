@@ -128,6 +128,8 @@ class PinterestAccount(models.Model):
     description = models.TextField(blank=True, null=True, verbose_name="账户描述")
     create_time = models.DateTimeField(blank=True, null=True, verbose_name="账号创建时间")
     token = models.CharField(blank=True, null=True, max_length=255, verbose_name="账号使用标识")
+    authorized_choices = ((0, 'no_authorized'), (1, 'authorized'))
+    authorized = models.SmallIntegerField(choices=authorized_choices, default=0, verbose_name="是否认证")
     add_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="修改时间")
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
