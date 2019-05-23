@@ -45,7 +45,7 @@ class ResponseMiddleware(MiddlewareMixin):
         if response.status_code == 404:
             response.status_code = 200
             self.res["code"] = 0
-            self.res["msg"] = response.data
+            self.res["msg"] = response.data if response.data else ""
             self.res["data"] = []
             response._container = [bytes(json.dumps(self.res).encode("utf-8"))]
             return response
