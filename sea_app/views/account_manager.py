@@ -125,10 +125,8 @@ class PinterestAccountOuthView(APIView):
 
     def post(self, request,*args, **kwargs):
         instance = models.PinterestAccount.objects.filter(id=kwargs["pk"]).first()
-        code, html = pinterest_api.PinterestApi().get_pinterest_code(instance.account_uri)
-        if code == 200:
-            return Response({"message": html})
-        return Response({"detail": "outh failed"}, status=status.HTTP_400_BAD_REQUEST)
+        url = pinterest_api.PinterestApi().get_pinterest_url(instance.account_uri)
+        return Response({"message": url})
 
 
 class PinterestAccountListView(generics.ListAPIView):
