@@ -79,7 +79,7 @@ class AccountListFilter(BaseFilterBackend):
         for a_id, info in today_group_dict.items():
             # 获取账号增量
             pin_id_under_account = set(filter(lambda x: x, info["pins"]))
-            info["account_publish_time"] = models.Pin.objects.filter(Q(id__in=pin_id_under_account)).order_by('-publish_time').first().publish_time
+            info["account_publish_time"] = models.Pin.objects.filter(Q(id__in=pin_id_under_account)).order_by('-publish_time').first().publish_time.strftime("%Y-%m-%d %H:%M:%S")
             info["pins"] = len(pin_id_under_account)
             yesterday_info = yesterday_group_dict.get(a_id)
             if yesterday_info:
@@ -116,13 +116,13 @@ class AccountListFilter(BaseFilterBackend):
                 # 获取账号数据
                 group_dict[today.pinterest_account_id] = {
                     "account_uri": today.pinterest_account.account_uri,
-                    "account_name": today.pinterest_account.name,
+                    "account_name": today.pinterest_account.nickname,
                     "account_email": today.pinterest_account.email,
-                    "account_create_time": today.pinterest_account.create_time,
+                    "account_create_time": today.pinterest_account.create_time.strftime("%Y-%m-%d %H:%M:%S"),
                     "account_type": today.pinterest_account.type,
                     "update_person": today.pinterest_account.user.username,
                     "account_state": today.pinterest_account.state,
-                    "account_crawl_time": today.pinterest_account.update_time,
+                    "account_crawl_time": today.pinterest_account.update_time.strftime("%Y-%m-%d %H:%M:%S"),
                     "pins": [] if not today.pin_id else [today.pin_id],  # pin数
                     "repin": today.pin_repin,
                     "like": today.pin_like,

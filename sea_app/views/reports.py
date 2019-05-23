@@ -97,7 +97,7 @@ def daily_report(pin_set_list, product_set_list):
             group_dict[date]["products"].append(item.product_id)
     for day, info in group_dict.items():
         data = {
-            "date": day,
+            "date": day.strftime("%Y-%m-%d"),
             "account_following": info["account_following"],
             "account_follower": info["account_follower"],
             "boards": len(set(filter(lambda x: x, info["boards"]))),
@@ -135,7 +135,7 @@ def daily_report_view(request):
     """日报视图函数"""
     pin_set_list, product_set_list = get_common_data(request)
     data_list = daily_report(pin_set_list, product_set_list)
-    return JsonResponse({"data": data_list, "status": status.HTTP_200_OK})
+    return data_list
 
 
 def subaccount_report_view(request, type):
@@ -169,7 +169,7 @@ def subaccount_report_view(request, type):
         # 请求有误
         data_list = "An error occurred in the request and data could not be retrieved"
 
-    return JsonResponse({"data": data_list, "status": status.HTTP_200_OK})
+    return data_list
 
 
 def subaccount_report(pin_set_list, product_set_list):
@@ -237,7 +237,7 @@ def board_report(pin_set_list, product_set_list):
     # board report
     data_list = []
     group_dict = {}
-    set_list = pin_set_list.filter(~Q(board_id=None), ~Q(board_id=""))
+    set_list = pin_set_list.filter(~Q(board_id=None))
     # 取时间范围内最新board数据及board下所有pin总数
     for item in set_list:
         board_id = item.board_id
@@ -351,8 +351,8 @@ def pins_report(pin_set_list, product_set_list):
     return data_list
 
 
-def dash_board_view(request):
-    """DashBoard视图"""
+def dash_board_change_part(request):
+    """DashBoard视图 随筛选变动部分"""
     pin_set_list, product_set_list = get_common_data(request)
     # 账户总览 图数据
     overview_list = account_overview_chart(pin_set_list, product_set_list, request)
@@ -360,19 +360,19 @@ def dash_board_view(request):
     total_data = account_overview_table(overview_list)
     # 最新新增数据
     latest_update = latest_updates(pin_set_list, product_set_list, request)
+
+    return {"overview_list": overview_list, "total_data": total_data, "latest_update": latest_update}
+
+
+def dash_board_fixed_part(request):
+    """DashBoard视图 固定部分"""
     # top pins
     top_5_pins = top_pins(request, period=7)
     # top board
     top_5_board = top_board(request, period=7)
     # activity log
     record_list = operation_record(request)
-    return JsonResponse({"overview_dict": overview_list,
-                         "total_data": total_data,
-                         "latest_update": latest_update,
-                         "top_5_pins": top_5_pins,
-                         "top_5_board": top_5_board,
-                         "record_list": record_list,
-                         "status": status.HTTP_200_OK})
+    return {"top_5_pins": top_5_pins, "top_5_board": top_5_board, "record_list": record_list}
 
 
 def get_num(queryset, fieldname):
@@ -468,7 +468,7 @@ def account_overview_chart(pin_set_list, product_set_list, request, reslut_num=N
     overview_list = []
     for day in time_list[::-1]:
         day_count = site_count(pin_set_list, product_set_list, day)
-        day_count["date"] = day
+        day_count["date"] = day.strftime("%Y-%m-%d %H:%M:%S")
         overview_list.append(day_count)
         if reslut_num and len(overview_list) >= reslut_num:
             break
@@ -697,7 +697,7 @@ def board_period_part(queryset):
                 "board_name": board_obj.board_name,
                 "pins": [] if not board_obj.pin_id else [board_obj.pin_id],  # pin数
                 "repins": board_obj.pin_repin,
-                "create_date": board_obj.board.create_time,
+                "create_date": board_obj.board.create_time.strftime("%Y-%m-%d %H:%M:%S"),
                 "followers": board_obj.board_follower
             }
         else:
