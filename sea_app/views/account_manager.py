@@ -8,7 +8,7 @@ from django.db.models import Sum
 from rest_framework.views import APIView
 
 from sea_app import models
-from sea_app.filters.report import AccountListFilter
+from sea_app.filters import report as report_filters
 from sea_app.serializers import account_manager, report
 from sea_app.filters import account_manager as account_manager_filters
 from sea_app.pageNumber.pageNumber import PNPagination
@@ -92,11 +92,47 @@ class ReportView(generics.ListAPIView):
     filterset_fields = ("product__sku", "state")
 
 
-class AccountListView(generics.ListAPIView):
+class AccountListManageView(generics.ListAPIView):
     queryset = models.PinterestHistoryData.objects.all()
     serializer_class = report.DailyReportSerializer
     pagination_class = PNPagination
-    filter_backends = (AccountListFilter,)
+    filter_backends = (report_filters.AccountListFilter,)
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(queryset)
+        return Response(queryset)
+
+
+class BoardListManageView(generics.ListAPIView):
+    queryset = models.PinterestHistoryData.objects.all()
+    serializer_class = report.DailyReportSerializer
+    pagination_class = PNPagination
+    filter_backends = (report_filters.BoardListFilter,)
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(queryset)
+        return Response(queryset)
+
+
+class PinListManageView(generics.ListAPIView):
+    queryset = models.PinterestHistoryData.objects.all()
+    serializer_class = report.DailyReportSerializer
+    pagination_class = PNPagination
+    filter_backends = (report_filters.PinListFilter,)
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 
@@ -131,7 +167,7 @@ class PinterestAccountOuthView(APIView):
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 
-    def post(self, request,*args, **kwargs):
+    def post(self, request, *args, **kwargs):
         instance = models.PinterestAccount.objects.filter(id=kwargs["pk"]).first()
         status, html = pinterest_api.PinterestApi().get_pinterest_code(instance.account_uri)
         if status == 200:
