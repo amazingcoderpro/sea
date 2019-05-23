@@ -129,3 +129,28 @@ class PinterestAccountOuthView(APIView):
         if code == 200:
             return Response({"message": html})
         return Response({"detail": "outh failed"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PinterestAccountListView(generics.ListAPIView):
+    queryset = models.PinterestAccount.objects.all()
+    serializer_class = report.PinterestAccountListSerializer
+    filter_backends = (account_manager_filters.PinterestAccountFilter,)
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+
+class BoardListView(generics.ListAPIView):
+    queryset = models.Board.objects.all()
+    serializer_class = report.BoardListSerializer
+    filter_backends = (account_manager_filters.BoardListFilter,)
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+
+class PinListView(generics.ListAPIView):
+    queryset = models.Pin.objects.all()
+    serializer_class = report.PinListSerializer
+    filter_backends = (account_manager_filters.PinListFilter,)
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+>>>>>>> df5e69fca9be55d28bc7f6ebd605829142aaf591
