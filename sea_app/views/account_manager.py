@@ -5,6 +5,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework.response import Response
 from django.db.models import Sum
+from rest_framework.views import APIView
 
 from sea_app import models
 from sea_app.filters.report import AccountListFilter
@@ -12,6 +13,7 @@ from sea_app.serializers import account_manager, report
 from sea_app.filters import account_manager as account_manager_filters
 from sea_app.pageNumber.pageNumber import PNPagination
 from sea_app.permission.permission import RolePermission
+from sdk.pinterest import pinterest_api
 
 
 class PinterestAccountView(generics.ListAPIView):
@@ -95,8 +97,8 @@ class AccountListView(generics.ListAPIView):
     serializer_class = report.DailyReportSerializer
     pagination_class = PNPagination
     filter_backends = (AccountListFilter,)
-    # permission_classes = (IsAuthenticated,)
-    # authentication_classes = (JSONWebTokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -112,6 +114,26 @@ class PinterestAccountCreateView(generics.CreateAPIView):
     """增加Pinterest 账号"""
     queryset = models.PinterestAccount.objects.all()
     serializer_class = account_manager.PinterestAccountCreateSerializer
-    # filter_backends = (account_manager_filters.ProductCountFilter,)
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
+
+    # def create(self, request, *args, **kwargs):
+    #     serializer = self.get_serializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+    #     self.perform_create(serializer)
+    #     status, html = pinterest_api.PinterestApi().get_pinterest_code(serializer.data.account_uri)
+    #     if status == 200:
+    #         return Response({"code": 1, "message": html})
+    #     return Response({"code": 0, "message": "outh failed"})
+
+
+class PinterestAccountOuthView(APIView):
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def post(self, request,*args, **kwargs):
+        instance = models.PinterestAccount.objects.filter(id=kwargs["pk"]).first()
+        status, html = pinterest_api.PinterestApi().get_pinterest_code(instance.account_uri)
+        if status == 200:
+            return Response({"code": 1, "message": html})
+        return Response({"code": 0, "message": "outh failed"})

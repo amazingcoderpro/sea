@@ -26,6 +26,7 @@ class PinterestApi():
             f"&client_id={self.client_id}" \
             f"&scope={self.scope}&state= {state}"
         code = requests.get(url)
+        print(code.status_code, code.text)
         return code.status_code, code.text
 
     def get_token(self, code):

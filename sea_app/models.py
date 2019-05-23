@@ -141,9 +141,11 @@ class Board(models.Model):
     """Pin Board表"""
     board_uri = models.CharField(max_length=32, verbose_name="Board唯一标识码")
     name = models.CharField(max_length=64, verbose_name="Board名称")
+    url = models.CharField(max_length=255, blank=True, null=True, verbose_name="Board URL")
     create_time = models.DateTimeField(verbose_name="Board创建时间")
     description = models.TextField(blank=True, null=True, verbose_name="Board 描述")
-    state = models.BooleanField(default=True, verbose_name="账号状态")  # True:Public, False:Private
+    state_choices = ((0, 'Private'), (1, 'Public'))
+    state = models.SmallIntegerField(choices=state_choices, default=1, verbose_name="账号状态")
     add_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="修改时间")
 

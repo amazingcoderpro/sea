@@ -118,11 +118,17 @@ class ShopifyCallback(APIView):
         store_name = request.data.get("status", None)
         status, token = ShopifyBase(store_name).get_token(code)
         if status:
-            models.Store.objects.filter(platform=1).update(token=token)
+            models.Store.objects.filter(platform=1, name=store_name).update(token=token)
         return HttpResponseRedirect(redirect_to="http://www.baidu.com")
 
 
 class PinterestCallback(APIView):
     """pinterest 回调接口"""
     def get(self, request, *args, **kwargs):
-        return Response({"code": 1, "message": "shopify_outh"})
+        code = request.data.get("code", None)
+        state = request.data.get("state", None)
+        from sdk.pinterest import pinterest_api
+        status, token = pinterest_api.PinterestApi().get_token(code)
+        if status:
+            models.PinterestAccount.objects.filter(account_uri=state).update(token=token)
+        return HttpResponseRedirect(redirect_to="http://www.baidu.com")

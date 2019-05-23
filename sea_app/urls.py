@@ -34,6 +34,7 @@ v1_urlpatterns = [
 
     # 授权回调
     url(r'store_outh/$', personal_center.StoreOuthView.as_view()),
+    url(r'pinterest_account/(?P<pk>[0-9]+)/$', account_manager.PinterestAccountOuthView.as_view()),
     url(r'shopify/callback/$', personal_center.ShopifyCallback.as_view()),
     url(r'pinterest/callback/$', personal_center.PinterestCallback.as_view()),
 
@@ -41,6 +42,7 @@ v1_urlpatterns = [
     url(r'account_list/$', account_manager.AccountListView.as_view()),
     # 增加账户
     url(r'pinterest_account/$', account_manager.PinterestAccountCreateView.as_view()),
+
 ]
 
 
