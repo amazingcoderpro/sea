@@ -37,7 +37,7 @@ v1_urlpatterns = [
     # 发布记录
     url(r'report/$', account_manager.ReportView.as_view()),
 
-    # 授权回调
+    # 店铺和账户授权
     url(r'store_auth/$', personal_center.StoreAuthView.as_view()),
     url(r'pinterest_account_auth/(?P<pk>[0-9]+)/$', account_manager.PinterestAccountAuthView.as_view()),
     url(r'shopify/callback/$', personal_center.ShopifyCallback.as_view()),
