@@ -31,17 +31,17 @@ class LoginView(generics.CreateAPIView):
             password = request.data.get('password')
             user = auth.authenticate(username=username, password=password)
             if user is not None and user.is_active:
-                request = {}
-                request["user"] = personal_center.LoginSerializer(instance=user, many=False).data
+                res = {}
+                res["user"] = personal_center.LoginSerializer(instance=user, many=False).data
                 payload = jwt_payload_handler(user)
-                request["token"] = "jwt {}".format(jwt_encode_handler(payload))
+                res["token"] = "jwt {}".format(jwt_encode_handler(payload))
                 # 生成菜单
                 menu_tree, route_list = MenuTree(user).crate_menu_tree()
-                request["menu_tree"] = menu_tree
-                request["router_list"] = route_list
-                return Response({"data": request, "code": 1}, status=status.HTTP_200_OK)
+                res["menu_tree"] = menu_tree
+                res["router_list"] = route_list
+                return Response(res, status=status.HTTP_200_OK)
             else:
-                return Response({"data": "用户名密码错误", "code": 0}, status=status.HTTP_200_OK)
+                return Response({"detail": "用户名密码错误"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

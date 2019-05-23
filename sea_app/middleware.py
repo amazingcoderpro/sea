@@ -15,19 +15,21 @@ class ResponseMiddleware(MiddlewareMixin):
             response.status_code = 200
             self.res["code"] = 2
             self.res["msg"] = response.data
+            self.res["data"] = []
             response._container = [bytes(json.dumps(self.res).encode("utf-8"))]
             return response
 
         if response.status_code == 401:
-            response.status_code = 200
             self.res["code"] = 0
             self.res["msg"] = response.data
+            self.res["data"] = []
             response._container = [bytes(json.dumps(self.res).encode("utf-8"))]
             return response
 
         if response.status_code == 200 or response.status_code == 201:
             response.status_code = 200
             self.res["code"] = 1
+            self.res["msg"] = "successful"
             self.res["data"] = response.data
             response._container = [bytes(json.dumps(self.res).encode("utf-8"))]
             return response
