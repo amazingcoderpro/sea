@@ -1,6 +1,6 @@
 from django.conf.urls import url, include
 
-from sea_app.views import reports, personal_center, account_manager
+from sea_app.views import reports, personal_center, account_manager, report
 
 v1_urlpatterns = [
     # 注册 登陆
@@ -16,9 +16,10 @@ v1_urlpatterns = [
     url(r'role/(?P<pk>[0-9]+)/$', personal_center.RoleOperView.as_view()),
 
     # 报告
-    url(r'dashboard/$', reports.dash_board_view),
-    url(r'daily_report/$', reports.daily_report_view),
-    url(r'subaccount_report/(?P<type>[a-zA-Z]+)/$', reports.subaccount_report_view),
+    url(r'dashboard/change_part/$', report.DashBoardChangePartView.as_view()),
+    url(r'dashboard/fixed_part/$', report.DashBoardFixedPartView.as_view()),
+    url(r'daily_report/$', report.DailyReportView.as_view()),
+    url(r'subaccount_report/(?P<type>[a-zA-Z]+)/$', report.SubAccountReportView.as_view()),
 
     # 选择列表
     url(r'select/account/$', account_manager.PinterestAccountListView.as_view()),
