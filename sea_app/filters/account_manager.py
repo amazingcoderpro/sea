@@ -9,6 +9,28 @@ class PinterestAccountFilter(BaseFilterBackend):
         return queryset.filter(user=request.user)
 
 
+class BoardListFilter(BaseFilterBackend):
+    """board列表过滤"""
+
+    def filter_queryset(self, request, queryset, view):
+        account_id = request.query_params.dict().get("pinterest_account_id")
+        if account_id:
+            return queryset.filter(Q(pinterest_account_id=account_id))
+        else:
+            return queryset.filter(pinterest_account__user=request.user)
+
+
+class PinListFilter(BaseFilterBackend):
+    """board列表过滤"""
+
+    def filter_queryset(self, request, queryset, view):
+        board_id = request.query_params.dict().get("board_id")
+        if board_id:
+            return queryset.filter(board_id=board_id)
+        else:
+            return queryset.filter(board__pinterest_account__user=request.user)
+
+
 class ProductFilter(BaseFilterBackend):
     """pinterest账号列表过滤"""
 

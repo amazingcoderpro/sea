@@ -15,7 +15,7 @@ class PinterestApi():
         self.client_secret = "c3ed769d9c5802a98f7c4b949f234c482a19e5bf3a3ac491a0d20e44d7f7556e"
         self.scope = "read_public,write_public,read_relationships,write_relationships"
 
-    def get_pinterest_code(self, state):
+    def get_pinterest_url(self, state):
         """
         获取授权code
         :param state: 自定义字段, 这可用于确保重定向回您的网站或应用程序不会被欺骗。
@@ -25,9 +25,8 @@ class PinterestApi():
             f"&redirect_uri={self.redirect_uri}" \
             f"&client_id={self.client_id}" \
             f"&scope={self.scope}&state= {state}"
-        code = requests.get(url)
-        print(code.status_code, code.text)
-        return code.status_code, code.text
+        return url
+
 
     def get_token(self, code):
         """
