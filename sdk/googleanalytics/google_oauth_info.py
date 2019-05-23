@@ -1,121 +1,88 @@
-# https://developers.google.com/analytics/solutions/articles/hello-analytics-api
-# https://developers.google.com/api-client-library/python/auth/installed-app
-# https://developers.google.com/api-client-library/python/auth/web-app
+"""Hello Analytics Reporting API V4."""
 
-import sys
-import json
-import webbrowser
-import logging
-
-import httplib2
-import os.path
-
+import argparse
 from apiclient import discovery
+import httplib2
 from oauth2client import client
-from oauth2client.file import Storage
+from oauth2client import file
+from oauth2client import tools
+
+SCOPES = ['https://www.googleapis.com/auth/analytics.readonly']
+DISCOVERY_URI = ('https://analyticsreporting.googleapis.com/$discovery/rest')
+CLIENT_SECRETS_PATH = 'client_secrets.json'
+# Path to client_secrets.json file.
+VIEW_ID = '103629507997646501816'
 
 
-def get_first_profile_id(service):
-    """Fetches first profile ID of account."""
-    accounts = service.management().accounts().list().execute()
+def initialize_analyticsreporting():
+    """
+    Initializes the analyticsreporting service object.
+    Returns:
+    analytics an authorized analyticsreporting service object.
+    """
+    # Parse command-line arguments.
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
+                                     parents=[tools.argparser])
+    flags = parser.parse_args([])
 
-    if accounts.get('items'):
-        first_account_id = accounts.get('items')[0].get('id')
-        webprops = service.management().webproperties()
-        webprops = webprops.list(accountId=first_account_id).execute()
+    # Set up a Flow object to be used if we need to authenticate.
+    flow = client.flow_from_clientsecrets(CLIENT_SECRETS_PATH,
+                                          scope=SCOPES,
+                                          message=tools.message_if_missing(CLIENT_SECRETS_PATH))
 
-        if webproperties.get('items'):
-            first_webproperty_id = webproperties.get('items')[0].get('id')
-
-            profiles = service.management().profiles().list(
-                accountId=first_account_id,
-                webPropertyId=first_webproperty_id
-            ).execute()
-
-            if profiles.get('items')[0].get('id'):
-                return profiles.get('items')[0].get('id')
-
-    return None
-
-
-def query_analytics(service, profile_id, start_date, end_date, metric):
-    """Performes simple query for profile."""
-    if profile_id == None or profile_id == "0":
-        profile_id = get_first_profile_id(service)
-
-    result = service.data().ga().get(
-        ids='ga:' + profile_id,
-        start_date=start_date,
-        end_date=end_date,
-        metrics='ga:' + metric
-    ).execute()
-
-    return result
-
-
-def read_credentials(fname):
-    """Reads JSON with credentials from file."""
-    if os.path.isfile(fname):
-        f = open(fname, "r")
-        credentials = client.OAuth2Credentials.from_json(f.read())
-        f.close()
-    else:
-        credentials = None
-
-    return credentials
-
-
-def write_credentials(fname, credentials):
-    """Writes credentials as JSON to file."""
-    f = open(fname, "w")
-    f.write(credentials.to_json())
-    f.close()
-
-
-def acquire_oauth2_credentials(secrets_file):
-    """Flows through OAuth 2.0 authorization process for credentials."""
-    flow = client.flow_from_clientsecrets(
-        secrets_file,
-        scope='https://www.googleapis.com/auth/analytics.readonly',
-        redirect_uri='urn:ietf:wg:oauth:2.0:oob')
-
-    auth_uri = flow.step1_get_authorize_url()
-    webbrowser.open(auth_uri)
-
-    auth_code = input('Enter the authentication code: ')
-
-    credentials = flow.step2_exchange(auth_code)
-    return credentials
-
-
-def create_service_object(credentials):
-    """Creates Service object for credentials."""
-    http_auth = httplib2.Http()
-    http_auth = credentials.authorize(http_auth)
-    service = discovery.build('analytics', 'v3', http_auth)
-    return service
-
-
-def oauth2_and_query_analytics(credentials_file, secrets_file, profile_id,start_date, end_date, metric):
-    logging.basicConfig()
-    """Performs authorization and then queries GA."""
-
-    credentials = read_credentials(credentials_file)
-
+    # Prepare credentials, and authorize HTTP object with them.
+    # If the credentials don't exist or are invalid run through the native client
+    # flow. The Storage object will ensure that if successful the good
+    # credentials will get written back to a file.
+    storage = file.Storage('analyticsreporting.dat')
+    credentials = storage.get()
     if credentials is None or credentials.invalid:
-        credentials = acquire_oauth2_credentials(secrets_file)
-        write_credentials(credentials_file, credentials)
+        credentials = tools.run_flow(flow, storage, flags)
+        http = credentials.authorize(http=httplib2.Http())
+        # Build the service object.
+        analytics = discovery.build('analytics', 'v4', http=http, discoveryServiceUrl=DISCOVERY_URI)
+        return analytics
 
-    service = create_service_object(credentials)
-    results = query_analytics(service, profile_id, start_date, end_date, metric)
 
-    return json.dumps(results, indent=4)
+def get_report(analytics):
+    # Use the Analytics Service Object to query the Analytics Reporting API V4.
+    return analytics.reports().batchGet(
+        body={
+            'reportRequests': [
+                {
+                    'viewId': VIEW_ID,
+                    'dateRanges': [{'startDate': '7daysAgo', 'endDate': 'today'}],
+                    'metrics': [{'expression': 'ga:sessions'}]
+                }]
+        }).execute()
+
+
+def print_response(response):
+    """Parses and prints the Analytics Reporting API V4 response"""
+    for report in response.get('reports', []):
+        columnHeader = report.get('columnHeader', {})
+        dimensionHeaders = columnHeader.get('dimensions', [])
+        metricHeaders = columnHeader.get('metricHeader', {}).get('metricHeaderEntries', [])
+        rows = report.get('data', {}).get('rows', [])
+
+    for row in rows:
+        dimensions = row.get('dimensions', [])
+        dateRangeValues = row.get('metrics', [])
+
+        for header, dimension in zip(dimensionHeaders, dimensions):
+            print(header + ': ' + dimension)
+
+        for i, values in enumerate(dateRangeValues):
+            print('Date range (' + str(i) + ')')
+            for metricHeader, value in zip(metricHeaders, values.get('values')):
+                print(metricHeader.get('name') + ': ' + value)
+
+
+def main():
+  analytics = initialize_analyticsreporting()
+  response = get_report(analytics)
+  print_response(response)
 
 
 if __name__ == '__main__':
-    profile_id, start_date, end_date, metric = sys.argv[1:5]
-
-    credentials_file = "credentials.json"
-    secrets_file = "client_secrets.json"
-
-    print(oauth2_and_query_analytics(credentials_file, secrets_file, profile_id,start_date, end_date, metric))
+  main()
