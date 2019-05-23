@@ -10,12 +10,12 @@ class PinterestApi():
     def __init__(self, access_token="", host=None):
         self.access_token = access_token
         self.pinterest_host = "https://api.pinterest.com/v1" if not host else host
-        self.redirect_uri = "http://sns.seamarketings.com/api/v1/pinterest/callback/"
+        self.redirect_uri = "https://pinbooster.seamarketings.com/api/v1/pinterest/callback/"
         self.client_id = "5031224083375764064"
         self.client_secret = "c3ed769d9c5802a98f7c4b949f234c482a19e5bf3a3ac491a0d20e44d7f7556e"
         self.scope = "read_public,write_public,read_relationships,write_relationships"
 
-    def get_pinterest_code(self, state):
+    def get_pinterest_url(self, state):
         """
         获取授权code
         :param state: 自定义字段, 这可用于确保重定向回您的网站或应用程序不会被欺骗。
@@ -25,9 +25,8 @@ class PinterestApi():
             f"&redirect_uri={self.redirect_uri}" \
             f"&client_id={self.client_id}" \
             f"&scope={self.scope}&state= {state}"
-        code = requests.get(url)
-        print(code.status_code, code.text)
-        return code.status_code, code.text
+        return url
+
 
     def get_token(self, code):
         """
