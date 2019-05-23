@@ -153,4 +153,3 @@ class PinListView(generics.ListAPIView):
     filter_backends = (account_manager_filters.PinListFilter,)
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
->>>>>>> df5e69fca9be55d28bc7f6ebd605829142aaf591
