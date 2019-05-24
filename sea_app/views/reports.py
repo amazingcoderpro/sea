@@ -538,14 +538,14 @@ def top_pins(request, period=7):
     # 过滤PinterestHistoryData数据(时间范围内最新的一次数据)
     query_time = start_time
     while query_time <= end_time:
-        old_queryset = models.PinterestHistoryData.objects.filter(Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
+        old_queryset = models.PinterestHistoryData.objects.filter(Q(update_time__range=(query_time.date() + datetime.timedelta(days=-1), query_time.date())),
                                                               Q(product_id__in=product_id_list))
         if old_queryset:
             break
         query_time += datetime.timedelta(days=1)
     query_time = end_time
     while query_time >= start_time:
-        new_queryset = models.PinterestHistoryData.objects.filter(Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
+        new_queryset = models.PinterestHistoryData.objects.filter(Q(update_time__range=(query_time.date() + datetime.timedelta(days=-1), query_time.date())),
                                                               Q(product_id__in=product_id_list))
         if new_queryset:
             break
@@ -555,7 +555,7 @@ def top_pins(request, period=7):
     query_time = prev_start_time
     while query_time <= start_time:
         prev_old_queryset = models.PinterestHistoryData.objects.filter(
-            Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
+            Q(update_time__range=(query_time.date() + datetime.timedelta(days=-1), query_time.date())),
             Q(product_id__in=product_id_list))
         if prev_old_queryset:
             break
@@ -563,7 +563,7 @@ def top_pins(request, period=7):
     query_time = start_time
     while query_time >= prev_start_time:
         prev_new_queryset = models.PinterestHistoryData.objects.filter(
-            Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
+            Q(update_time__range=(query_time.date() + datetime.timedelta(days=-1), query_time.date())),
             Q(product_id__in=product_id_list))
         if prev_new_queryset:
             break
@@ -597,7 +597,7 @@ def pins_period(new_queryset, old_queryset):
             pin_dict[pin_obj.pin_id] = {
                 "SKU": pin_obj.product.sku,
                 "image": pin_obj.pin_thumbnail,
-                "pin_date": pin_obj.pin.publish_time,
+                "pin_date": pin_obj.pin.publish_time.strftime("%Y-%m-%d %H:%M:%S"),
                 "repins": pin_obj.pin_repin,
                 "increment": pin_obj.pin_repin - old_repin
             }
@@ -738,7 +738,7 @@ def operation_record(request, result_num=None):
             "username": record.user.username,
             "action": record.action,
             "record": record.record,
-            "operation_time": record.operation_time
+            "operation_time": record.operation_time.strftime("%Y-%m-%d %H:%M:%S")
         })
     return record_list
 
