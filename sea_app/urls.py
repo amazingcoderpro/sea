@@ -1,6 +1,6 @@
 from django.conf.urls import url, include
 
-from sea_app.views import reports, personal_center, account_manager, report
+from sea_app.views import reports, personal_center, account_manager, report, store
 
 v1_urlpatterns = [
     # 注册 登陆
@@ -52,6 +52,10 @@ v1_urlpatterns = [
     url(r'account_manage/(?P<pk>[0-9]+)/$', account_manager.AccountManageView.as_view()),
     # 增加账户
     url(r'pinterest_account/$', account_manager.PinterestAccountCreateView.as_view()),
+
+    # 店铺管理
+    url(r'store/$', store.StoreView.as_view()),
+    url(r'store/(?P<pk>[0-9]+)/$', store.StoreOperView.as_view()),
 
 ]
 
