@@ -129,6 +129,8 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+USE_TZ = False
+
 AUTH_USER_MODEL = "sea_app.User"
 
 APPEND_SLASH = False

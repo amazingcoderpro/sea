@@ -19,7 +19,7 @@ class ResponseMiddleware(MiddlewareMixin):
             response._container = [bytes(json.dumps(self.res).encode("utf-8"))]
             return response
 
-        if response.status_code == 401:
+        if response.status_code == 401 or response.status_code == 403:
             self.res["code"] = 0
             self.res["msg"] = response.data
             self.res["data"] = []
@@ -44,8 +44,8 @@ class ResponseMiddleware(MiddlewareMixin):
 
         if response.status_code == 404:
             response.status_code = 200
-            self.res["code"] = 0
-            self.res["msg"] = response.data if response.data else ""
+            self.res["code"] = 2
+            self.res["msg"] = "The resource was not found"
             self.res["data"] = []
             response._container = [bytes(json.dumps(self.res).encode("utf-8"))]
             return response
