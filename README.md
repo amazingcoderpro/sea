@@ -26,6 +26,7 @@ VALUES
     (19, 'PermissionManager', '4-1', 18, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 19, NULL),
     (20, 'UserManager', '/user_manager', 19, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 20, NULL),
     (21, 'RoleManager', '/role_manager', 19, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 21, NULL);
+	(22, 'StoreManager', '/store_manager', 18, '2019-05-14 03:14:35.111111', '2019-05-14 03:14:35.111111', 22, NULL);
 
 
 INSERT INTO `role` (`id`, `name`, `user_id`, `create_time`, `update_time`, `menu_list`)
