@@ -22,12 +22,12 @@ class BoardListSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Board
         depth = 1
-        fields = ("id", "name", "pinterest_account_id")
+        fields = ("id", "name", "pinterest_account_id", "board_uri", "description")
 
 
 class PinListSerializer(serializers.ModelSerializer):
+    baord_uri = serializers.CharField(source="board.board_uri", read_only=True)
     class Meta:
         model = models.Pin
-        depth = 1
-        fields = ("id", "description", "board_id")
+        fields = ("id", "description", "board", "pin_uri", "url", "baord_uri")
 

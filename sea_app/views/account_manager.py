@@ -1,3 +1,5 @@
+import json
+
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
@@ -8,6 +10,7 @@ from django.db.models import Sum
 from rest_framework.views import APIView
 from rest_framework import status
 
+from sdk.pinterest.pinterest_api import PinterestApi
 from sea_app import models
 from sea_app.filters import report as report_filters
 from sea_app.serializers import account_manager, report
@@ -190,3 +193,53 @@ class PinListView(generics.ListAPIView):
     filter_backends = (account_manager_filters.PinListFilter,)
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
+
+
+class BoardManageView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = models.Board.objects.all()
+    serializer_class = report.BoardListSerializer
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def put(self, request, *args, **kwargs):
+        data = request.data
+        access_token = models.Board.objects.get(board_uri=data["board_uri"]).pinterest_account.token
+        state_code, info = PinterestApi(access_token=access_token).edit_doard(data["board_uri"], data["name"], data["description"])
+        if state_code == 200 or state_code == 201:
+            return self.update(request, *args, **kwargs)
+        else:
+            return Response({"detail": json.loads(info)["message"]}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, *args, **kwargs):
+        board_obj = models.Board.objects.get(pk=kwargs["pk"])
+        state_code = PinterestApi(access_token=board_obj.pinterest_account.token).delete_board(board_obj.board_uri)
+        if state_code == 200 or state_code == 201:
+            return self.destroy(request, *args, **kwargs)
+        else:
+            return Response({"detail": "delete failed!"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PinManageView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = models.Pin.objects.all()
+    serializer_class = report.PinListSerializer
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def put(self, request, *args, **kwargs):
+        data = request.data
+        pin_obj = models.Pin.objects.get(pin_uri=data["pin_uri"])
+        access_token = pin_obj.board.pinterest_account.token
+        board_uri = models.Board.objects.get(pk=data["board_id"])
+        state_code, info = PinterestApi(access_token=access_token).edit_pin_id(data["pin_uri"], board_uri, data["description"], data["url"])
+        if state_code == 200 or state_code == 201:
+            return self.update(request, *args, **kwargs)
+        else:
+            return Response({"detail": json.loads(info)["message"]}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, *args, **kwargs):
+        pin_obj = models.Pin.objects.get(pk=kwargs["pk"])
+        state_code = PinterestApi(access_token=pin_obj.board.pinterest_account.token).delete_pin_id(pin_obj.pin_uri)
+        if state_code == 200 or state_code == 201:
+            return self.destroy(request, *args, **kwargs)
+        else:
+            return Response({"detail": "delete failed!"}, status=status.HTTP_400_BAD_REQUEST)
