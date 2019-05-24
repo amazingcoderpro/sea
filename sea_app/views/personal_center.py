@@ -92,7 +92,7 @@ class RoleOperView(generics.RetrieveUpdateDestroyAPIView):
         instance = self.get_object()
         is_exit = models.User.objects.filter(role=instance)
         if is_exit:
-            return Response({"message": "The role also has user binding"}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "The role also has user binding"}, status=status.HTTP_400_BAD_REQUEST)
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
