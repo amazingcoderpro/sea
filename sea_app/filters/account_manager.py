@@ -24,7 +24,7 @@ class PinListFilter(BaseFilterBackend):
     """board列表过滤"""
 
     def filter_queryset(self, request, queryset, view):
-        board_id = request.query_params.dict().get("board_id")
+        board_id = request.query_params.dict().get("board")
         if board_id:
             return queryset.filter(board_id=board_id)
         else:
