@@ -65,24 +65,24 @@ def print_response(response):
         metricHeaders = columnHeader.get('metricHeader', {}).get('metricHeaderEntries', [])
         rows = report.get('data', {}).get('rows', [])
 
-    for row in rows:
-        dimensions = row.get('dimensions', [])
-        dateRangeValues = row.get('metrics', [])
+        for row in rows:
+            dimensions = row.get('dimensions', [])
+            dateRangeValues = row.get('metrics', [])
 
-        for header, dimension in zip(dimensionHeaders, dimensions):
-            print(header + ': ' + dimension)
+            for header, dimension in zip(dimensionHeaders, dimensions):
+                print(header + ': ' + dimension)
 
-        for i, values in enumerate(dateRangeValues):
-            print('Date range (' + str(i) + ')')
-            for metricHeader, value in zip(metricHeaders, values.get('values')):
-                print(metricHeader.get('name') + ': ' + value)
+            for i, values in enumerate(dateRangeValues):
+                print('Date range (' + str(i) + ')')
+                for metricHeader, value in zip(metricHeaders, values.get('values')):
+                    print(metricHeader.get('name') + ': ' + value)
 
 
 def main():
-  analytics = initialize_analyticsreporting()
-  response = get_report(analytics)
-  print_response(response)
+    analytics = initialize_analyticsreporting()
+    response = get_report(analytics)
+    print_response(response)
 
 
 if __name__ == '__main__':
-  main()
+    main()
