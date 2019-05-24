@@ -109,7 +109,7 @@ class PinterestApi():
         delete_boards = requests.delete(url)
         return delete_boards.status_code
 
-    def edit_doard(self, board_id, name, description):
+    def edit_board_id(self, board_id, name, description):
         edit_board_id_fields = ["id", "Cname", "Curl", "Ccounts", "Ccreated_at", "Ccreator", "Cdescription", "Cimage",
                                 "Cprivacy", "Creason"]
         str_fields = "%2".join(edit_board_id_fields)
@@ -118,7 +118,7 @@ class PinterestApi():
             "name": name,
             "description": description
         }
-        user_info = requests.get(url, payload)
+        user_info = requests.patch(url, payload)
         print(user_info.status_code, user_info.text)
         return user_info.status_code, user_info.text
 
@@ -225,4 +225,7 @@ if __name__ == '__main__':
     code = "ae7fde7811cf4f17"
     all_pinterest_api = PinterestApi(access_token=access_token)
     # all_pinterest_api.get_user_pins(access_token=access_token)
-    all_pinterest_api.get_pin_id(pin_id="753790056365099389")
+    # all_pinterest_api.get_user_pins()
+    # all_pinterest_api.get_user_boards()
+    # all_pinterest_api.get_pin_id(pin_id="753790056365099389")
+    all_pinterest_api.edit_doard(board_id="753790125070479475", name="jjjjj", description="jjjjjjjjjjjjjjjjjjjjjjj")
