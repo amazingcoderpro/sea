@@ -9,7 +9,7 @@ class StoreSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Store
-        fields = ("name", "url", "email", "visitors", "scan", "sale", "user", "authorized", "create_time")
+        fields = ("id", "name", "url", "email", "visitors", "scan", "sale", "user", "authorized", "create_time")
         # extra_kwargs = {
         #     'platform': {'write_only': False, 'read_only': True},
         # }

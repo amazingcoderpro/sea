@@ -31,7 +31,7 @@ VALUES
 
 INSERT INTO `role` (`id`, `name`, `user_id`, `create_time`, `update_time`, `menu_list`)
 VALUES
-    (1, '站长', 1, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', '[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]'),
+    (1, '站长', 1, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', '[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22]'),
     (2, '运营专员', 1, '2019-05-16 07:11:06.600170', '2019-05-16 07:11:06.811441', '[1,2]');
 
 INSERT INTO `user` (`id`, `last_login`, `is_superuser`, `first_name`, `last_name`, `email`, `is_staff`, `is_active`, `date_joined`, `username`, `nickname`, `password`, `site_name`, `site_url`, `link`, `state`, `create_time`, `update_time`, `parent_id`, `role_id`)

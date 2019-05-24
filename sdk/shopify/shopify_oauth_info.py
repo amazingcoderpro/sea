@@ -34,9 +34,10 @@ class ShopifyBase():
                          f"&scope={scopes_info}" \
                          f"&redirect_uri={redirect_uri}" \
                          f"&state={nonce}&grant_options[]="
-        get_permission_code = requests.get(permission_url)
-        print(get_permission_code.status_code, get_permission_code.text)
-        return get_permission_code.status_code, get_permission_code.text
+        return permission_url
+        # get_permission_code = requests.get(permission_url)
+        # print(get_permission_code.status_code, get_permission_code.text)
+        # return get_permission_code.status_code, get_permission_code.text
 
     def confirm_installation(self, authorization_code, hmac, timestamp, nonce):
         """

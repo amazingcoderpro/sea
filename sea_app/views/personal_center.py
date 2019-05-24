@@ -102,13 +102,12 @@ class StoreAuthView(APIView):
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 
-    def post(self, request):
-        store_name = request.data.get("store_name",None)
-        permission_list = request.data.get("permission_list", None)
-        status, html = ShopifyBase(store_name).ask_permission(store_name, scopes=permission_list)
-        if status == 200:
-            return Response({"code": 1, "message": html})
-        return Response({"code": 0, "message": "outh failed"})
+    def post(self, request, *args, **kwargs):
+        instance = models.Store.objects.filter(id=kwargs["pk"]).first()
+        if instance.authorized == 1:
+            return Response({"detail": "This store is authorized"}, status=status.HTTP_400_BAD_REQUEST)
+        url = ShopifyBase(instance.name).ask_permission(instance.name)
+        return Response({"message": url})
 
 
 class ShopifyCallback(APIView):
