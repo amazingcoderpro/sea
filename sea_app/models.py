@@ -174,7 +174,7 @@ class Board(models.Model):
 class Pin(models.Model):
     """Pin 表"""
     pin_uri = models.CharField(max_length=32, verbose_name="Pin唯一标识码")
-    url = models.CharField(max_length=255, blank=True, null=True, verbose_name="Pin URL")
+    url = models.URLField(max_length=255, blank=True, null=True, verbose_name="Pin URL")
     description = models.TextField(verbose_name="Pin 描述")
     site_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
     thumbnail = models.TextField(verbose_name="缩略图")
