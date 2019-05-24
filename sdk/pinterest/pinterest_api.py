@@ -27,7 +27,6 @@ class PinterestApi():
             f"&scope={self.scope}&state= {state}"
         return url
 
-
     def get_token(self, code):
         """
         # 获取token
@@ -110,12 +109,16 @@ class PinterestApi():
         delete_boards = requests.delete(url)
         return delete_boards.status_code
 
-    def edit_doard(self, board_id):
+    def edit_doard(self, board_id, name, description):
         edit_board_id_fields = ["id", "Cname", "Curl", "Ccounts", "Ccreated_at", "Ccreator", "Cdescription", "Cimage",
                                 "Cprivacy", "Creason"]
         str_fields = "%2".join(edit_board_id_fields)
         url = f"{self.pinterest_host}/boards/{board_id}/?access_token={self.access_token}&fields={str_fields}"
-        user_info = requests.get(url)
+        payload = {
+            "name": name,
+            "description": description
+        }
+        user_info = requests.get(url, payload)
         print(user_info.status_code, user_info.text)
         return user_info.status_code, user_info.text
 
@@ -171,7 +174,7 @@ class PinterestApi():
         print(new_pin.status_code, new_pin.text)
         return new_pin.status_code, new_pin.text
 
-    def edit_pin_id(self, pin_id):
+    def edit_pin_id(self, pin_id, board, note, link):
         """
         修改 pin
         :param pin_id:
@@ -182,7 +185,12 @@ class PinterestApi():
                               "Cmedia", "Cimage", "Cmetadata", "Coriginal_link"]
         str_fields = "%2".join(edit_pin_id_fields)
         api_request_url = f"{self.pinterest_host}/pins/{pin_id}/?access_token={self.access_token}&fields={str_fields}"
-        new_pin = requests.patch(api_request_url)
+        payload = {
+            "board": board,
+            "note": note,
+            "link": link
+        }
+        new_pin = requests.patch(api_request_url, payload)
         return new_pin.status_code, new_pin.text
 
     def delete_pin_id(self, pin_id):
