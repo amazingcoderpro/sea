@@ -49,6 +49,7 @@ v1_urlpatterns = [
     url(r'account_list/(?P<aid>[0-9]+)/(?P<bid>[0-9]+)/$', account_manager.PinListManageView.as_view()),
     url(r'board_manage/(?P<pk>[0-9]+)/$', account_manager.BoardManageView.as_view()),
     url(r'pin_manage/(?P<pk>[0-9]+)/$', account_manager.PinManageView.as_view()),
+    url(r'account_manage/(?P<pk>[0-9]+)/$', account_manager.AccountManageView.as_view()),
     # 增加账户
     url(r'pinterest_account/$', account_manager.PinterestAccountCreateView.as_view()),
 
