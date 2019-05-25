@@ -72,7 +72,8 @@ class ShopifyBase():
         }
         url = f"https://{self.shop_name}.myshopify.com/admin/oauth/access_token"
         get_access_token = requests.post(url, display)
-        print(get_access_token.status_code, get_access_token.text)
+        return get_access_token.status_code, get_access_token.text
+
 
 
 if __name__ == '__main__':

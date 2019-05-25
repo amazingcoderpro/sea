@@ -83,6 +83,7 @@ class Store(models.Model):
     sale = models.FloatField(blank=True, null=True, default=0.00, verbose_name="营收额")
     authorized_choices = ((0, 'no_authorized'), (1, 'authorized'))
     authorized = models.SmallIntegerField(choices=authorized_choices, default=0, verbose_name="是否认证")
+    token = models.CharField(blank=True, null=True, max_length=255, verbose_name="账号使用标识")
     platform = models.ForeignKey(Platform, on_delete=models.DO_NOTHING, blank=True, null=True)
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
