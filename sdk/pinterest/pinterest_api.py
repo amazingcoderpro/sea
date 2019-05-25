@@ -48,8 +48,7 @@ class PinterestApi():
         except Exception as e:
             logger.error("pinterest token failed = {}".format(e))
             return {"code": 2, "msg": e, "data": ""}
-            return {"code": 2, "msg": e, "data": ""}
-            
+
     def get_user_info(self):
         """
         返回当前用户的信息
