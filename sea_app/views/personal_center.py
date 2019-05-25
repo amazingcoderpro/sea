@@ -115,10 +115,13 @@ class ShopifyCallback(APIView):
     def get(self, request):
         code = request.query_params.get("code", None)
         store_name = request.query_params.get("status", None)
+        if not code or not store_name:
+            return Response({"message": "auth faild"})
         status, token = ShopifyBase(store_name).get_token(code)
         if token:
-            models.Store.objects.filter(platform=1, name=store_name).update(token=token)
-        return HttpResponseRedirect(redirect_to="http://www.baidu.com")
+            models.Store.objects.filter(platform=1, name=store_name).update(token=token, authorized=1)
+        # return HttpResponseRedirect(redirect_to="http://www.baidu.com")
+        return Response({"message": "auth successful"})
 
 
 class PinterestCallback(APIView):

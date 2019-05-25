@@ -78,7 +78,7 @@ class ShopifyBase():
             return result.status_code, token
         else:
             return 500, ""
-        
+
 
 if __name__ == '__main__':
     ShopifyBase = ShopifyBase(shop_name="ordersea")
