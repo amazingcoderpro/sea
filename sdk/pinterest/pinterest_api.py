@@ -68,7 +68,6 @@ class PinterestApi():
         except Exception as e:
             logger.error("get user info failed".format(e))
             return {"code": 2, "msg": e, "data": ""}
-            return {"code": 2, "msg": e, "data": ""}
 
     def create_board(self, name, description):
         """
@@ -334,7 +333,7 @@ if __name__ == '__main__':
     all_pinterest_api = PinterestApi(access_token=access_token)
     # all_pinterest_api.get_user_pins(access_token=access_token)
     # all_pinterest_api.get_user_info()
-    all_pinterest_api.get_pinterest_url(state="123")
+    all_pinterest_api.get_pinterest_url(state="twobercancan@gmail.com")
     all_pinterest_api.delete_pin_id(pin_id="55451266411112")
     all_pinterest_api.get_user_pins()
     # all_pinterest_api.get_user_boards()

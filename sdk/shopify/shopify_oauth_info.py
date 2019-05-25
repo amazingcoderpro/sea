@@ -58,15 +58,17 @@ class ShopifyBase():
                 return {"code": 1, "msg": "", "data": json.loads(result.text)["access_token"]}
             else:
                 logger.error("get shopify token is failed, shopname={}".format(self.shop_name))
-                return {"code": 2, "msg": "", "data": json.loads(result.text)["access_token"]}
+                return {"code": 2, "msg": "", "data": ""}
         except Exception as e:
             logger.error("get shopify token is failed".format(e))
+            return {"code": 2, "msg": "", "data": ""}
 
 
 if __name__ == '__main__':
     ShopifyBase = ShopifyBase(shop_name="ordersea")
     # ShopifyBase.reRequest(shop="ordersea", method="get", url="", headers=None, data=None)
     ShopifyBase.ask_permission(nonce="ordersea")
+    ShopifyBase.get_token(code="23333584")
     # ShopifyBase.confirm_installation()
     # ShopifyBase.get_token(shop="ordersea")
 

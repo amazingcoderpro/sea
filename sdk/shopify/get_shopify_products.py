@@ -1,4 +1,6 @@
 import requests
+from config import logger
+import json
 
 
 class ProductsApi:
@@ -20,23 +22,45 @@ class ProductsApi:
 
     def get_shop_info(self):
         shop_url = f"https://{self.client_id}:{self.access_token}@{self.shop}{self.version_url}shop.json"
-        shop_info = requests.get(shop_url)
-        print(shop_info.status_code, shop_info.text)
-        return shop_info.status_code, shop_info.text
+        try:
+            result = requests.get(shop_url)
+            if result.status_code == 200:
+                logger.info("get shopify info is success")
+                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+            else:
+                logger.info("get shopify info is failed")
+                return {"code": 1, "msg": json.loads(result.text).get("errors", ""), "data": ""}
+        except Exception as e:
+            logger.error("get shopify info is failed info={}".format(e))
+            return {"code": 2, "msg": e, "data": ""}
 
     def get_all_products(self):
         products_url = f"https://{self.client_id}:{self.access_token}@{self.shop}{self.version_url}products.json"
-        all_products_info = requests.get(products_url)
-        print(all_products_info.status_code, all_products_info.text)
-        return all_products_info.status_code, all_products_info.text
+        try:
+            result = requests.get(products_url)
+            if result.status_code == 200:
+                logger.info("get shopify all prodects is success")
+                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+            else:
+                logger.info("get shopify all prodects is failed")
+                return {"code": 2, "msg": json.loads(result.text).get("errors", ""), "data": ""}
+        except Exception as e:
+            logger.error("get shopify all prodects is failed info={}".format(e))
+            return {"code": 2, "msg": e, "data": ""}
 
     def get_product_id(self):
         products_url = f"https://{self.client_id}:{self.access_token}@{self.shop}{self.version_url}products/{self.id}.json"
-        if self.id == None:
-            return None
-        products_id_info = requests.get(products_url)
-        print(products_id_info.status_code, products_id_info.text)
-        return products_id_info.status_code, products_id_info.text
+        try:
+            result = requests.get(products_url)
+            if result.status_code == 200:
+                logger.info("get shopify all prodects by id is success")
+                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+            else:
+                logger.info("get shopify all prodects by id is failed")
+                return {"code": 2, "msg": json.loads(result.text).get("errors", ""), "data": ""}
+        except Exception as e:
+            logger.error("get shopify all prodects by id is failed info={}".format(e))
+            return {"code": 2, "msg": e, "data": ""}
 
 
 if __name__ == '__main__':
