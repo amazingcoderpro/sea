@@ -37,6 +37,7 @@ class PinterestApi():
             f"grant_type=authorization_code" \
             f"&client_id={self.client_id}&client_secret={self.client_secret}&code={code}"
         token_info = requests.post(url)
+        print(token_info.text)
         return token_info.status_code, token_info.text
 
     def get_user_info(self):

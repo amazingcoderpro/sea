@@ -17,7 +17,7 @@ from sea_app.pageNumber.pageNumber import PNPagination
 from sea_app.filters import personal_center as personal_center_filters
 from sea_app.permission.permission import UserPermission, RolePermission
 from sdk.shopify.shopify_oauth_info import ShopifyBase
-
+from sdk.pinterest import pinterest_api
 
 class LoginView(generics.CreateAPIView):
     """登陆"""
@@ -127,9 +127,10 @@ class ShopifyCallback(APIView):
 class PinterestCallback(APIView):
     """pinterest 回调接口"""
     def get(self, request, *args, **kwargs):
-        code = request.data.get("code", None)
-        state = request.data.get("state", None)
-        from sdk.pinterest import pinterest_api
+        code = request.query_params.get("code", None)
+        store_name = request.query_params.get("status", None)
+        if not code or not store_name:
+            return Response({"message": "auth faild"})
         status, token = pinterest_api.PinterestApi().get_token(code)
         if status:
             models.PinterestAccount.objects.filter(account_uri=state).update(token=token)
