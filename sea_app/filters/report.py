@@ -118,6 +118,7 @@ class AccountListFilter(BaseFilterBackend):
                     "account_uri": today.pinterest_account.account_uri,
                     "account_name": today.pinterest_account.nickname,
                     "account_email": today.pinterest_account.email,
+                    "account_description": today.pinterest_account.description,
                     "account_create_time": today.pinterest_account.create_time.strftime("%Y-%m-%d %H:%M:%S"),
                     "account_type": today.pinterest_account.type,
                     "account_authorized": today.pinterest_account.authorized,
