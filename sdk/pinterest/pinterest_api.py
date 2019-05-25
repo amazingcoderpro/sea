@@ -1,6 +1,8 @@
 # -*- coding:utf-8 -*-
 import requests
 import json
+from config import logger
+
 
 class PinterestApi():
     """
@@ -36,12 +38,16 @@ class PinterestApi():
         url = f"https://api.pinterest.com/v1/oauth/token?" \
             f"grant_type=authorization_code" \
             f"&client_id={self.client_id}&client_secret={self.client_secret}&code={code}"
-        result = requests.post(url)
-        if result.status_code == 200:
-            return json.loads(result.text)["access_token"]
-        else:
-            return ""
-
+        try:
+            result = requests.post(url)
+            if result.status_code == 200:
+                logger.info("pinterest token success = {}".format(json.loads(result.text)["access_token"]))
+                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+            else:
+                return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
+        except Exception as e:
+            logger.error("pinterest token failed = {}".format(e))
+            
     def get_user_info(self):
         """
         返回当前用户的信息
@@ -51,9 +57,15 @@ class PinterestApi():
                                 "Ccreated_at", "Cimage", "Cusername"]
         str_fields = "%2".join(get_user_info_fields)
         url = f"{self.pinterest_host}/me/?access_token={self.access_token}&fields={str_fields}"
-        user_info = requests.get(url)
-        print(user_info.status_code, user_info.text)
-        return user_info.status_code, user_info.text
+        try:
+            result = requests.get(url)
+            if result.status_code == 200:
+                logger.info("get user: {} info is success".format(json.loads(result.text)["data"]["username"]))
+                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+            else:
+                return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
+        except Exception as e:
+            logger.error("get user info failed".format(e))
 
     def create_board(self, name, description):
         """
@@ -70,9 +82,15 @@ class PinterestApi():
             "name": name,
             "description": description
         }
-        new_bord = requests.post(url, payload)
-        print(new_bord.status_code, new_bord.text)
-        return new_bord.status_code, new_bord.text
+        try:
+            result = requests.post(url, payload)
+            if result.status_code == 200:
+                logger.info("create user boards is success name={}".format(name))
+                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+            else:
+                return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
+        except Exception as e:
+            logger.error("post user boards is failed:{}".format(e))
 
     def get_user_boards(self):
         """
@@ -84,9 +102,15 @@ class PinterestApi():
                                   "Cimage", "Cprivacy", "Creason"]
         str_fields = "%2".join(get_user_boards_fields)
         url = f"{self.pinterest_host}/me/boards/?access_token={self.access_token}&fields={str_fields}"
-        user_info = requests.get(url)
-        print(user_info.status_code, user_info.text)
-        return user_info.status_code, user_info.text
+        try:
+            result = requests.get(url)
+            if result.status_code == 200:
+                logger.info("get user boards is success")
+                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+            else:
+                return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
+        except Exception as e:
+            logger.error("get user boards failed: {}".format(e))
 
     def get_board_id(self, board_id):
         """
@@ -98,9 +122,15 @@ class PinterestApi():
                                "Cprivacy", "Creason"]
         str_fields = "%2".join(get_board_id_fields)
         url = f"{self.pinterest_host}/boards/{board_id}/?access_token={self.access_token}&fields={str_fields}"
-        user_info = requests.get(url)
-        print(user_info.status_code, user_info.text)
-        return user_info.status_code, user_info.text
+        try:
+            result = requests.get(url)
+            if result.status_code == 200:
+                logger.info("get by id board is success; board_id={}".format(board_id))
+                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+            else:
+                return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
+        except Exception as e:
+            logger.error("get by id board failed:{}".format(e))
 
     def delete_board(self, board_id):
         """
@@ -109,10 +139,24 @@ class PinterestApi():
         :return:
         """
         url = f"{self.pinterest_host}/boards/{board_id}/?access_token={self.access_token}"
-        delete_boards = requests.delete(url)
-        return delete_boards.status_code
+        try:
+            result = requests.delete(url)
+            if result.status_code == 200:
+                logger.info("delete board is success, board_id={}".format(board_id))
+                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+            else:
+                return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
+        except Exception as e:
+            logger.error("delete board is failed: {}".format(e))
 
     def edit_board_id(self, board_id, name, description):
+        """
+        编辑 board
+        :param board_id:
+        :param name:
+        :param description:
+        :return:
+        """
         edit_board_id_fields = ["id", "Cname", "Curl", "Ccounts", "Ccreated_at", "Ccreator", "Cdescription", "Cimage",
                                 "Cprivacy", "Creason"]
         str_fields = "%2".join(edit_board_id_fields)
@@ -121,9 +165,15 @@ class PinterestApi():
             "name": name,
             "description": description
         }
-        user_info = requests.patch(url, payload)
-        print(user_info.status_code, user_info.text)
-        return user_info.status_code, user_info.text
+        try:
+            result = requests.patch(url, payload)
+            if result.status_code == 200:
+                logger.info("edit board is success; board_id={},name={} ".format(board_id, name))
+                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+            else:
+                return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
+        except Exception as e:
+            logger.error("edit board is failed".format(e))
 
     def create_pin(self, board_id, note, image_url, link):
         """
@@ -144,9 +194,15 @@ class PinterestApi():
             "image_url": image_url,
             "link": link
         }
-        new_pin = requests.post(api_request_url, json=payload)
-        print(new_pin.status_code, new_pin.text)
-        return new_pin.status_code, new_pin.text
+        try:
+            result = requests.post(api_request_url, json=payload)
+            if result.status_code == 200:
+                logger.info("create new pin is success; board_id={}".format(board_id))
+                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+            else:
+                return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
+        except Exception as e:
+            logger.error("create new pin is failed:{}".format(e))
 
     def get_user_pins(self):
         """
@@ -158,9 +214,15 @@ class PinterestApi():
                                 "Ccreated_at", "Ccreator", "Coriginal_link", "Cmedia", "Cmetadata", "Cimage"]
         str_fields = "%2".join(get_user_pins_fields)
         api_request_url = f"{self.pinterest_host}/me/pins/?cursor=&access_token={self.access_token}&fields={str_fields}"
-        new_pin = requests.get(api_request_url)
-        print(new_pin.status_code, new_pin.text)
-        return new_pin.status_code, new_pin.text
+        try:
+            result = requests.get(api_request_url)
+            if result.status_code == 200:
+                logger.info("get user pins is success")
+                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+            else:
+                return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
+        except Exception as e:
+            logger.error("get user pins is failed: {}".format(e))
 
     def get_pin_id(self, pin_id):
         """
@@ -173,14 +235,20 @@ class PinterestApi():
                              "Ccreator", "Cimage", "Clink", "Cmedia", "Cmetadata", "Coriginal_link"]
         str_fields = "%2".join(get_pin_id_fields)
         api_request_url = f"{self.pinterest_host}/pins/{pin_id}/?access_token={self.access_token}&fields={str_fields}"
-        new_pin = requests.get(api_request_url)
-        print(new_pin.status_code, new_pin.text)
-        return new_pin.status_code, new_pin.text
+        try:
+            result = requests.get(api_request_url)
+            if result.status_code == 200:
+                logger.info("get pin by id is success, pin_id={}".format(pin_id))
+        except Exception as e:
+            logger.error("get pin by id is failed: {}".format(e))
 
     def edit_pin_id(self, pin_id, board, note, link):
         """
-        修改 pin
+        编辑 pin
         :param pin_id:
+        :param board:
+        :param note:
+        :param link:
         :return:
         """
         edit_pin_id_fields = ["id", "Clink", "Cnote", "Curl", "Cattribution", "Cboard", "Ccolor", "Ccounts",
@@ -192,19 +260,32 @@ class PinterestApi():
             "note": note,
             "link": link
         }
-        new_pin = requests.patch(api_request_url, payload)
-        print(new_pin.status_code, new_pin.text)
-        return new_pin.status_code, new_pin.text
+        try:
+            result = requests.patch(api_request_url, payload)
+            if result.status_code == 200:
+                logger.info("edit pin by id is success; pin_id={}".format(pin_id))
+                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+            else:
+                return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
+        except Exception as e:
+            logger.error("edit pin by id is failed: {}".format(e))
 
     def delete_pin_id(self, pin_id):
         """
-        # 删除pin
+        # 删除 pin
         :param pin_id:
         :return:
         """
         url = f"{self.pinterest_host}/pins/{pin_id}/?access_token={self.access_token}"
-        delete_pin = requests.delete(url)
-        return delete_pin.status_code, delete_pin.text
+        try:
+            result = requests.delete(url)
+            if result.status_code == 200:
+                logger.info("delete pin by id:{} is success".format(pin_id))
+                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+            else:
+                return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
+        except Exception as e:
+            logger.error("delete pin by id is failed: {}".format(e))
 
     def get_user_suggested(self, count):
         """
@@ -217,9 +298,16 @@ class PinterestApi():
         str_fields = "%2".join(get_user_suggested_fields)
         url = f"{self.pinterest_host}/me/boards/suggested/?" \
               f"count={count}&access_token={self.access_token}&fields={str_fields}"
-        user_suggested = requests.get(url)
-        return user_suggested.status_code, user_suggested.text
-
+        try:
+            result = requests.get(url)
+            if result.status_code == 200:
+                logger.info("get user suggest: {} is success".format(count))
+                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+            else:
+                return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
+        except Exception as e:
+            logger.error("get user suggest is failed:{}".format(e))
+            
 
 if __name__ == '__main__':
     access_token = "ArVPxolYdQAXgzr0-FFoRGAF682xFaDsz-o3I1FF0n-lswCyYAp2ADAAAk1KRdOSuUEgxv0AAAAA"
@@ -228,6 +316,8 @@ if __name__ == '__main__':
     code = "ae7fde7811cf4f17"
     all_pinterest_api = PinterestApi(access_token=access_token)
     # all_pinterest_api.get_user_pins(access_token=access_token)
+    # all_pinterest_api.get_user_info()
+    all_pinterest_api.delete_pin_id(pin_id="55451266411112")
     all_pinterest_api.get_user_pins()
     # all_pinterest_api.get_user_boards()
     # all_pinterest_api.get_pin_id(pin_id="753790056365099389")
