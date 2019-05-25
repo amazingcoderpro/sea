@@ -1,6 +1,7 @@
 import requests
 from urllib import parse
 import json
+from config import logger
 
 
 class ShopifyBase():
@@ -37,25 +38,6 @@ class ShopifyBase():
                          f"&state={nonce}&grant_options[]="
         return permission_url
 
-    def confirm_installation(self, authorization_code, hmac, timestamp, nonce):
-        """
-         # 获取授权码的code
-         :param authorization_code:
-         :param hmac:
-         :param timestamp:
-         :param nonce:
-         :param shop:
-         :return: status_code, text
-        """
-        url = "https://example.org/some/redirect/uri?" \
-              f"code={authorization_code}" \
-              f"&hmac={hmac}" \
-              f"&timestamp={timestamp}" \
-              f"&state={nonce}" \
-              f"&shop={self.shop_name}"
-        installation_code = requests.get(url)
-        return installation_code.status_code, installation_code.text
-
     def get_token(self, code):
         """
         获取shopify的永久性token
@@ -69,12 +51,16 @@ class ShopifyBase():
             "code": code
         }
         url = f"https://{self.shop_name}.myshopify.com/admin/oauth/access_token"
-        result = requests.post(url, display)
-        if result.status_code == 200:
-            token = json.loads(result.text)["access_token"]
-            return result.status_code, token
-        else:
-            return 500, ""
+        try:
+            result = requests.post(url, display)
+            if result.status_code == 200:
+                logger.info("get shopify token is successed, shopname={}".format(self.shop_name))
+                return {"code": 1, "msg": "", "data": json.loads(result.text)["access_token"]}
+            else:
+                logger.error("get shopify token is failed, shopname={}".format(self.shop_name))
+                return {"code": 2, "msg": "", "data": json.loads(result.text)["access_token"]}
+        except Exception as e:
+            logger.error("get shopify token is failed".format(e))
 
 
 if __name__ == '__main__':
