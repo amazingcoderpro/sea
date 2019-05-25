@@ -1,5 +1,6 @@
 import requests
 from urllib import parse
+import json
 
 
 class ShopifyBase():
@@ -71,10 +72,13 @@ class ShopifyBase():
             "code": code
         }
         url = f"https://{self.shop_name}.myshopify.com/admin/oauth/access_token"
-        get_access_token = requests.post(url, display)
-        return get_access_token.status_code, get_access_token.text
-
-
+        result = requests.post(url, display)
+        if result.status_code == 200:
+            token = json.loads(result.text)["access_token"]
+            return result.status_code, token
+        else:
+            return 500, ""
+        
 
 if __name__ == '__main__':
     ShopifyBase = ShopifyBase(shop_name="ordersea")

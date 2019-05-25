@@ -116,7 +116,7 @@ class ShopifyCallback(APIView):
         code = request.query_params.get("code", None)
         store_name = request.query_params.get("status", None)
         status, token = ShopifyBase(store_name).get_token(code)
-        if status:
+        if token:
             models.Store.objects.filter(platform=1, name=store_name).update(token=token)
         return HttpResponseRedirect(redirect_to="http://www.baidu.com")
 
