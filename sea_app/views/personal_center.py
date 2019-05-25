@@ -19,6 +19,7 @@ from sea_app.permission.permission import UserPermission, RolePermission
 from sdk.shopify.shopify_oauth_info import ShopifyBase
 from sdk.pinterest import pinterest_api
 
+
 class LoginView(generics.CreateAPIView):
     """登陆"""
     queryset = models.User.objects.all()
@@ -79,6 +80,14 @@ class RoleView(generics.ListCreateAPIView):
     filter_backends = (personal_center_filters.RoleFilter,)
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
+
+    def list(self, request, *args, **kwargs):
+        show_more = request.query_params.get("show_more", None)
+        if not show_more:
+            return super(RoleView, self).list(request)
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class RoleOperView(generics.RetrieveUpdateDestroyAPIView):
