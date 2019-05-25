@@ -120,9 +120,7 @@ class ShopifyCallback(APIView):
         status, token = ShopifyBase(store_name).get_token(code)
         if token:
             models.Store.objects.filter(platform=1, name=store_name).update(token=token, authorized=1)
-            return Response({"message": "auth successful"})
-        # return HttpResponseRedirect(redirect_to="http://www.baidu.com")
-        return Response({"message": "auth faild"})
+        return HttpResponseRedirect(redirect_to="http://www.baidu.com")
 
 
 class PinterestCallback(APIView):
@@ -134,7 +132,5 @@ class PinterestCallback(APIView):
             return Response({"message": "auth faild"})
         token = pinterest_api.PinterestApi().get_token(code)
         if token:
-            models.PinterestAccount.objects.filter(account_uri=account_uri).update(token=token)
-            return Response({"message": "auth successful"})
-        return Response({"message": "auth faild"})
-        # return HttpResponseRedirect(redirect_to="http://www.baidu.com")
+            models.PinterestAccount.objects.filter(account_uri=account_uri).update(token=token,authorized=1)
+        return HttpResponseRedirect(redirect_to="http://www.baidu.com")
