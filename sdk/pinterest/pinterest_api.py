@@ -24,7 +24,7 @@ class PinterestApi():
         url = f"https://api.pinterest.com/oauth/?response_type=code" \
             f"&redirect_uri={self.redirect_uri}" \
             f"&client_id={self.client_id}" \
-            f"&scope={self.scope}&state= {state}"
+            f"&scope={self.scope}&state={state}"
         return url
 
     def get_token(self, code):
