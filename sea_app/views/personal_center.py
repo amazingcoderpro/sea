@@ -139,7 +139,7 @@ class PinterestCallback(APIView):
         account_uri = request.query_params.get("state", None)
         if not code or not account_uri:
             return Response({"message": "auth faild"})
-        token = pinterest_api.PinterestApi().get_token(code)
-        if token:
-            models.PinterestAccount.objects.filter(account_uri=account_uri).update(token=token,authorized=1)
+        result = pinterest_api.PinterestApi().get_token(code)
+        if result["code"] == 1:
+            models.PinterestAccount.objects.filter(account_uri=account_uri).update(token=result["data"]["access_token"], authorized=1)
         return HttpResponseRedirect(redirect_to="http://www.baidu.com")
