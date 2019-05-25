@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 import requests
-
+import json
 
 class PinterestApi():
     """
@@ -36,9 +36,11 @@ class PinterestApi():
         url = f"https://api.pinterest.com/v1/oauth/token?" \
             f"grant_type=authorization_code" \
             f"&client_id={self.client_id}&client_secret={self.client_secret}&code={code}"
-        token_info = requests.post(url)
-        print(token_info.text)
-        return token_info.status_code, token_info.text
+        result = requests.post(url)
+        if result.status_code == 200:
+            return json.loads(result.text)["access_token"]
+        else:
+            return ""
 
     def get_user_info(self):
         """

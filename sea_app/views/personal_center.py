@@ -114,24 +114,27 @@ class ShopifyCallback(APIView):
     """shopify 回调接口"""
     def get(self, request):
         code = request.query_params.get("code", None)
-        store_name = request.query_params.get("status", None)
+        store_name = request.query_params.get("state", None)
         if not code or not store_name:
             return Response({"message": "auth faild"})
         status, token = ShopifyBase(store_name).get_token(code)
         if token:
             models.Store.objects.filter(platform=1, name=store_name).update(token=token, authorized=1)
+            return Response({"message": "auth successful"})
         # return HttpResponseRedirect(redirect_to="http://www.baidu.com")
-        return Response({"message": "auth successful"})
+        return Response({"message": "auth faild"})
 
 
 class PinterestCallback(APIView):
     """pinterest 回调接口"""
     def get(self, request, *args, **kwargs):
         code = request.query_params.get("code", None)
-        store_name = request.query_params.get("status", None)
-        if not code or not store_name:
+        account_uri = request.query_params.get("state", None)
+        if not code or not account_uri:
             return Response({"message": "auth faild"})
-        status, token = pinterest_api.PinterestApi().get_token(code)
-        if status:
-            models.PinterestAccount.objects.filter(account_uri=state).update(token=token)
-        return HttpResponseRedirect(redirect_to="http://www.baidu.com")
+        token = pinterest_api.PinterestApi().get_token(code)
+        if token:
+            models.PinterestAccount.objects.filter(account_uri=account_uri).update(token=token)
+            return Response({"message": "auth successful"})
+        return Response({"message": "auth faild"})
+        # return HttpResponseRedirect(redirect_to="http://www.baidu.com")
