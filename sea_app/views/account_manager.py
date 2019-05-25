@@ -97,6 +97,7 @@ class ReportView(generics.ListAPIView):
 
 
 class AccountListManageView(generics.ListAPIView):
+    """账号管理 -- 账号 列表显示"""
     queryset = models.PinterestHistoryData.objects.all()
     serializer_class = report.DailyReportSerializer
     pagination_class = PNPagination
@@ -115,6 +116,7 @@ class AccountListManageView(generics.ListAPIView):
 
 
 class BoardListManageView(generics.ListAPIView):
+    """账号管理 -- board 列表显示"""
     queryset = models.PinterestHistoryData.objects.all()
     serializer_class = report.DailyReportSerializer
     pagination_class = PNPagination
@@ -133,6 +135,7 @@ class BoardListManageView(generics.ListAPIView):
 
 
 class PinListManageView(generics.ListAPIView):
+    """账号管理 -- pin 列表显示"""
     queryset = models.PinterestHistoryData.objects.all()
     serializer_class = report.DailyReportSerializer
     pagination_class = PNPagination
@@ -172,6 +175,7 @@ class PinterestAccountAuthView(APIView):
 
 
 class PinterestAccountListView(generics.ListAPIView):
+    """账号 select框显示"""
     queryset = models.PinterestAccount.objects.all()
     serializer_class = report.PinterestAccountListSerializer
     filter_backends = (account_manager_filters.PinterestAccountFilter,)
@@ -180,6 +184,7 @@ class PinterestAccountListView(generics.ListAPIView):
 
 
 class BoardListView(generics.ListAPIView):
+    """board select框显示"""
     queryset = models.Board.objects.all()
     serializer_class = report.BoardListSerializer
     filter_backends = (account_manager_filters.BoardListFilter,)
@@ -188,6 +193,7 @@ class BoardListView(generics.ListAPIView):
 
 
 class PinListView(generics.ListAPIView):
+    """pin select框显示"""
     queryset = models.Pin.objects.all()
     serializer_class = report.PinListSerializer
     filter_backends = (account_manager_filters.PinListFilter,)
@@ -196,6 +202,7 @@ class PinListView(generics.ListAPIView):
 
 
 class BoardManageView(generics.RetrieveUpdateDestroyAPIView):
+    """Board管理 更新 删除"""
     queryset = models.Board.objects.all()
     serializer_class = report.BoardListSerializer
     permission_classes = (IsAuthenticated,)
@@ -204,7 +211,7 @@ class BoardManageView(generics.RetrieveUpdateDestroyAPIView):
     def put(self, request, *args, **kwargs):
         data = request.data
         access_token = models.Board.objects.get(board_uri=data["board_uri"]).pinterest_account.token
-        state_code, info = PinterestApi(access_token=access_token).edit_doard(data["board_uri"], data["name"], data["description"])
+        state_code, info = PinterestApi(access_token=access_token).edit_board_id(data["board_uri"], data["name"], data["description"])
         if state_code == 200 or state_code == 201:
             return self.update(request, *args, **kwargs)
         else:
@@ -220,6 +227,7 @@ class BoardManageView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class PinManageView(generics.RetrieveUpdateDestroyAPIView):
+    """pin管理 更新 删除"""
     queryset = models.Pin.objects.all()
     serializer_class = report.PinListSerializer
     permission_classes = (IsAuthenticated,)
@@ -229,7 +237,7 @@ class PinManageView(generics.RetrieveUpdateDestroyAPIView):
         data = request.data
         pin_obj = models.Pin.objects.get(pin_uri=data["pin_uri"])
         access_token = pin_obj.board.pinterest_account.token
-        board_uri = models.Board.objects.get(pk=data["board_id"])
+        board_uri = models.Board.objects.get(pk=data["board"]).board_uri
         state_code, info = PinterestApi(access_token=access_token).edit_pin_id(data["pin_uri"], board_uri, data["description"], data["url"])
         if state_code == 200 or state_code == 201:
             return self.update(request, *args, **kwargs)
@@ -238,8 +246,15 @@ class PinManageView(generics.RetrieveUpdateDestroyAPIView):
 
     def delete(self, request, *args, **kwargs):
         pin_obj = models.Pin.objects.get(pk=kwargs["pk"])
-        state_code = PinterestApi(access_token=pin_obj.board.pinterest_account.token).delete_pin_id(pin_obj.pin_uri)
+        state_code, info = PinterestApi(access_token=pin_obj.board.pinterest_account.token).delete_pin_id(pin_obj.pin_uri)
         if state_code == 200 or state_code == 201:
             return self.destroy(request, *args, **kwargs)
         else:
             return Response({"detail": "delete failed!"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AccountManageView(generics.DestroyAPIView):
+    """Pin账号管理 删除"""
+    queryset = models.PinterestAccount.objects.all()
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)

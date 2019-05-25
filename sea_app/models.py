@@ -71,15 +71,29 @@ class Platform(models.Model):
 class Store(models.Model):
     """店铺表"""
     name = models.CharField(max_length=64, verbose_name="店铺名称")
-    url = models.CharField(max_length=255, blank=True, null=True, verbose_name="店铺URL")
-    create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
-    update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+    url = models.CharField(max_length=255, verbose_name="店铺URL")
+    email = models.EmailField(
+        verbose_name='email address',
+        max_length=255,
+        blank=True,
+        null=True
+    )
+    visitors = models.IntegerField(blank=True, null=True, default=0, verbose_name="访问量")
+    scan = models.IntegerField(blank=True, null=True, default=0, verbose_name="浏览量")
+    sale = models.FloatField(blank=True, null=True, default=0.00, verbose_name="营收额")
+    authorized_choices = ((0, 'no_authorized'), (1, 'authorized'))
+    authorized = models.SmallIntegerField(choices=authorized_choices, default=0, verbose_name="是否认证")
+    token = models.CharField(blank=True, null=True, max_length=255, verbose_name="账号使用标识")
     platform = models.ForeignKey(Platform, on_delete=models.DO_NOTHING, blank=True, null=True)
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
+    create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
     class Meta:
         # managed = False
+        # unique_together = ("name", "platform")
         db_table = 'store'
+        ordering = ["-id"]
 
 
 class ProductCategory(models.Model):
@@ -161,7 +175,7 @@ class Board(models.Model):
 class Pin(models.Model):
     """Pin 表"""
     pin_uri = models.CharField(max_length=32, verbose_name="Pin唯一标识码")
-    url = models.CharField(max_length=255, blank=True, null=True, verbose_name="Pin URL")
+    url = models.URLField(max_length=255, blank=True, null=True, verbose_name="Pin URL")
     description = models.TextField(verbose_name="Pin 描述")
     site_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
     thumbnail = models.TextField(verbose_name="缩略图")
@@ -246,6 +260,7 @@ class Rule(models.Model):
     class Meta:
         # managed = False
         db_table = 'rule'
+        ordering = ["-update_time"]
 
 
 class RuleSchedule(models.Model):

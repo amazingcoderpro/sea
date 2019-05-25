@@ -1,6 +1,6 @@
 from django.conf.urls import url, include
 
-from sea_app.views import reports, personal_center, account_manager, report
+from sea_app.views import reports, personal_center, account_manager, report, store
 
 v1_urlpatterns = [
     # 注册 登陆
@@ -38,7 +38,7 @@ v1_urlpatterns = [
     url(r'report/$', account_manager.ReportView.as_view()),
 
     # 店铺和账户授权
-    url(r'store_auth/$', personal_center.StoreAuthView.as_view()),
+    url(r'store_auth/(?P<pk>[0-9]+)/$', personal_center.StoreAuthView.as_view()),
     url(r'pinterest_account_auth/(?P<pk>[0-9]+)/$', account_manager.PinterestAccountAuthView.as_view()),
     url(r'shopify/callback/$', personal_center.ShopifyCallback.as_view()),
     url(r'pinterest/callback/$', personal_center.PinterestCallback.as_view()),
@@ -49,8 +49,13 @@ v1_urlpatterns = [
     url(r'account_list/(?P<aid>[0-9]+)/(?P<bid>[0-9]+)/$', account_manager.PinListManageView.as_view()),
     url(r'board_manage/(?P<pk>[0-9]+)/$', account_manager.BoardManageView.as_view()),
     url(r'pin_manage/(?P<pk>[0-9]+)/$', account_manager.PinManageView.as_view()),
+    url(r'account_manage/(?P<pk>[0-9]+)/$', account_manager.AccountManageView.as_view()),
     # 增加账户
     url(r'pinterest_account/$', account_manager.PinterestAccountCreateView.as_view()),
+
+    # 店铺管理
+    url(r'store/$', store.StoreView.as_view()),
+    url(r'store/(?P<pk>[0-9]+)/$', store.StoreOperView.as_view()),
 
 ]
 

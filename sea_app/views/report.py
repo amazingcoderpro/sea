@@ -1,19 +1,11 @@
 # -*- coding: utf-8 -*-
-import datetime
-from datetime import datetime, timedelta
-
-from django.db.models import Q
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 
-from sea_app import models
-from sea_app.filters import personal_center
 from sea_app.pageNumber.pageNumber import PNPagination
-from sea_app.serializers import report
-from sea_app.filters import report as report_filters
 from sea_app.views import reports
 
 
@@ -47,6 +39,7 @@ class SubAccountReportView(generics.ListAPIView):
 
 
 class DashBoardChangePartView(APIView):
+    """dashboard 变动部分视图"""
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 
@@ -56,6 +49,7 @@ class DashBoardChangePartView(APIView):
 
 
 class DashBoardFixedPartView(APIView):
+    """dashboard 固定部分视图"""
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 

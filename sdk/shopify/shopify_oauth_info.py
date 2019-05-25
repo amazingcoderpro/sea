@@ -1,5 +1,6 @@
 import requests
 from urllib import parse
+import json
 
 
 class ShopifyBase():
@@ -34,9 +35,10 @@ class ShopifyBase():
                          f"&scope={scopes_info}" \
                          f"&redirect_uri={redirect_uri}" \
                          f"&state={nonce}&grant_options[]="
-        get_permission_code = requests.get(permission_url)
-        print(get_permission_code.status_code, get_permission_code.text)
-        return get_permission_code.status_code, get_permission_code.text
+        return permission_url
+        # get_permission_code = requests.get(permission_url)
+        # print(get_permission_code.status_code, get_permission_code.text)
+        # return get_permission_code.status_code, get_permission_code.text
 
     def confirm_installation(self, authorization_code, hmac, timestamp, nonce):
         """
@@ -70,8 +72,12 @@ class ShopifyBase():
             "code": code
         }
         url = f"https://{self.shop_name}.myshopify.com/admin/oauth/access_token"
-        get_access_token = requests.post(url, display)
-        print(get_access_token.status_code, get_access_token.text)
+        result = requests.post(url, display)
+        if result.status_code == 200:
+            token = json.loads(result.text)["access_token"]
+            return result.status_code, token
+        else:
+            return 500, ""
 
 
 if __name__ == '__main__':
