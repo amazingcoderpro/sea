@@ -11,7 +11,7 @@ SCOPES = ['https://www.googleapis.com/auth/analytics.readonly']
 DISCOVERY_URI = ('https://analyticsreporting.googleapis.com/$discovery/rest')
 CLIENT_SECRETS_PATH = 'client_secrets.json'
 # Path to client_secrets.json file.
-VIEW_ID = '103629507997646501816'
+VIEW_ID = 'UA-140415283-1'
 
 
 def initialize_analyticsreporting():
@@ -30,10 +30,6 @@ def initialize_analyticsreporting():
                                           scope=SCOPES,
                                           message=tools.message_if_missing(CLIENT_SECRETS_PATH))
 
-    # Prepare credentials, and authorize HTTP object with them.
-    # If the credentials don't exist or are invalid run through the native client
-    # flow. The Storage object will ensure that if successful the good
-    # credentials will get written back to a file.
     storage = file.Storage('analyticsreporting.dat')
     credentials = storage.get()
     if credentials is None or credentials.invalid:

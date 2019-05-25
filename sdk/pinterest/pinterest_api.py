@@ -181,8 +181,7 @@ class PinterestApi():
         :return:
         """
         edit_pin_id_fields = ["id", "Clink", "Cnote", "Curl", "Cattribution", "Cboard", "Ccolor", "Ccounts",
-                              "Ccreated_at", "Ccreator",
-                              "Cmedia", "Cimage", "Cmetadata", "Coriginal_link"]
+                              "Ccreated_at", "Ccreator", "Cmedia", "Cimage", "Cmetadata", "Coriginal_link"]
         str_fields = "%2".join(edit_pin_id_fields)
         api_request_url = f"{self.pinterest_host}/pins/{pin_id}/?access_token={self.access_token}&fields={str_fields}"
         payload = {
@@ -191,6 +190,7 @@ class PinterestApi():
             "link": link
         }
         new_pin = requests.patch(api_request_url, payload)
+        print(new_pin.status_code, new_pin.text)
         return new_pin.status_code, new_pin.text
 
     def delete_pin_id(self, pin_id):
@@ -225,7 +225,8 @@ if __name__ == '__main__':
     code = "ae7fde7811cf4f17"
     all_pinterest_api = PinterestApi(access_token=access_token)
     # all_pinterest_api.get_user_pins(access_token=access_token)
-    # all_pinterest_api.get_user_pins()
+    all_pinterest_api.get_user_pins()
     # all_pinterest_api.get_user_boards()
     # all_pinterest_api.get_pin_id(pin_id="753790056365099389")
-    all_pinterest_api.edit_doard(board_id="753790125070479475", name="jjjjj", description="jjjjjjjjjjjjjjjjjjjjjjj")
+    # all_pinterest_api.edit_board_id(board_id="753790125070479475", name="jjjjj", description="jjjjjjjjjjjjjjjjjjjjjjj")
+    # all_pinterest_api.edit_pin_id(pin_id="753790056365099389", board="753790125070473943", note="tianchang", link="www.baidu.com")
