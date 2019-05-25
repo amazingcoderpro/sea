@@ -113,8 +113,8 @@ class StoreAuthView(APIView):
 class ShopifyCallback(APIView):
     """shopify 回调接口"""
     def get(self, request):
-        code = request.data.get("code", None)
-        store_name = request.data.get("status", None)
+        code = request.query_params.get("code", None)
+        store_name = request.query_params.get("status", None)
         status, token = ShopifyBase(store_name).get_token(code)
         if status:
             models.Store.objects.filter(platform=1, name=store_name).update(token=token)
