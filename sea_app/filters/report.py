@@ -118,6 +118,7 @@ class AccountListFilter(BaseFilterBackend):
                     "account_uri": today.pinterest_account.account_uri,
                     "account_name": today.pinterest_account.nickname,
                     "account_email": today.pinterest_account.email,
+                    "account_description": today.pinterest_account.description,
                     "account_create_time": today.pinterest_account.create_time.strftime("%Y-%m-%d %H:%M:%S"),
                     "account_type": today.pinterest_account.type,
                     "account_authorized": today.pinterest_account.authorized,
@@ -211,8 +212,12 @@ class PinListFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         account_id = request._request.resolver_match.kwargs['aid']
         board_id = request._request.resolver_match.kwargs['bid']
-        pin_set = models.Pin.objects.filter(board_id=board_id)
         pin_id_list = []
+        query_str = request.query_params.dict().get("query_str")
+        if query_str:
+            pin_set = models.Pin.objects.filter(Q(pin_uri=query_str) | Q(product__sku=query_str), Q(board_id=board_id))
+        else:
+            pin_set = models.Pin.objects.filter(board_id=board_id)
         for pin in pin_set:
             pin_id_list.append(pin.id)
         # 获取所有pin最近两天的数据
