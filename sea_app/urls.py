@@ -1,5 +1,6 @@
 from django.conf.urls import url, include
 
+# from sea_app.views import reports, personal_center, account_manager, report, store
 from sea_app.views import reports, personal_center, account_manager, report, store
 
 v1_urlpatterns = [
@@ -8,11 +9,11 @@ v1_urlpatterns = [
     url(r'^account/register/$', personal_center.RegisterView.as_view()),
 
     # 用户 角色管理
-    url(r'users/$', personal_center.UserView.as_view()),
-    url(r'users/(?P<pk>[0-9]+)/$', personal_center.UserOperView.as_view()),
-    url(r'users/operation_record/$', reports.operation_record_listview),
-    url(r'role/$', personal_center.RoleView.as_view()),
-    url(r'role/(?P<pk>[0-9]+)/$', personal_center.RoleOperView.as_view()),
+    # url(r'users/$', personal_center.UserView.as_view()),
+    # url(r'users/(?P<pk>[0-9]+)/$', personal_center.UserOperView.as_view()),
+    # url(r'users/operation_record/$', reports.operation_record_listview),
+    # url(r'role/$', personal_center.RoleView.as_view()),
+    # url(r'role/(?P<pk>[0-9]+)/$', personal_center.RoleOperView.as_view()),
 
     # 报告
     url(r'dashboard/change_part/$', report.DashBoardChangePartView.as_view()),
@@ -38,8 +39,8 @@ v1_urlpatterns = [
     url(r'report/$', account_manager.ReportView.as_view()),
 
     # 店铺和账户授权
-    url(r'store_auth/(?P<pk>[0-9]+)/$', personal_center.StoreAuthView.as_view()),
-    url(r'pinterest_account_auth/(?P<pk>[0-9]+)/$', account_manager.PinterestAccountAuthView.as_view()),
+    # url(r'store_auth/(?P<pk>[0-9]+)/$', personal_center.StoreAuthView.as_view()),
+    # url(r'pinterest_account_auth/(?P<pk>[0-9]+)/$', account_manager.PinterestAccountAuthView.as_view()),
     url(r'shopify/callback/$', personal_center.ShopifyCallback.as_view()),
     url(r'pinterest/callback/$', personal_center.PinterestCallback.as_view()),
 
