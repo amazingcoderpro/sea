@@ -11,7 +11,7 @@ SCOPES = ['https://www.googleapis.com/auth/analytics.readonly']
 DISCOVERY_URI = ('https://analyticsreporting.googleapis.com/$discovery/rest')
 CLIENT_SECRETS_PATH = 'client_secrets.json'
 # Path to client_secrets.json file.
-VIEW_ID = 'UA-140415283-1'
+VIEW_ID = '195776851'
 
 
 def initialize_analyticsreporting():
@@ -34,10 +34,11 @@ def initialize_analyticsreporting():
     credentials = storage.get()
     if credentials is None or credentials.invalid:
         credentials = tools.run_flow(flow, storage, flags)
-        http = credentials.authorize(http=httplib2.Http())
-        # Build the service object.
-        analytics = discovery.build('analytics', 'v4', http=http, discoveryServiceUrl=DISCOVERY_URI)
-        return analytics
+    http = credentials.authorize(http=httplib2.Http())
+    # Build the service object.
+    analytics = discovery.build('analytics', 'v4', http=http, discoveryServiceUrl=DISCOVERY_URI)
+    print(analytics)
+    return analytics
 
 
 def get_report(analytics):
@@ -48,22 +49,29 @@ def get_report(analytics):
                 {
                     'viewId': VIEW_ID,
                     'dateRanges': [{'startDate': '7daysAgo', 'endDate': 'today'}],
-                    'metrics': [{'expression': 'ga:sessions'}]
+                    'metrics': [{'expression': 'ga:sessions'}],
+                    'dimensions': [{'name': 'ga:country'}]
                 }]
-        }).execute()
+        }
+    ).execute()
 
 
 def print_response(response):
     """Parses and prints the Analytics Reporting API V4 response"""
     for report in response.get('reports', []):
         columnHeader = report.get('columnHeader', {})
+        print(columnHeader)
         dimensionHeaders = columnHeader.get('dimensions', [])
+        print(dimensionHeaders)
         metricHeaders = columnHeader.get('metricHeader', {}).get('metricHeaderEntries', [])
         rows = report.get('data', {}).get('rows', [])
+        print(rows)
 
         for row in rows:
             dimensions = row.get('dimensions', [])
+            print(dimensions)
             dateRangeValues = row.get('metrics', [])
+            print(dateRangeValues)
 
             for header, dimension in zip(dimensionHeaders, dimensions):
                 print(header + ': ' + dimension)
