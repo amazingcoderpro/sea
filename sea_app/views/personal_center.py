@@ -102,17 +102,17 @@ class RegisterView(generics.CreateAPIView):
 #         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class StoreAuthView(APIView):
-    """店铺授权接口"""
-    permission_classes = (IsAuthenticated,)
-    authentication_classes = (JSONWebTokenAuthentication,)
-
-    def post(self, request, *args, **kwargs):
-        instance = models.Store.objects.filter(id=kwargs["pk"]).first()
-        if instance.authorized == 1:
-            return Response({"detail": "This store is authorized"}, status=status.HTTP_400_BAD_REQUEST)
-        url = ShopifyBase(instance.name).ask_permission(instance.name)
-        return Response({"message": url})
+# class StoreAuthView(APIView):
+#     """店铺授权接口"""
+#     permission_classes = (IsAuthenticated,)
+#     authentication_classes = (JSONWebTokenAuthentication,)
+#
+#     def post(self, request, *args, **kwargs):
+#         instance = models.Store.objects.filter(id=kwargs["pk"]).first()
+#         if instance.authorized == 1:
+#             return Response({"detail": "This store is authorized"}, status=status.HTTP_400_BAD_REQUEST)
+#         url = ShopifyBase(instance.name).ask_permission(instance.name)
+#         return Response({"message": url})
 
 
 class ShopifyCallback(APIView):
@@ -124,7 +124,8 @@ class ShopifyCallback(APIView):
             return Response({"message": "auth faild"})
         status, token = ShopifyBase(store_name).get_token(code)
         if token:
-            models.Store.objects.filter(platform=1, name=store_name).update(token=token, authorized=1)
+            data = {"name": store_name, "platform": 1, "token": token}
+            models.Store.objects.create(platform=1, name=store_name).update(token=token, authorized=1)
         return HttpResponseRedirect(redirect_to="http://www.baidu.com")
 
 
