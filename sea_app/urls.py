@@ -7,6 +7,8 @@ v1_urlpatterns = [
     # 注册 登陆
     url(r'^account/login/$', personal_center.LoginView.as_view()),
     url(r'^account/register/$', personal_center.RegisterView.as_view()),
+    # shopfy设置密码
+    url(r'^account/set_password/(?P<pk>[0-9]+)/$', personal_center.SetPasswordView.as_view()),
 
     # 用户 角色管理
     # url(r'users/$', personal_center.UserView.as_view()),

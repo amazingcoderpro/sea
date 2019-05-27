@@ -17,6 +17,7 @@ from sea_app.pageNumber.pageNumber import PNPagination
 from sea_app.filters import personal_center as personal_center_filters
 # from sea_app.permission.permission import UserPermission, RolePermission
 from sdk.shopify.shopify_oauth_info import ShopifyBase
+from sdk.shopify.get_shopify_products import ProductsApi
 from sdk.pinterest import pinterest_api
 
 
@@ -47,6 +48,16 @@ class RegisterView(generics.CreateAPIView):
     """注册"""
     queryset = models.User.objects.all()
     serializer_class = personal_center.RegisterSerializer
+
+
+class SetPasswordView(generics.UpdateAPIView):
+    """设置密码"""
+    queryset = models.User.objects.all()
+    serializer_class = personal_center.SetPasswordSerializer
+
+
+
+
 
 
 # class UserView(generics.ListCreateAPIView):
@@ -123,16 +134,20 @@ class ShopifyCallback(APIView):
         if not code or not shop:
             return Response({"message": "auth faild"})
         status, token = ShopifyBase(shop).get_token(code)
-        if token:
+        if status == 200 and token:
+            if models.User.objects.filter(username=shop).first():
+                return Response({"message": "shop already auth"})
             store_data = {"name": shop, "url": shop, "platform": 1, "token": token}
             store_instance = models.Store.objects.create(**store_data)
+            # TDD 调接口获取邮箱
+            info = ProductsApi(token).get_shop_info()
             email = "163.com"
             user_data = {"username": email, "email": email}
             user_instance = models.User.objects.create(**user_data)
             store_instance.user = user_instance
             store_instance.save()
             return HttpResponseRedirect(redirect_to="http://www.baidu.com/?shop={}&email={}&id={}".format(shop, email, user_instance.id))
-        return HttpResponseRedirect(redirect_to="http://www.baidu.com")
+        return Response({"message": "auth faild"})
 
 
 class PinterestCallback(APIView):
