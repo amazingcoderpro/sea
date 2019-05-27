@@ -16,7 +16,7 @@ from sea_app.filters import report as report_filters
 from sea_app.serializers import account_manager, report
 from sea_app.filters import account_manager as account_manager_filters
 from sea_app.pageNumber.pageNumber import PNPagination
-from sea_app.permission.permission import RolePermission
+# from sea_app.permission.permission import RolePermission
 from sdk.pinterest import pinterest_api
 
 
@@ -42,7 +42,7 @@ class RuleView(generics.ListCreateAPIView):
 class RuleOperView(generics.UpdateAPIView):
     queryset = models.Rule.objects.all()
     serializer_class = account_manager.RuleSerializer
-    permission_classes = (IsAuthenticated, RolePermission)
+    permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 
 
