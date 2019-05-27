@@ -36,10 +36,10 @@ from django.db import models
 
 class User(AbstractUser):
     """系统用户表"""
-    username = models.EmailField(max_length=255, unique=True, verbose_name="账户邮箱")
-    email = models.EmailField(max_length=255, unique=True, blank=True, null=True, verbose_name="账户邮箱")
+    username = models.EmailField(max_length=255, verbose_name="账户邮箱")
+    email = models.EmailField(max_length=255, blank=True, null=True, verbose_name="账户邮箱")
     # nickname = models.CharField(max_length=45, verbose_name="昵称")
-    password = models.CharField(max_length=128, verbose_name="密码")
+    password = models.CharField(max_length=128, blank=True, null=True,  verbose_name="密码")
     site_name = models.CharField(max_length=45, blank=True, null=True, verbose_name="站点名称")
     site_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="站点URL")
     link = models.CharField(max_length=255, blank=True, null=True, verbose_name="链接参数")
@@ -71,8 +71,8 @@ class Platform(models.Model):
 
 class Store(models.Model):
     """店铺表"""
-    name = models.CharField(max_length=255, verbose_name="店铺名称")
-    url = models.CharField(blank=True, null=True, max_length=255, verbose_name="店铺URL")
+    name = models.CharField(blank=True, null=True, max_length=255, verbose_name="店铺名称")
+    url = models.CharField(blank=True, null=True, max_length=255, unique=True, verbose_name="店铺URL")
     # email = models.EmailField(
     #     verbose_name='email address',
     #     max_length=255,

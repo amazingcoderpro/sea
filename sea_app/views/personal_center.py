@@ -119,13 +119,19 @@ class ShopifyCallback(APIView):
     """shopify 回调接口"""
     def get(self, request):
         code = request.query_params.get("code", None)
-        store_name = request.query_params.get("state", None)
-        if not code or not store_name:
+        shop = request.query_params.get("shop", None)
+        if not code or not shop:
             return Response({"message": "auth faild"})
-        status, token = ShopifyBase(store_name).get_token(code)
+        status, token = ShopifyBase(shop).get_token(code)
         if token:
-            data = {"name": store_name, "platform": 1, "token": token}
-            models.Store.objects.create(platform=1, name=store_name).update(token=token, authorized=1)
+            store_data = {"name": shop, "url": shop, "platform": 1, "token": token}
+            store_instance = models.Store.objects.create(**store_data)
+            email = "163.com"
+            user_data = {"username": email, "email": email}
+            user_instance = models.User.objects.create(**user_data)
+            store_instance.user = user_instance
+            store_instance.save()
+            return HttpResponseRedirect(redirect_to="http://www.baidu.com/?shop={}&email={}&id={}".format(shop, email, user_instance.id))
         return HttpResponseRedirect(redirect_to="http://www.baidu.com")
 
 
