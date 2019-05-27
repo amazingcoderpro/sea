@@ -94,7 +94,6 @@ class PinterestApi():
         except Exception as e:
             logger.error("post user boards is failed:{}".format(e))
             return {"code": 2, "msg": e, "data": ""}
-            return {"code": 2, "msg": e, "data": ""}
 
     def get_user_boards(self):
         """
@@ -115,7 +114,6 @@ class PinterestApi():
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("get user boards failed: {}".format(e))
-            return {"code": 2, "msg": e, "data": ""}
             return {"code": 2, "msg": e, "data": ""}
 
     def get_board_id(self, board_id):
