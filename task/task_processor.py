@@ -55,20 +55,24 @@ class PinterestOpt:
         return True
 
     def image_2_base64(self, image_src, is_thumb=True, size=(100, 100), format='png'):
-        if not os.path.exists(image_src):
-            response = requests.get(image_src)
-            image = Image.open(BytesIO(response.content))
-        else:
-            image = Image.open(image_src)
+        try:
+            base64_str = ""
+            if not os.path.exists(image_src):
+                response = requests.get(image_src)
+                image = Image.open(BytesIO(response.content))
+            else:
+                image = Image.open(image_src)
 
-        if is_thumb:
-            image.thumbnail(size)
+            if is_thumb:
+                image.thumbnail(size)
 
-        output_buffer = BytesIO()
-        image.save(output_buffer, format=format)
-        byte_data = output_buffer.getvalue()
-        base64_str = base64.b64encode(byte_data)
-        base64_str = base64_str.decode("utf-8")
+            output_buffer = BytesIO()
+            image.save(output_buffer, format=format)
+            byte_data = output_buffer.getvalue()
+            base64_str = base64.b64encode(byte_data)
+            base64_str = base64_str.decode("utf-8")
+        except Exception as e:
+            logger.error("image_2_base64 e={}".format(e))
         return base64_str
 
     def base64_2_image(self, base64_str, image_path):
@@ -85,92 +89,107 @@ class PinterestOpt:
         :param status: 发布状态　0－－未发布，１－－已发布
         :return: list
         """
-        con = DBUtil().get_instance()
-        cursor = con.cursor()
+        try:
+            conn = DBUtil().get_instance()
+            cursor = conn.cursor()
 
-        # 先拿到所有状态为0的record
-        cursor.execute('''
-                select id, execute_time, board_id, product_id, rule_id from `publish_record` where state=%s and execute_time between %s and %s
-                ''', (status, datetime.datetime.now(), datetime.datetime.now() + datetime.timedelta(seconds=3000)))
-        records = cursor.fetchall()
-
-        pending_records = []
-        # 遍历每一个record, 收集发布所需的所有参数
-        for record in records:
-            record_id, execute_time, board_id, product_id, rule_id = record
-
-            # 取到待发布的pin所隶属的board信息
+            # 先拿到所有状态为0的record
             cursor.execute('''
-                    select board_uri, name, pinterest_account_id, state from `board` where id=%s
-                    ''', board_id)
-            board = cursor.fetchone()
-            board_uri, board_name, pinterest_account_id, board_state = board
+                    select id, execute_time, board_id, product_id, rule_id from `publish_record` where state=%s and execute_time between %s and %s
+                    ''', (status, datetime.datetime.now(), datetime.datetime.now() + datetime.timedelta(seconds=3000)))
+            records = cursor.fetchall()
 
-            # 取到待发布的pin所隶属的账号信息，　主要是token
-            cursor.execute('''
-                    select account_uri, state, token from `pinterest_account` where id=%s
-                    ''', pinterest_account_id)
-            account = cursor.fetchone()
+            pending_records = []
+            # 遍历每一个record, 收集发布所需的所有参数
+            for record in records:
+                record_id, execute_time, board_id, product_id, rule_id = record
 
-            account_uri, account_state, token = account
+                # 取到待发布的pin所隶属的board信息
+                cursor.execute('''
+                        select board_uri, name, pinterest_account_id, state from `board` where id=%s
+                        ''', board_id)
+                board = cursor.fetchone()
+                board_uri, board_name, pinterest_account_id, board_state = board
 
-            # 取到待发布的pin所关联的产品信息
-            cursor.execute('''
-                    select sku, url, name, image_url, price, tag from `product` where id=%s
-                    ''', product_id)
-            product = cursor.fetchone()
-            sku, product_url, name, image_url, price, tag = product
-            pending_record = {"id": record_id,
-                              "execute_time": execute_time,
-                              "board_id": board_id,
-                              "board_uri": board_uri,
-                              "board_state": board_state,
-                              "account_id": pinterest_account_id,
-                              "account_uri": account_uri,
-                              "account_state": account_state,
-                              "token": token,
-                              "product_id": product_id,
-                              "img_url": image_url,
-                              "note": name,
-                              "link": product_url}
+                # 取到待发布的pin所隶属的账号信息，　主要是token
+                cursor.execute('''
+                        select account_uri, state, token from `pinterest_account` where id=%s
+                        ''', pinterest_account_id)
+                account = cursor.fetchone()
 
-            pending_records.append(pending_record)
+                account_uri, account_state, token = account
+
+                # 取到待发布的pin所关联的产品信息
+                cursor.execute('''
+                        select sku, url, name, image_url, price, tag from `product` where id=%s
+                        ''', product_id)
+                product = cursor.fetchone()
+                sku, product_url, name, image_url, price, tag = product
+                pending_record = {"id": record_id,
+                                  "execute_time": execute_time,
+                                  "board_id": board_id,
+                                  "board_uri": board_uri,
+                                  "board_state": board_state,
+                                  "account_id": pinterest_account_id,
+                                  "account_uri": account_uri,
+                                  "account_state": account_state,
+                                  "token": token,
+                                  "product_id": product_id,
+                                  "img_url": image_url,
+                                  "note": name,
+                                  "link": product_url}
+
+                pending_records.append(pending_record)
+        except Exception as e:
+            logger.exception("get_pending_records exception e={}".format(e))
+        finally:
+            cursor.close()
+            conn.close()
 
         return pending_records
 
     def publish_pins(self, records):
-        con = DBUtil().get_instance()
-        cursor = con.cursor()
-        utm_params = ""
-        for record in records:
-            pin_api = PinterestApi(access_token=record["token"])
-            note = record["note"]
-            link = record["link"] + utm_params
-            board_id = record["board_id"]
-            product_id = record["product_id"]
-            ret = pin_api.create_pin(board_id=record["board_uri"], note=record["note"], image_url=record["img_url"], link=link)
-            print(ret)
+        try:
+            conn = DBUtil().get_instance()
+            cursor = conn.cursor()
+            utm_params = ""
+            for record in records:
+                pin_api = PinterestApi(access_token=record["token"])
+                note = record["note"]
+                link = record["link"] + utm_params
+                board_id = record["board_id"]
+                product_id = record["product_id"]
+                ret = pin_api.create_pin(board_id=record["board_uri"], note=record["note"], image_url=record["img_url"], link=link)
+                print(ret)
 
-            if ret[0] in [200, 201]:
-                data = json.loads(ret[1])["data"]
-                pin_uri = data["id"]
-                url = data["url"]
-                # site_url = data["original_link"]
-                thumbnail = self.image_2_base64(record["img_url"])
-                time_now = datetime.datetime.now()
-                cursor.execute('''insert into `pin` (`pin_uri`, `url`, `description`, `origin_link`, `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ''', (pin_uri, url, note, link, thumbnail, time_now, time_now, board_id, product_id))
-                pin_id = cursor.lastrowid
+                if ret[0] in [200, 201]:
+                    data = json.loads(ret[1])["data"]
+                    pin_uri = data["id"]
+                    url = data["url"]
+                    # site_url = data["original_link"]
+                    thumbnail = self.image_2_base64(record["img_url"])
+                    time_now = datetime.datetime.now()
+                    cursor.execute('''insert into `pin` (`pin_uri`, `url`, `description`, `origin_link`, `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ''', (pin_uri, url, note, link, thumbnail, time_now, time_now, board_id, product_id))
+                    pin_id = cursor.lastrowid
 
-                state = 1
-                remark = ""
-                update_time = finished_time = time_now
+                    state = 1
+                    remark = ""
+                    update_time = finished_time = time_now
 
-                cursor.execute('''
-                        update `publish_record` set state=%s, remark=%s, finished_time=%s, pin_id=%s, update_time=%s where id=%s
-                        ''', (state, remark, finished_time, pin_id, update_time, record["id"]))
+                    cursor.execute('''
+                            update `publish_record` set state=%s, remark=%s, finished_time=%s, pin_id=%s, update_time=%s where id=%s
+                            ''', (state, remark, finished_time, pin_id, update_time, record["id"]))
 
-                con.commit()
+                    conn.commit()
+        except Exception as e:
+            logger.exception("publish_pins exception e={}".format(e))
+            return False
+        finally:
+            cursor.close()
+            conn.close()
+
+        return True
 
     def produce_records_by_rule(self):
         """
@@ -386,9 +405,66 @@ class PinterestOpt:
         return True
 
 
+from sdk.shopify.get_shopify_products import ProductsApi
 class ShopifyOpt:
+    def get_products(self):
+        conn = DBUtil().get_instance()
+        cursor = conn.cursor()
+        cursor.execute('''select name, url, token, user_id from `store` where id>=0''')
+        stores = cursor.fetchall()
+        for store in stores:
+            name, url, token, user_id = store
+            papi = ProductsApi(token, url)
+            ret = papi.get_shop_info()
+            if ret["code"] == 1:
+                shop = ret["data"].get("shop", {})
+                print(shop)
+                id = shop.get("id", "")
+                name = shop.get("name", "")
+                timezone = shop.get("timezone", "")
+                domain = shop.get("domain", "")
+
+            ret = papi.get_all_products()
+            if ret["code"] == 1:
+                products = ret["data"].get("products", [])
+
+
+
     def update_products(self):
-        pass
+        try:
+            conn = DBUtil().get_instance()
+            cursor = conn.cursor()
+
+            #拿到所有店铺的token
+            cursor.execute('''select id, token, url, user_id from `store` where id>=0''')
+            stores = cursor.fetchall()
+            store_info = {}
+            for store in stores:
+                store_info[store[0]] = {"token": store[1], "url": store[2], "user_id": store[3]}
+
+            cursor.execute('''select id, sku, url, store_id from `product` where id>=0''')
+            products = cursor.fetchall()
+            for pro in [58]:
+                # 根据产品隶属的店铺id,　获取token
+                store = store_info.get(pro[3], {})
+                store_token = store.get("token", "")
+                store_uri = store.get("url", "")
+                if not all([store_token, store_uri]):
+                    logger.warning("store have no token or uri. store id={}".format(pro[3]))
+                    continue
+                papi = ProductsApi(store_token, store_uri)
+                ret = papi.get_all_products()
+                papi.get_product_id()
+
+
+        except Exception as e:
+            logger.exception("update products e={}".format(e))
+            return False
+        finally:
+            cursor.close()
+            conn.close()
+
+        return True
 
 
 class TaskProcessor:
@@ -456,8 +532,10 @@ def test_pinterest_opt():
     # if records:
     #     print(records)
     #     pt.publish_pins(records)
-    pt.update_pinterest_data()
+    # pt.update_pinterest_data()
 
+    st = ShopifyOpt()
+    st.update_products()
     # base64_str = pt.image_2_base64("https://www.theadultman.com/wp-content/uploads/2016/08/Things-Every-Man-Should-Own-1-1.jpg", is_thumb=False)
     # pt.base64_2_image(base64_str, "123.jpg")
     # pt.update_pinterest_data()
