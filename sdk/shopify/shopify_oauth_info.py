@@ -9,15 +9,16 @@ class ShopifyBase():
     """
     shopify授权的api
     """
-    def __init__(self, shop_name):
+    def __init__(self, shop_uri):
         """
         :param code: 1 状态正确， 2 状态错误， -1 出现异常
         :param shop_name: 店铺名称
         """
-        self.shop_name = shop_name
         self.client_id = SHOPIFY_CONFIG.get("client_id")
         self.client_secret = SHOPIFY_CONFIG.get("client_secret")
         self.redirect_uri = SHOPIFY_CONFIG.get("redirect_uri")
+        self.shop_uri = shop_uri
+        self.shop_name = shop_uri.split(".")[0]
         self.scopes = SHOPIFY_CONFIG.get("scopes")
         self.headers = {'Content-Type': 'application/json'}
 
@@ -31,7 +32,7 @@ class ShopifyBase():
         """
         redirect_uri = parse.quote(self.redirect_uri)
         scopes_info = ",".join(self.scopes)
-        permission_url = f"https://{self.shop_name}.myshopify.com/admin/oauth/authorize" \
+        permission_url = f"https://{self.shop_name}/admin/oauth/authorize" \
                          f"?client_id={self.client_id}" \
                          f"&scope={scopes_info}" \
                          f"&redirect_uri={redirect_uri}" \

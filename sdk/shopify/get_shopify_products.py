@@ -5,7 +5,7 @@ from config import SHOPIFY_CONFIG
 
 
 class ProductsApi:
-    def __init__(self, access_token, shop_name):
+    def __init__(self, access_token, shop_uri):
         """
         :param client_id: api key
         :param access_token: api password
@@ -16,7 +16,8 @@ class ProductsApi:
         """
         self.client_id = SHOPIFY_CONFIG.get("client_id")
         self.access_token = access_token
-        self.shop_name = shop_name
+        self.shop_uri = shop_uri
+        self.shop_name = shop_uri.split(".")[0]
         self.scopes = SHOPIFY_CONFIG.get("scopes")
         self.callback_uri = SHOPIFY_CONFIG.get("callback_uri")
         self.version_url = "/admin/api/2019-04/"
