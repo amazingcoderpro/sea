@@ -52,8 +52,7 @@ class ShopifyBase():
         }
         url = f"https://{self.shop_name}.myshopify.com/admin/oauth/access_token"
         try:
-            result = requests.post(url, display, headers=self.headers)
-            # print(result.status_code)
+            result = requests.post(url, json.dumps(display), headers=self.headers)
             if result.status_code == 200:
                 logger.info("get shopify token is successed, shopname={}".format(self.shop_name))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("access_token")}
