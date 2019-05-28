@@ -16,7 +16,7 @@ from sea_app.filters import report as report_filters
 from sea_app.serializers import account_manager, report
 from sea_app.filters import account_manager as account_manager_filters
 from sea_app.pageNumber.pageNumber import PNPagination
-from sea_app.permission.permission import RolePermission
+# from sea_app.permission.permission import RolePermission
 from sdk.pinterest import pinterest_api
 
 
@@ -42,7 +42,7 @@ class RuleView(generics.ListCreateAPIView):
 class RuleOperView(generics.UpdateAPIView):
     queryset = models.Rule.objects.all()
     serializer_class = account_manager.RuleSerializer
-    permission_classes = (IsAuthenticated, RolePermission)
+    permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 
 
@@ -161,17 +161,17 @@ class PinterestAccountCreateView(generics.CreateAPIView):
     authentication_classes = (JSONWebTokenAuthentication,)
 
 
-class PinterestAccountAuthView(APIView):
-    """账户授权"""
-    permission_classes = (IsAuthenticated,)
-    authentication_classes = (JSONWebTokenAuthentication,)
-
-    def post(self, request, *args, **kwargs):
-        instance = models.PinterestAccount.objects.filter(id=kwargs["pk"]).first()
-        if instance.authorized == 1:
-            return Response({"detail": "This account is authorized"}, status=status.HTTP_400_BAD_REQUEST)
-        url = pinterest_api.PinterestApi().get_pinterest_url(instance.account_uri)
-        return Response({"message": url})
+# class PinterestAccountAuthView(APIView):
+#     """账户授权"""
+#     permission_classes = (IsAuthenticated,)
+#     authentication_classes = (JSONWebTokenAuthentication,)
+#
+#     def post(self, request, *args, **kwargs):
+#         instance = models.PinterestAccount.objects.filter(id=kwargs["pk"]).first()
+#         if instance.authorized == 1:
+#             return Response({"detail": "This account is authorized"}, status=status.HTTP_400_BAD_REQUEST)
+#         url = pinterest_api.PinterestApi().get_pinterest_url(instance.account_uri)
+#         return Response({"message": url})
 
 
 class PinterestAccountListView(generics.ListAPIView):

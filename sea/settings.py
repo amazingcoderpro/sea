@@ -156,3 +156,17 @@ shopify = {
 pinterest = {
 
 }
+
+#######################
+# DEFINE EMAIL CONFIG #
+#######################
+
+EMAIL_HOST = "smtpout.secureserver.net"
+EMAIL_PORT = 25
+EMAIL_HOST_USER = "service@pinbooster.seamarketings.com"
+EMAIL_HOST_PASSWORD = "orderplus"
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+EMAIL_USE_SSL = False
+EMAIL_SUBJECT_PREFIX = " "
+# 默认邮件接收方(开发人员，如果代码出现极端异常可进行邮件通知.)
+DEFAULT_TO_EMAILS = ["877252373@qq.com", ]

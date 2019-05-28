@@ -71,6 +71,6 @@ if __name__ == '__main__':
     callback_uri = "http://www.orderplus.com/index.html"
     id = "3583116148816"
     products_api = ProductsApi(client_id, access_token, shop, scopes, callback_uri)
-    products_api.get_all_products()
+    # products_api.get_all_products()
     products_api.get_shop_info()
-    products_api.get_product_id()
+    # products_api.get_product_id()
