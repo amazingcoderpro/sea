@@ -29,23 +29,30 @@ class GoogleApi():
         """
         return analytics.reports().batchGet(
             body={
-                'reportRequests': [
-                    {
-                        'viewId': self.VIEW_ID,
-                        'dateRanges': [{'startDate': '7daysAgo', 'endDate': 'today'}],
-                        'metrics': [{'expression': 'ga:users'},
-                                    {"expression": "ga:pageviews"},
-                                    {"expression": "ga:sessions"}],
-                        'dimensions': [{'name': 'ga:city'},
-                                       {"name": "ga:browser"}],
-                        "orderBys":
-                            [
-                                {"fieldName": "ga:sessions", "sortOrder": "DESCENDING"},
-                                {"fieldName": "ga:pageviews", "sortOrder": "DESCENDING"},
-                            ]
-                    }]
-            }
-        ).execute()
+                "reportRequests":
+                    [
+                        {
+                            "viewId": self.VIEW_ID,
+                            "dateRanges": [
+                                # {'startDate': '7daysAgo', 'endDate': 'today'},
+                                {"startDate": "1daysAgo", "endDate": "1daysAgo"}
+                            ],
+                            "metrics": [
+                                {"expression": "ga:pageviews"},
+                                {"expression": "ga:sessions"}
+                            ],
+                            "dimensions": [{"name": "ga:browser"}, {"name": "ga:country"}],
+                            "dimensionFilterClauses": [
+                                {
+                                    "filters": [
+                                        {
+                                            "dimensionName": "ga:browser",
+                                            "operator": "EXACT",
+                                            "expressions": ["Chrome"]
+                                        }]
+                                   }]
+                                }]
+                           }).execute()
 
     def print_response(self, response):
         """Parses and prints the Analytics Reporting API V4 response.
