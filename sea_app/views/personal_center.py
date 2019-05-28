@@ -145,32 +145,31 @@ class ShopifyCallback(APIView):
     def get(self, request):
         code = request.query_params.get("code", None)
         shop = request.query_params.get("shop", None)
-        state = request.query_params.get("state", None)
-        print("####", code)
-        print("####", shop)
-        if not code or not shop or not state:
-            return HttpResponseRedirect(redirect_to="http://www.baidu.com/")
-        result = ShopifyBase(state).get_token(code)
+        if not code or not shop:
+            return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
+        shop_name = shop.split(".")[0]
+        result = ShopifyBase(shop).get_token(code)
         if result["code"] == 1:
             instance = models.Store.objects.filter(url=shop).first()
             if instance:
                 instance.token = result["data"]
                 instance.save()
-                user_instance = models.User.objects.filter(id=instance.user_id)
+                user_instance = models.User.objects.filter(id=instance.user_id).first()
+                email = user_instance.email
             else:
-                print(shop, result["data"])
-                store_data = {"name": state, "url": shop, "platform": 1, "token": result["data"]}
+                store_data = {"name": shop_name, "url": shop, "token": result["data"]}
                 instance = models.Store.objects.create(**store_data)
+                instance.platform_id = 1
+                instance.save()
                 # TDD 调接口获取邮箱
-                info = ProductsApi(access_token=result["data"], shop_name=state).get_shop_info()
-                print("#info", info)
-                email = "163.com"
-                user_data = {"username": email, "email": email}
+                info = ProductsApi(access_token=result["data"], shop_uri=shop).get_shop_info()
+                email = info["data"]["shop"]["email"]
+                user_data = {"username": shop, "email": email}
                 user_instance = models.User.objects.create(**user_data)
                 instance.user = user_instance
                 instance.save()
-            return HttpResponseRedirect(redirect_to="http://www.baidu.com/?shop={}&email={}&id={}".format(shop, email, user_instance.id))
-        return HttpResponseRedirect(redirect_to="http://www.baidu.com/")
+            return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/shopfy_regist?shop={}&email={}&id={}".format(shop, email, user_instance.id))
+        return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
 
 
 class PinterestCallback(APIView):

@@ -5,7 +5,7 @@ from config import SHOPIFY_CONFIG
 
 
 class ProductsApi:
-    def __init__(self, access_token, shop_name):
+    def __init__(self, access_token, shop_uri):
         """
         :param client_id: api key
         :param access_token: api password
@@ -16,14 +16,14 @@ class ProductsApi:
         """
         self.client_id = SHOPIFY_CONFIG.get("client_id")
         self.access_token = access_token
-        self.shop_name = shop_name
+        self.shop_uri = shop_uri
         self.scopes = SHOPIFY_CONFIG.get("scopes")
         self.callback_uri = SHOPIFY_CONFIG.get("callback_uri")
         self.version_url = "/admin/api/2019-04/"
         self.headers = {'Content-Type': 'application/json'}
 
     def get_shop_info(self):
-        shop_url = f"https://{self.client_id}:{self.access_token}@{self.shop_name}{self.version_url}shop.json"
+        shop_url = f"https://{self.client_id}:{self.access_token}@{self.shop_uri}{self.version_url}shop.json"
         try:
             result = requests.get(shop_url)
             if result.status_code == 200:
@@ -37,7 +37,7 @@ class ProductsApi:
             return {"code": -1, "msg": str(e), "data": ""}
 
     def get_all_products(self):
-        products_url = f"https://{self.client_id}:{self.access_token}@{self.shop_name}{self.version_url}products.json"
+        products_url = f"https://{self.client_id}:{self.access_token}@{self.shop_uri}{self.version_url}products.json"
         try:
             result = requests.get(products_url)
             if result.status_code == 200:
@@ -51,7 +51,7 @@ class ProductsApi:
             return {"code": -1, "msg": str(e), "data": ""}
 
     def get_product_id(self, id):
-        products_url = f"https://{self.client_id}:{self.access_token}@{self.shop_name}{self.version_url}products/{id}.json"
+        products_url = f"https://{self.client_id}:{self.access_token}@{self.shop_uri}{self.version_url}products/{id}.json"
         try:
             result = requests.get(products_url)
             if result.status_code == 200:
