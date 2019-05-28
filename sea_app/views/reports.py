@@ -67,14 +67,14 @@ def daily_report(pin_set_list, product_set_list):
         date = item.update_time.date()
         if date not in group_dict:
             group_dict[date] = {
-                "account_following": item.account_following,
-                "account_follower": item.account_follower,
+                "account_followings": item.account_followings,
+                "account_followers": item.account_followers,
                 "boards": [] if not item.board_id else [item.board_id],  # board数
-                "board_follower": item.board_follower,
+                "board_followers": item.board_followers,
                 "pins": [] if not item.pin_id else [item.pin_id],  # pin数
                 "pin_saves": item.pin_saves,
-                "pin_like": item.pin_like,
-                "pin_comments": item.pin_comment,
+                "pin_likes": item.pin_likes,
+                "pin_comments": item.pin_comments,
                 "pin_view": item.pin_views,
                 "pin_clicks": item.pin_clicks,
                 "product_sales": 0,
@@ -82,27 +82,27 @@ def daily_report(pin_set_list, product_set_list):
                 "products": [] if not item.product_id else [item.product_id],  # product
             }
         else:
-            group_dict[date]["account_following"] += item.account_following
-            group_dict[date]["account_follower"] += item.account_follower
+            group_dict[date]["account_followings"] += item.account_followings
+            group_dict[date]["account_followers"] += item.account_followers
             group_dict[date]["boards"].append(item.board_id)
-            group_dict[date]["board_follower"] += item.board_follower
+            group_dict[date]["board_followers"] += item.board_followers
             group_dict[date]["pins"].append(item.pin_id)
             group_dict[date]["pin_saves"] += item.pin_saves
-            group_dict[date]["pin_like"] += item.pin_like
-            group_dict[date]["pin_comments"] += item.pin_comment
+            group_dict[date]["pin_likes"] += item.pin_likes
+            group_dict[date]["pin_comments"] += item.pin_comments
             group_dict[date]["pin_view"] += item.pin_views
             group_dict[date]["pin_clicks"] += item.pin_clicks
             group_dict[date]["products"].append(item.product_id)
     for day, info in group_dict.items():
         data = {
             "date": day.strftime("%Y-%m-%d"),
-            "account_following": info["account_following"],
-            "account_follower": info["account_follower"],
+            "account_followings": info["account_followings"],
+            "account_followers": info["account_followers"],
             "boards": len(set(filter(lambda x: x, info["boards"]))),
-            "board_follower": info["board_follower"],
+            "board_followers": info["board_followers"],
             "pins": len(set(filter(lambda x: x, info["pins"]))),
             "pin_saves": info["pin_saves"],
-            "pin_like": info["pin_like"],
+            "pin_likes": info["pin_likes"],
             "pin_comments": info["pin_comments"],
             "pin_view": info["pin_view"],
             "pin_clicks": info["pin_clicks"],
@@ -182,12 +182,12 @@ def subaccount_report(pin_set_list, product_set_list):
             group_dict[subaccount_id] = {
                 "account_name": item.account_name,
                 "boards": [] if not item.board_id else [item.board_id],  # board数
-                "account_following": item.account_following,
-                "account_follower": item.account_follower,
+                "account_followings": item.account_followings,
+                "account_followers": item.account_followers,
                 "pins": [] if not item.pin_id else [item.pin_id],  # pin数
                 "pin_saves": item.pin_saves,
-                "pin_like": item.pin_like,
-                "pin_comments": item.pin_comment,
+                "pin_likes": item.pin_likes,
+                "pin_comments": item.pin_comments,
                 "pin_view": item.pin_views,
                 "pin_clicks": item.pin_clicks,
                 "products": [] if not item.product_id else [item.product_id],  # product
@@ -196,8 +196,8 @@ def subaccount_report(pin_set_list, product_set_list):
             group_dict[subaccount_id]["boards"].append(item.board_uri)  # board数
             group_dict[subaccount_id]["pins"].append(item.pin_uri)  # pin数
             group_dict[subaccount_id]["pin_saves"] += item.pin_saves
-            group_dict[subaccount_id]["pin_like"] += item.pin_like
-            group_dict[subaccount_id]["pin_comments"] += item.pin_comment
+            group_dict[subaccount_id]["pin_likes"] += item.pin_likes
+            group_dict[subaccount_id]["pin_comments"] += item.pin_comments
             group_dict[subaccount_id]["pin_view"] += item.pin_views
             group_dict[subaccount_id]["pin_clicks"] += item.pin_clicks
             group_dict[subaccount_id]["products"].append(item.product_id)  # product
@@ -205,12 +205,12 @@ def subaccount_report(pin_set_list, product_set_list):
         data = {
             "subaccount_id": subaccount_id,
             "account_name": info["account_name"],
-            "account_following": info["account_following"],
-            "account_follower": info["account_follower"],
+            "account_followings": info["account_followings"],
+            "account_followers": info["account_followers"],
             "boards": len(set(filter(lambda x: x, info["boards"]))),
             "pins": len(set(filter(lambda x: x, info["pins"]))),
             "pin_saves": info["pin_saves"],
-            "pin_like": info["pin_like"],
+            "pin_likes": info["pin_likes"],
             "pin_comments": info["pin_comments"],
             "pin_view": info["pin_view"],
             "pin_clicks": info["pin_clicks"],
@@ -243,11 +243,11 @@ def board_report(pin_set_list, product_set_list):
             group_dict[board_id] = {
                 "update_time": item.update_time,
                 "board_name": item.board_name,
-                "board_follower": item.board_follower,
+                "board_followers": item.board_followers,
                 "pins": [] if not item.pin_id else [item.pin_id],  # pin数
                 "pin_saves": item.pin_saves,
-                "pin_like": item.pin_like,
-                "pin_comments": item.pin_comment,
+                "pin_likes": item.pin_likes,
+                "pin_comments": item.pin_comments,
                 "pin_view": item.pin_views,
                 "pin_clicks": item.pin_clicks,
                 "products": [] if not item.product_id else [item.product_id],  # product
@@ -255,8 +255,8 @@ def board_report(pin_set_list, product_set_list):
         else:
             group_dict[board_id]["pins"].append(item.pin_id)  # pin数
             group_dict[board_id]["pin_saves"] += item.pin_saves
-            group_dict[board_id]["pin_like"] += item.pin_like
-            group_dict[board_id]["pin_comments"] += item.pin_comment
+            group_dict[board_id]["pin_likes"] += item.pin_likes
+            group_dict[board_id]["pin_comments"] += item.pin_comments
             group_dict[board_id]["pin_view"] += item.pin_views
             group_dict[board_id]["pin_clicks"] += item.pin_clicks
             group_dict[board_id]["products"].append(item.product_id)  # product
@@ -265,10 +265,10 @@ def board_report(pin_set_list, product_set_list):
         data = {
             "board_id": board_id,
             "board_name": info["board_name"],
-            "board_follower": info["board_follower"],
+            "board_followers": info["board_followers"],
             "pins": len(set(filter(lambda x: x, info["pins"]))),
             "pin_saves": info["pin_saves"],
-            "pin_like": info["pin_like"],
+            "pin_likes": info["pin_likes"],
             "pin_comments": info["pin_comments"],
             "pin_view": info["pin_view"],
             "pin_clicks": info["pin_clicks"],
@@ -302,8 +302,8 @@ def pins_report(pin_set_list, product_set_list):
                 "update_time": item.update_time,
                 "pin_thumbnail": item.pin_thumbnail,
                 "pin_saves": item.pin_saves,
-                "pin_like": item.pin_like,
-                "pin_comments": item.pin_comment,
+                "pin_likes": item.pin_likes,
+                "pin_comments": item.pin_comments,
                 "pin_view": item.pin_views,
                 "pin_clicks": item.pin_clicks,
                 "product_id": item.product_id
@@ -314,8 +314,8 @@ def pins_report(pin_set_list, product_set_list):
                     "update_time": item.update_time,
                     "pin_thumbnail": item.pin_thumbnail,
                     "pin_saves": item.pin_saves,
-                    "pin_like": item.pin_like,
-                    "pin_comments": item.pin_comment,
+                    "pin_likes": item.pin_likes,
+                    "pin_comments": item.pin_comments,
                     "pin_view": item.pin_views,
                     "pin_clicks": item.pin_clicks,
                     "product_id": item.product_id
@@ -325,7 +325,7 @@ def pins_report(pin_set_list, product_set_list):
             "pin_uri": pin_uri,
             "pin_thumbnail": info["pin_thumbnail"],
             "pin_saves": info["pin_saves"],
-            "pin_like": info["pin_like"],
+            "pin_likes": info["pin_likes"],
             "pin_comments": info["pin_comments"],
             "pin_view": info["pin_view"],
             "pin_clicks": info["pin_clicks"],
@@ -404,7 +404,7 @@ def site_count(pin_set_list, product_set_list, oneday=datetime.datetime.now()):
     # 获取Board总数
     board_set = pin_queryset.filter(~Q(board_id=None), Q(pin_id=None))
     board_num = get_num(board_set, "board_id")
-    board_followers = count_num(board_set, 'board_follower')
+    board_followers = count_num(board_set, 'board_followers')
     # 获取pin总数
     pin_set = pin_queryset.filter(~Q(pin_id=None))
     pin_num = get_num(pin_set, "pin_id")
@@ -696,12 +696,12 @@ def board_period_part(queryset):
                 "pins": [] if not board_obj.pin_id else [board_obj.pin_id],  # pin数
                 "saves": board_obj.pin_saves,
                 "create_date": board_obj.board.create_time.strftime("%Y-%m-%d %H:%M:%S"),
-                "followers": board_obj.board_follower
+                "followers": board_obj.board_followers
             }
         else:
             board_dict[board_obj.board_id]["pins"].append(board_obj.pin_id)
             board_dict[board_obj.board_id]["saves"] += board_obj.pin_saves
-            board_dict[board_obj.board_id]["followers"] += board_obj.board_follower
+            board_dict[board_obj.board_id]["followers"] += board_obj.board_followers
     return board_dict
 
 
