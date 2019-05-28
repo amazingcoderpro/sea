@@ -56,4 +56,3 @@ class DashBoardFixedPartView(APIView):
     def get(self, request, *args, **kwargs):
         data = reports.dash_board_fixed_part(request)
         return Response(data)
-

@@ -1,16 +1,18 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
+from django.core.mail import EmailMultiAlternatives
 
 from sea_app import models
+from sea.settings import DEFAULT_FROM_EMAIL
 import json
 
 
 class LoginSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(required=True, min_length=5, error_messages={
+    username = serializers.CharField(required=True,error_messages={
         "blank": "请输入用户名",
         "required": "请携带该参数",
-        "max_length": "用户名格式不对",
-        "min_length": "用户名长度最少为5位",
+        # "max_length": "用户名格式不对",
+        # "min_length": "用户名长度最少为5位",
     })
 
     password = serializers.CharField(required=True, min_length=5, error_messages={
@@ -21,7 +23,7 @@ class LoginSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.User
         depth = 1
-        fields = ("id", "username", "password", "nickname",)
+        fields = ("id", "username", "password",)
         extra_kwargs = {
             'password': {'write_only': True},
             'email': {'read_only': True}
@@ -56,6 +58,31 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.set_password(validated_data["password"])
         user.save()
         return user
+
+
+class SetPasswordSerializer(serializers.ModelSerializer):
+    password2 = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = models.User
+        fields = ("id", "username", "password", "password2", "create_time")
+        extra_kwargs = {
+            'password': {'write_only': True},
+        }
+
+    def validate(self, attrs):
+        if not attrs["password"] == attrs["password2"]:
+            raise serializers.ValidationError("两次密码不一致，请重新输入")
+        del attrs["password2"]
+        return attrs
+
+    def update(self, instance, validated_data):
+        instance.set_password(validated_data["password"])
+        instance.save()
+        msg = EmailMultiAlternatives("11","22", from_email=DEFAULT_FROM_EMAIL, to=("877252373@qq.com",))
+        msg.content_subtype = "html"
+        msg.send()
+        return instance
 
 
 # class UserSerializer(serializers.ModelSerializer):

@@ -1,23 +1,25 @@
 from django.conf.urls import url, include
+from django.views.decorators.cache import cache_page
 
-# from sea_app.views import reports, personal_center, account_manager, report, store
 from sea_app.views import reports, personal_center, account_manager, report, store
 
 v1_urlpatterns = [
     # 注册 登陆
     url(r'^account/login/$', personal_center.LoginView.as_view()),
     url(r'^account/register/$', personal_center.RegisterView.as_view()),
+    # shopfy设置密码
+    url(r'^account/set_password/(?P<pk>[0-9]+)/$', personal_center.SetPasswordView.as_view()),
 
     # 用户 角色管理
     # url(r'users/$', personal_center.UserView.as_view()),
     # url(r'users/(?P<pk>[0-9]+)/$', personal_center.UserOperView.as_view()),
-    # url(r'users/operation_record/$', reports.operation_record_listview),
+    url(r'users/operation_record/$', cache_page(60 * 2)(personal_center.OperationRecord.as_view())),
     # url(r'role/$', personal_center.RoleView.as_view()),
     # url(r'role/(?P<pk>[0-9]+)/$', personal_center.RoleOperView.as_view()),
 
     # 报告
-    url(r'dashboard/change_part/$', report.DashBoardChangePartView.as_view()),
-    url(r'dashboard/fixed_part/$', report.DashBoardFixedPartView.as_view()),
+    url(r'dashboard/change_part/$', cache_page(60 * 5)(report.DashBoardChangePartView.as_view())),
+    url(r'dashboard/fixed_part/$', cache_page(60 * 15)(report.DashBoardFixedPartView.as_view())),
     url(r'daily_report/$', report.DailyReportView.as_view()),
     url(r'subaccount_report/(?P<type>[a-zA-Z]+)/$', report.SubAccountReportView.as_view()),
 
@@ -39,8 +41,8 @@ v1_urlpatterns = [
     url(r'report/$', account_manager.ReportView.as_view()),
 
     # 店铺和账户授权
-    # url(r'store_auth/(?P<pk>[0-9]+)/$', personal_center.StoreAuthView.as_view()),
-    # url(r'pinterest_account_auth/(?P<pk>[0-9]+)/$', account_manager.PinterestAccountAuthView.as_view()),
+    url(r'store_auth/(?P<pk>[0-9]+)/$', personal_center.StoreAuthView.as_view()),
+    url(r'pinterest_account_auth/(?P<pk>[0-9]+)/$', personal_center.PinterestAccountAuthView.as_view()),
     url(r'shopify/callback/$', personal_center.ShopifyCallback.as_view()),
     url(r'pinterest/callback/$', personal_center.PinterestCallback.as_view()),
 

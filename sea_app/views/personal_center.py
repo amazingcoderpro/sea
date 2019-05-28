@@ -17,7 +17,9 @@ from sea_app.pageNumber.pageNumber import PNPagination
 from sea_app.filters import personal_center as personal_center_filters
 # from sea_app.permission.permission import UserPermission, RolePermission
 from sdk.shopify.shopify_oauth_info import ShopifyBase
+from sdk.shopify.get_shopify_products import ProductsApi
 from sdk.pinterest import pinterest_api
+from sea_app.views import reports
 
 
 class LoginView(generics.CreateAPIView):
@@ -47,6 +49,16 @@ class RegisterView(generics.CreateAPIView):
     """注册"""
     queryset = models.User.objects.all()
     serializer_class = personal_center.RegisterSerializer
+
+
+class SetPasswordView(generics.UpdateAPIView):
+    """设置密码"""
+    queryset = models.User.objects.all()
+    serializer_class = personal_center.SetPasswordSerializer
+
+
+
+
 
 
 # class UserView(generics.ListCreateAPIView):
@@ -102,17 +114,30 @@ class RegisterView(generics.CreateAPIView):
 #         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-# class StoreAuthView(APIView):
-#     """店铺授权接口"""
-#     permission_classes = (IsAuthenticated,)
-#     authentication_classes = (JSONWebTokenAuthentication,)
-#
-#     def post(self, request, *args, **kwargs):
-#         instance = models.Store.objects.filter(id=kwargs["pk"]).first()
-#         if instance.authorized == 1:
-#             return Response({"detail": "This store is authorized"}, status=status.HTTP_400_BAD_REQUEST)
-#         url = ShopifyBase(instance.name).ask_permission(instance.name)
-#         return Response({"message": url})
+class StoreAuthView(APIView):
+    """店铺授权接口"""
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def post(self, request, *args, **kwargs):
+        instance = models.Store.objects.filter(id=kwargs["pk"]).first()
+        # if instance.authorized == 1:
+        #     return Response({"detail": "This store is authorized"}, status=status.HTTP_400_BAD_REQUEST)
+        url = ShopifyBase(instance.name).ask_permission(instance.name)
+        return Response({"message": url})
+
+
+class PinterestAccountAuthView(APIView):
+    """账户授权"""
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def post(self, request, *args, **kwargs):
+        instance = models.PinterestAccount.objects.filter(id=kwargs["pk"]).first()
+        if instance.authorized == 1:
+            return Response({"detail": "This account is authorized"}, status=status.HTTP_400_BAD_REQUEST)
+        url = pinterest_api.PinterestApi().get_pinterest_url(instance.account_uri)
+        return Response({"message": url})
 
 
 class ShopifyCallback(APIView):
@@ -122,17 +147,28 @@ class ShopifyCallback(APIView):
         shop = request.query_params.get("shop", None)
         if not code or not shop:
             return Response({"message": "auth faild"})
-        status, token = ShopifyBase(shop).get_token(code)
-        if token:
-            store_data = {"name": shop, "url": shop, "platform": 1, "token": token}
-            store_instance = models.Store.objects.create(**store_data)
-            email = "163.com"
-            user_data = {"username": email, "email": email}
-            user_instance = models.User.objects.create(**user_data)
-            store_instance.user = user_instance
-            store_instance.save()
+        print("####", code)
+        print("####", shop)
+        result = ShopifyBase(shop).get_token(code)
+        if result["code"] == 1:
+            instance = models.Store.objects.filter(url=shop).first()
+            if instance:
+                instance.token = result["data"]
+                instance.save()
+            else:
+                print(shop,result["data"])
+                store_data = {"name": shop, "url": shop, "platform": 1, "token": result["data"]}
+                store_instance = models.Store.objects.create(**store_data)
+                # TDD 调接口获取邮箱
+                info = ProductsApi(access_token=result["data"]).get_shop_info()
+                print("#info", info)
+                email = "163.com"
+                user_data = {"username": email, "email": email}
+                user_instance = models.User.objects.create(**user_data)
+                store_instance.user = user_instance
+                store_instance.save()
             return HttpResponseRedirect(redirect_to="http://www.baidu.com/?shop={}&email={}&id={}".format(shop, email, user_instance.id))
-        return HttpResponseRedirect(redirect_to="http://www.baidu.com")
+        return Response({"message": "auth faild"})
 
 
 class PinterestCallback(APIView):
@@ -146,3 +182,13 @@ class PinterestCallback(APIView):
         if result["code"] == 1:
             models.PinterestAccount.objects.filter(account_uri=account_uri).update(token=result["data"]["access_token"], authorized=1)
         return HttpResponseRedirect(redirect_to="http://www.baidu.com")
+
+
+class OperationRecord(generics.ListAPIView):
+    """操作记录 视图"""
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def get(self, request, *args, **kwargs):
+        data = reports.operation_record(request)
+        return Response(data)
