@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 import requests
 import json
+from config import PINTEREST_CONFIG
 from config import logger
 
 
@@ -16,10 +17,10 @@ class PinterestApi():
         """
         self.access_token = access_token
         self.pinterest_host = "https://api.pinterest.com/v1" if not host else host
-        self.redirect_uri = "https://pinbooster.seamarketings.com/api/v1/pinterest/callback/"
-        self.client_id = "5031224083375764064"
-        self.client_secret = "c3ed769d9c5802a98f7c4b949f234c482a19e5bf3a3ac491a0d20e44d7f7556e"
-        self.scope = "read_public,write_public,read_relationships,write_relationships"
+        self.redirect_uri = PINTEREST_CONFIG.get("redirect_uri")
+        self.client_id = PINTEREST_CONFIG.get("client_id")
+        self.client_secret = PINTEREST_CONFIG.get("client_secret")
+        self.scope = PINTEREST_CONFIG.get("scope")
 
     def get_pinterest_url(self, state):
         """
@@ -45,7 +46,7 @@ class PinterestApi():
         try:
             result = requests.post(url)
             if result.status_code == 200:
-                logger.info("pinterest token success = {}".format(json.loads(result.text)["access_token"]))
+                logger.info("pinterest token success = {}".format(json.loads(result.text).get("access_token")))
                 return {"code": 1, "msg": "", "data": json.loads(result.text)}
             else:
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
@@ -66,7 +67,7 @@ class PinterestApi():
             result = requests.get(url)
             if result.status_code == 200:
                 logger.info("get user: {} info is success".format(json.loads(result.text)["data"]["username"]))
-                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+                return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
@@ -92,7 +93,7 @@ class PinterestApi():
             result = requests.post(url, payload)
             if result.status_code == 200:
                 logger.info("create user boards is success name={}".format(name))
-                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+                return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
@@ -113,7 +114,7 @@ class PinterestApi():
             result = requests.get(url)
             if result.status_code == 200:
                 logger.info("get user boards is success")
-                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+                return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
@@ -134,7 +135,7 @@ class PinterestApi():
             result = requests.get(url)
             if result.status_code == 200:
                 logger.info("get by id board is success; board_id={}".format(board_id))
-                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+                return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
@@ -152,7 +153,7 @@ class PinterestApi():
             result = requests.delete(url)
             if result.status_code == 200:
                 logger.info("delete board is success, board_id={}".format(board_id))
-                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+                return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
@@ -179,7 +180,7 @@ class PinterestApi():
             result = requests.patch(url, payload)
             if result.status_code == 200:
                 logger.info("edit board is success; board_id={},name={} ".format(board_id, name))
-                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+                return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
@@ -209,7 +210,7 @@ class PinterestApi():
             result = requests.post(api_request_url, json=payload)
             if result.status_code == 200:
                 logger.info("create new pin is success; board_id={}".format(board_id))
-                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+                return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
@@ -230,7 +231,7 @@ class PinterestApi():
             result = requests.get(api_request_url)
             if result.status_code == 200:
                 logger.info("get user pins is success")
-                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+                return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
@@ -252,6 +253,9 @@ class PinterestApi():
             result = requests.get(api_request_url)
             if result.status_code == 200:
                 logger.info("get pin by id is success, pin_id={}".format(pin_id))
+                return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
+            else:
+                return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("get pin by id is failed: {}".format(e))
             return {"code": -1, "msg": e, "data": ""}
@@ -278,7 +282,7 @@ class PinterestApi():
             result = requests.patch(api_request_url, payload)
             if result.status_code == 200:
                 logger.info("edit pin by id is success; pin_id={}".format(pin_id))
-                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+                return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
@@ -296,7 +300,7 @@ class PinterestApi():
             result = requests.delete(url)
             if result.status_code == 200:
                 logger.info("delete pin by id:{} is success".format(pin_id))
-                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+                return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
                 logger.info("delete pin by id:{} is failed".format(pin_id))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
@@ -319,7 +323,7 @@ class PinterestApi():
             result = requests.get(url)
             if result.status_code == 200:
                 logger.info("get user suggest: {} is success".format(count))
-                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+                return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:

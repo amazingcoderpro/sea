@@ -69,13 +69,3 @@ if __name__ == '__main__':
     ShopifyBase.ask_permission(nonce="ordersea")
     # ShopifyBase.confirm_installation()
     # ShopifyBase.get_token(shop="ordersea")
-
-
-
-
-
-
-
-
-
-
