@@ -10,6 +10,10 @@ class ShopifyBase():
     shopify授权的api
     """
     def __init__(self, shop_name):
+        """
+        :param code: 1 状态正确， 2 状态错误， -1 出现异常
+        :param shop_name: 店铺名称
+        """
         self.shop_name = shop_name
         self.client_id = SHOPIFY_CONFIG.get("client_id")
         self.client_secret = SHOPIFY_CONFIG.get("client_secret")

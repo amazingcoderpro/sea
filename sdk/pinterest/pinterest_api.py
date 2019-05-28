@@ -11,7 +11,6 @@ class PinterestApi():
 
     def __init__(self, access_token="", host=None):
         """
-
         :param access_token:
         :param host:
         """

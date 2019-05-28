@@ -5,23 +5,24 @@ from config import SHOPIFY_CONFIG
 
 
 class ProductsApi:
-    def __init__(self, access_token, shop):
+    def __init__(self, access_token, shop_name):
         """
         :param client_id: api key
         :param access_token: api password
-        :param shop: 店铺名称
+        :param shop_name: 店铺名称
         :param scopes: 权限
         :param callback_uri: callback url
+        :param code: 1 状态正确， 2 状态错误， -1 出现异常
         """
         self.client_id = SHOPIFY_CONFIG.get("client_id")
         self.access_token = access_token
-        self.shop = shop
+        self.shop_name = shop_name
         self.scopes = SHOPIFY_CONFIG.get("scopes")
         self.callback_uri = SHOPIFY_CONFIG.get("callback_uri")
         self.version_url = "/admin/api/2019-04/"
 
     def get_shop_info(self):
-        shop_url = f"https://{self.client_id}:{self.access_token}@{self.shop}{self.version_url}shop.json"
+        shop_url = f"https://{self.client_id}:{self.access_token}@{self.shop_name}{self.version_url}shop.json"
         try:
             result = requests.get(shop_url)
             if result.status_code == 200:
@@ -35,7 +36,7 @@ class ProductsApi:
             return {"code": -1, "msg": e, "data": ""}
 
     def get_all_products(self):
-        products_url = f"https://{self.client_id}:{self.access_token}@{self.shop}{self.version_url}products.json"
+        products_url = f"https://{self.client_id}:{self.access_token}@{self.shop_name}{self.version_url}products.json"
         try:
             result = requests.get(products_url)
             if result.status_code == 200:
@@ -48,8 +49,8 @@ class ProductsApi:
             logger.error("get shopify all prodects is failed info={}".format(e))
             return {"code": -1, "msg": e, "data": ""}
 
-    def get_product_id(self):
-        products_url = f"https://{self.client_id}:{self.access_token}@{self.shop}{self.version_url}products/{self.id}.json"
+    def get_product_id(self, id):
+        products_url = f"https://{self.client_id}:{self.access_token}@{self.shop_name}{self.version_url}products/{id}.json"
         try:
             result = requests.get(products_url)
             if result.status_code == 200:
