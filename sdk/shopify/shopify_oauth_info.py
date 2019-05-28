@@ -51,7 +51,9 @@ class ShopifyBase():
         }
         url = f"https://{self.shop_name}.myshopify.com/admin/oauth/access_token"
         try:
-            result = requests.post(url, display)
+            headers = {'Content-Type': 'application/json'}
+            result = requests.post(url, json.dumps(display), headers=headers)
+            # print(result.status_code)
             if result.status_code == 200:
                 logger.info("get shopify token is successed, shopname={}".format(self.shop_name))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("access_token")}
@@ -66,6 +68,6 @@ class ShopifyBase():
 if __name__ == '__main__':
     ShopifyBase = ShopifyBase(shop_name="ordersea")
     # ShopifyBase.reRequest(shop="ordersea", method="get", url="", headers=None, data=None)
-    ShopifyBase.ask_permission(nonce="ordersea")
-    # ShopifyBase.confirm_installation()
-    # ShopifyBase.get_token(shop="ordersea")
+    # ShopifyBase.ask_permission(nonce="ordersea")
+
+    ShopifyBase.get_token(code="ec370ccb56986acb1a76db0e3fecd798")
