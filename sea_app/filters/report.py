@@ -84,15 +84,15 @@ class AccountListFilter(BaseFilterBackend):
             yesterday_info = yesterday_group_dict.get(a_id)
             if yesterday_info:
                 yesterday_pins = len(set(filter(lambda x: x, yesterday_info.get("pins", 0))))
-                yesterday_repin = yesterday_info.get("repin", 0)
-                yesterday_like = yesterday_info.get("like", 0)
-                yesterday_comment = yesterday_info.get("comment", 0)
+                yesterday_saves = yesterday_info.get("saves", 0)
+                yesterday_likes = yesterday_info.get("likes", 0)
+                yesterday_comment = yesterday_info.get("comments", 0)
             else:
-                yesterday_pins = yesterday_repin = yesterday_like = yesterday_comment = 0
+                yesterday_pins = yesterday_saves = yesterday_likes = yesterday_comment = 0
             info["pins_increment"] = info["pins"] - yesterday_pins
-            info["repin_increment"] = info["repin"] - yesterday_repin
-            info["like_increment"] = info["like"] - yesterday_like
-            info["comment_increment"] = info["comment"] - yesterday_comment
+            info["saves_increment"] = info["saves"] - yesterday_saves
+            info["likes_increment"] = info["likes"] - yesterday_likes
+            info["comments_increment"] = info["comments"] - yesterday_comment
         # 添加发布数，并整理输出结果
         account_list = []
         for index, a in enumerate(today_group_dict.items()):
@@ -126,15 +126,15 @@ class AccountListFilter(BaseFilterBackend):
                     "account_state": today.pinterest_account.state,
                     "account_crawl_time": today.pinterest_account.update_time.strftime("%Y-%m-%d %H:%M:%S"),
                     "pins": [] if not today.pin_id else [today.pin_id],  # pin数
-                    "repin": today.pin_repin,
-                    "like": today.pin_like,
-                    "comment": today.pin_comment,
+                    "saves": today.pin_saves,
+                    "likes": today.pin_likess,
+                    "comments": today.pin_comments,
                 }
             else:
                 group_dict[today.pinterest_account_id]["pins"].append(today.pin_id)
-                group_dict[today.pinterest_account_id]["repin"] += today.pin_repin
-                group_dict[today.pinterest_account_id]["like"] += today.pin_like
-                group_dict[today.pinterest_account_id]["comment"] += today.pin_comment
+                group_dict[today.pinterest_account_id]["saves"] += today.pin_saves
+                group_dict[today.pinterest_account_id]["likes"] += today.pin_likess
+                group_dict[today.pinterest_account_id]["comments"] += today.pin_comments
         return group_dict
 
 
@@ -161,15 +161,15 @@ class BoardListFilter(BaseFilterBackend):
             yesterday_b_info = yesterday_group_dict.get("b_id")
             if yesterday_b_info:
                 yesterday_pins = len(set(filter(lambda x: x, yesterday_b_info.get("pins", 0))))
-                yesterday_repin = yesterday_b_info.get("repin", 0)
-                yesterday_like = yesterday_b_info.get("like", 0)
-                yesterday_comment = yesterday_b_info.get("comment", 0)
+                yesterday_saves = yesterday_b_info.get("saves", 0)
+                yesterday_likes = yesterday_b_info.get("likes", 0)
+                yesterday_comment = yesterday_b_info.get("comments", 0)
             else:
-                yesterday_pins = yesterday_repin = yesterday_like = yesterday_comment = 0
+                yesterday_pins = yesterday_saves = yesterday_likes = yesterday_comment = 0
             b_info["pins_increment"] = b_info["pins"] - yesterday_pins
-            b_info["repin_increment"] = b_info["repin"] - yesterday_repin
-            b_info["like_increment"] = b_info["like"] - yesterday_like
-            b_info["comment_increment"] = b_info["comment"] - yesterday_comment
+            b_info["saves_increment"] = b_info["saves"] - yesterday_saves
+            b_info["likes_increment"] = b_info["likes"] - yesterday_likes
+            b_info["comments_increment"] = b_info["comments"] - yesterday_comment
         # 获取board发布数据
         boards_list = []
         for b_index, b in enumerate(today_group_dict.items()):
@@ -194,15 +194,15 @@ class BoardListFilter(BaseFilterBackend):
                     "board_description": today.board.description,
                     "board_state": today.board.state,
                     "pins": [] if not today.pin_id else [today.pin_id],  # pin数
-                    "repin": today.pin_repin,
-                    "like": today.pin_like,
-                    "comment": today.pin_comment,
+                    "saves": today.pin_saves,
+                    "likes": today.pin_likess,
+                    "comments": today.pin_comments,
                 }
             else:
                 group_dict[today.board_id]["pins"].append(today.pin_id)
-                group_dict[today.board_id]["repin"] += today.pin_repin
-                group_dict[today.board_id]["like"] += today.pin_like
-                group_dict[today.board_id]["comment"] += today.pin_comment
+                group_dict[today.board_id]["saves"] += today.pin_saves
+                group_dict[today.board_id]["likes"] += today.pin_likess
+                group_dict[today.board_id]["comments"] += today.pin_comments
         return group_dict
 
 
@@ -232,16 +232,16 @@ class PinListFilter(BaseFilterBackend):
         for p_id, p_info in today_group_dict.items():
             yesterday_p_info = yesterday_group_dict.get("p_id")
             if yesterday_p_info:
-                yesterday_view = yesterday_p_info.get("view", 0)
-                yesterday_repin = yesterday_p_info.get("repin", 0)
-                yesterday_like = yesterday_p_info.get("like", 0)
-                yesterday_comment = yesterday_p_info.get("comment", 0)
+                yesterday_view = yesterday_p_info.get("views", 0)
+                yesterday_saves = yesterday_p_info.get("saves", 0)
+                yesterday_likes = yesterday_p_info.get("likes", 0)
+                yesterday_comment = yesterday_p_info.get("comments", 0)
             else:
-                yesterday_view = yesterday_repin = yesterday_like = yesterday_comment = 0
-            p_info["view_increment"] = p_info["view"] - yesterday_view
-            p_info["repin_increment"] = p_info["repin"] - yesterday_repin
-            p_info["like_increment"] = p_info["like"] - yesterday_like
-            p_info["comment_increment"] = p_info["comment"] - yesterday_comment
+                yesterday_view = yesterday_saves = yesterday_likes = yesterday_comment = 0
+            p_info["view_increment"] = p_info["views"] - yesterday_view
+            p_info["saves_increment"] = p_info["saves"] - yesterday_saves
+            p_info["likes_increment"] = p_info["likes"] - yesterday_likes
+            p_info["comments_increment"] = p_info["comments"] - yesterday_comment
             p_info["under_board_id"] = board_id
             p_info["under_account_id"] = account_id
         # 获取pin数据
@@ -263,16 +263,16 @@ class PinListFilter(BaseFilterBackend):
                     "pin_description": today.pin.description,
                     "pin_url": today.pin.url,
                     "product_sku": today.pin.product.sku,
-                    "view": today.pin_views,
-                    "repin": today.pin_repin,
-                    "like": today.pin_like,
-                    "comment": today.pin_comment,
+                    "views": today.pin_views,
+                    "saves": today.pin_saves,
+                    "likes": today.pin_likess,
+                    "comments": today.pin_comments,
                 }
             else:
-                group_dict[today.pin_id]["view"] += today.pin_views
-                group_dict[today.pin_id]["repin"] += today.pin_repin
-                group_dict[today.pin_id]["like"] += today.pin_like
-                group_dict[today.pin_id]["comment"] += today.pin_comment
+                group_dict[today.pin_id]["views"] += today.pin_views
+                group_dict[today.pin_id]["saves"] += today.pin_saves
+                group_dict[today.pin_id]["likes"] += today.pin_likess
+                group_dict[today.pin_id]["comments"] += today.pin_comments
         return group_dict
 
 
@@ -304,15 +304,15 @@ class AccountListFilter_b(BaseFilterBackend):
             yesterday_info = yesterday_group_dict.get(a_id)
             if yesterday_info:
                 yesterday_pins = len(set(filter(lambda x: x, yesterday_info.get("pins", 0))))
-                yesterday_repin = yesterday_info.get("repin", 0)
-                yesterday_like = yesterday_info.get("like", 0)
-                yesterday_comment = yesterday_info.get("comment", 0)
+                yesterday_saves = yesterday_info.get("saves", 0)
+                yesterday_likes = yesterday_info.get("likes", 0)
+                yesterday_comment = yesterday_info.get("comments", 0)
             else:
-                yesterday_pins = yesterday_repin = yesterday_like = yesterday_comment = 0
+                yesterday_pins = yesterday_saves = yesterday_likes = yesterday_comment = 0
             info["pins_increment"] = info["pins"] - yesterday_pins
-            info["repin_increment"] = info["repin"] - yesterday_repin
-            info["like_increment"] = info["like"] - yesterday_like
-            info["comment_increment"] = info["comment"] - yesterday_comment
+            info["saves_increment"] = info["saves"] - yesterday_saves
+            info["likes_increment"] = info["likes"] - yesterday_likes
+            info["comments_increment"] = info["comments"] - yesterday_comment
             # 获取board增量
             for b_id, b_info in info["board_list"].items():
                 pin_id_under_board = set(filter(lambda x: x, b_info["pins"]))
@@ -321,34 +321,34 @@ class AccountListFilter_b(BaseFilterBackend):
                     yesterday_b_info = yesterday_group_dict.get(a_id)["board_list"].get("b_id")
                     if yesterday_b_info:
                         yesterday_pins = len(set(filter(lambda x: x, yesterday_b_info.get("pins", 0))))
-                        yesterday_repin = yesterday_b_info.get("repin", 0)
-                        yesterday_like = yesterday_b_info.get("like", 0)
-                        yesterday_comment = yesterday_b_info.get("comment", 0)
+                        yesterday_saves = yesterday_b_info.get("saves", 0)
+                        yesterday_likes = yesterday_b_info.get("likes", 0)
+                        yesterday_comment = yesterday_b_info.get("comments", 0)
                     else:
-                        yesterday_pins = yesterday_repin = yesterday_like = yesterday_comment = 0
+                        yesterday_pins = yesterday_saves = yesterday_likes = yesterday_comment = 0
                 except:
-                    yesterday_pins = yesterday_repin = yesterday_like = yesterday_comment = 0
+                    yesterday_pins = yesterday_saves = yesterday_likes = yesterday_comment = 0
                 b_info["pins_increment"] = b_info["pins"] - yesterday_pins
-                b_info["repin_increment"] = b_info["repin"] - yesterday_repin
-                b_info["like_increment"] = b_info["like"] - yesterday_like
-                b_info["comment_increment"] = b_info["comment"] - yesterday_comment
+                b_info["saves_increment"] = b_info["saves"] - yesterday_saves
+                b_info["likes_increment"] = b_info["likes"] - yesterday_likes
+                b_info["comments_increment"] = b_info["comments"] - yesterday_comment
                 # 获取pin增量
                 for p_id, p_info in b_info["pin_list"].items():
                     try:
                         yesterday_p_info = yesterday_group_dict.get(a_id)["board_list"].get("b_id")["pin_list"].get("p_id")
                         if yesterday_p_info:
-                            yesterday_view = yesterday_p_info.get("view", 0)
-                            yesterday_repin = yesterday_p_info.get("repin", 0)
-                            yesterday_like = yesterday_p_info.get("like", 0)
-                            yesterday_comment = yesterday_p_info.get("comment", 0)
+                            yesterday_view = yesterday_p_info.get("views", 0)
+                            yesterday_saves = yesterday_p_info.get("saves", 0)
+                            yesterday_likes = yesterday_p_info.get("likes", 0)
+                            yesterday_comment = yesterday_p_info.get("comments", 0)
                         else:
-                            yesterday_view = yesterday_repin = yesterday_like = yesterday_comment = 0
+                            yesterday_view = yesterday_saves = yesterday_likes = yesterday_comment = 0
                     except:
-                        yesterday_view = yesterday_repin = yesterday_like = yesterday_comment = 0
-                    p_info["view_increment"] = p_info["view"] - yesterday_view
-                    p_info["repin_increment"] = p_info["repin"] - yesterday_repin
-                    p_info["like_increment"] = p_info["like"] - yesterday_like
-                    p_info["comment_increment"] = p_info["comment"] - yesterday_comment
+                        yesterday_view = yesterday_saves = yesterday_likes = yesterday_comment = 0
+                    p_info["view_increment"] = p_info["views"] - yesterday_view
+                    p_info["saves_increment"] = p_info["saves"] - yesterday_saves
+                    p_info["likes_increment"] = p_info["likes"] - yesterday_likes
+                    p_info["comments_increment"] = p_info["comments"] - yesterday_comment
                     p_info["under_board_id"] = b_id
                     p_info["under_account_id"] = a_id
 
@@ -403,33 +403,33 @@ class AccountListFilter_b(BaseFilterBackend):
                     "account_crawl_time": today.pinterest_account.update_time,
                     # "boards": [] if not today.board_id else [today.board_id],  # board数
                     "pins": [] if not today.pin_id else [today.pin_id],  # pin数
-                    "repin": today.pin_repin,
-                    "like": today.pin_like,
-                    "comment": today.pin_comment,
+                    "saves": today.pin_saves,
+                    "likes": today.pin_likess,
+                    "comments": today.pin_comments,
                     "board_list": {}
                 }
             else:
                 # group_dict[today.pinterest_account_id]["boards"].append(today.board_id)
                 group_dict[today.pinterest_account_id]["pins"].append(today.pin_id)
-                group_dict[today.pinterest_account_id]["repin"] += today.pin_repin
-                group_dict[today.pinterest_account_id]["like"] += today.pin_like
-                group_dict[today.pinterest_account_id]["comment"] += today.pin_comment
+                group_dict[today.pinterest_account_id]["saves"] += today.pin_saves
+                group_dict[today.pinterest_account_id]["likes"] += today.pin_likess
+                group_dict[today.pinterest_account_id]["comments"] += today.pin_comments
             # 获取board数据
             if today.board_id and today.board_id not in group_dict[today.pinterest_account_id]["board_list"]:
                 group_dict[today.pinterest_account_id]["board_list"][today.board_id] = {
                     "board_description": today.board.description,
                     "board_state": "Public" if today.board.state else "Private",
                     "pins": [] if not today.pin_id else [today.pin_id],  # pin数
-                    "repin": today.pin_repin,
-                    "like": today.pin_like,
-                    "comment": today.pin_comment,
+                    "saves": today.pin_saves,
+                    "likes": today.pin_likess,
+                    "comments": today.pin_comments,
                     "pin_list": {}
                 }
             elif today.board_id and today.board_id in group_dict[today.pinterest_account_id]["board_list"]:
                 group_dict[today.pinterest_account_id]["board_list"][today.board_id]["pins"].append(today.pin_id)
-                group_dict[today.pinterest_account_id]["board_list"][today.board_id]["repin"] += today.pin_repin
-                group_dict[today.pinterest_account_id]["board_list"][today.board_id]["like"] += today.pin_like
-                group_dict[today.pinterest_account_id]["board_list"][today.board_id]["comment"] += today.pin_comment
+                group_dict[today.pinterest_account_id]["board_list"][today.board_id]["saves"] += today.pin_saves
+                group_dict[today.pinterest_account_id]["board_list"][today.board_id]["likes"] += today.pin_likess
+                group_dict[today.pinterest_account_id]["board_list"][today.board_id]["comments"] += today.pin_comments
 
             # 获取pin数据
             if today.pin_id and today.pin_id not in group_dict[today.pinterest_account_id]["board_list"][today.board_id]["pin_list"]:
@@ -438,16 +438,16 @@ class AccountListFilter_b(BaseFilterBackend):
                     "pin_description": today.pin.description,
                     "pin_url": today.pin.url,
                     "product_sku": today.pin.product.sku,
-                    "view": today.pin_views,
-                    "repin": today.pin_repin,
-                    "like": today.pin_like,
-                    "comment": today.pin_comment,
+                    "views": today.pin_views,
+                    "saves": today.pin_saves,
+                    "likes": today.pin_likess,
+                    "comments": today.pin_comments,
                 }
             elif today.pin_id and today.pin_id in group_dict[today.pinterest_account_id]["board_list"][today.board_id]["pin_list"]:
-                group_dict[today.pinterest_account_id]["board_list"][today.board_id]["pin_list"][today.pin_id]["view"] += today.pin_views
-                group_dict[today.pinterest_account_id]["board_list"][today.board_id]["pin_list"][today.pin_id]["repin"] += today.pin_repin
-                group_dict[today.pinterest_account_id]["board_list"][today.board_id]["pin_list"][today.pin_id]["like"] += today.pin_like
-                group_dict[today.pinterest_account_id]["board_list"][today.board_id]["pin_list"][today.pin_id]["comment"] += today.pin_comment
+                group_dict[today.pinterest_account_id]["board_list"][today.board_id]["pin_list"][today.pin_id]["views"] += today.pin_views
+                group_dict[today.pinterest_account_id]["board_list"][today.board_id]["pin_list"][today.pin_id]["saves"] += today.pin_saves
+                group_dict[today.pinterest_account_id]["board_list"][today.board_id]["pin_list"][today.pin_id]["likes"] += today.pin_likess
+                group_dict[today.pinterest_account_id]["board_list"][today.board_id]["pin_list"][today.pin_id]["comments"] += today.pin_comments
 
         return group_dict
 
