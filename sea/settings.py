@@ -170,3 +170,12 @@ EMAIL_USE_SSL = False
 EMAIL_SUBJECT_PREFIX = " "
 # 默认邮件接收方(开发人员，如果代码出现极端异常可进行邮件通知.)
 DEFAULT_TO_EMAILS = ["877252373@qq.com", ]
+
+
+# view 缓存
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache', #缓存到本地内存中
+        'TIMEOUT': 60,
+    }
+}
