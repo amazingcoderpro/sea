@@ -18,7 +18,6 @@ class PinterestAccountSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "account_uri",
-            "name",
             "email",
             "type",
             "state",
@@ -90,6 +89,12 @@ class RuleSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Product
+        fields = "__all__"
+
+
+class ProductHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.ProductHistoryData
         fields = "__all__"
 
 

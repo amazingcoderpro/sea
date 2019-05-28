@@ -59,7 +59,7 @@ class ProductView(generics.ListAPIView):
 class ProductCount(generics.ListAPIView):
     """获取符合条件的产品"""
     queryset = models.ProductHistoryData.objects.all()
-    serializer_class = account_manager.ProductSerializer
+    serializer_class = account_manager.ProductHistorySerializer
     filter_backends = (account_manager_filters.ProductCountFilter,)
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
@@ -71,18 +71,19 @@ class ProductCount(generics.ListAPIView):
         sale = request.query_params.get("sale", '')
         res = []
         queryset = self.filter_queryset(self.get_queryset())
-        result = queryset.values("product").annotate(scan=Sum("product_scan"), sale=Sum("product_sale"))
-        if scan and sale:
-            for item in result:
-                scan_codition = "{} {} {}".format(item["scan"], scan_sign, scan)
-                sale_codition = "{} {} {}".format(item["sale"], sale_sign, sale)
-                if eval(scan_codition) and eval(sale_codition):
-                    res.append(item["product"])
-        else:
-            for item in result:
-                scan_codition = "{} {} {}".format(item["scan"], scan_sign, scan)
-                if eval(scan_codition):
-                    res.append(item["product"])
+        print("queryset", queryset)
+        # result = queryset.values("product").annotate(scan=Sum("product_scan"), sale=Sum("product_sale"))
+        # if scan and sale:
+        #     for item in result:
+        #         scan_codition = "{} {} {}".format(item["scan"], scan_sign, scan)
+        #         sale_codition = "{} {} {}".format(item["sale"], sale_sign, sale)
+        #         if eval(scan_codition) and eval(sale_codition):
+        #             res.append(item["product"])
+        # else:
+        #     for item in result:
+        #         scan_codition = "{} {} {}".format(item["scan"], scan_sign, scan)
+        #         if eval(scan_codition):
+        #             res.append(item["product"])
         return Response(res)
 
 
