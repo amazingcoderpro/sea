@@ -188,9 +188,9 @@ class Pin(models.Model):
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     board = models.ForeignKey(Board, on_delete=models.DO_NOTHING, blank=True, null=True)
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
-    saves = models.IntegerField(default=0, verbose_name="转发量")
-    comments = models.IntegerField(default=0, verbose_name="评论量")
-    likes = models.IntegerField(default=0, verbose_name="点赞数, pinteres平台已经没有了")
+    saves = models.IntegerField(default=0, verbose_name=u"转发量")
+    comments = models.IntegerField(default=0, verbose_name=u"评论量")
+    likes = models.IntegerField(default=0, verbose_name=u"点赞数, pinteres平台已经没有了,暂时保留")
 
     class Meta:
         # managed = False
@@ -211,7 +211,7 @@ class PinterestHistoryData(models.Model):
     pin_uri = models.CharField(max_length=32, blank=True, null=True, verbose_name="Pin唯一标识码")
     pin_note = models.TextField(blank=True, null=True, verbose_name="Pin 描述")
     pin_thumbnail = models.TextField(blank=True, null=True, verbose_name="缩略图")
-    pin_likes = models.IntegerField(default=0, verbose_name="喜欢量, pinteres平台已经没有了")
+    pin_likes = models.IntegerField(default=0, verbose_name="喜欢量, pinteres平台已经没有了, 暂时保留")
     pin_comments = models.IntegerField(default=0, verbose_name="评论量")
     pin_saves = models.IntegerField(default=0, verbose_name="转发量")
     pin_views = models.IntegerField(default=0, verbose_name="浏览量")
