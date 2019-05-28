@@ -1,6 +1,6 @@
 from django.conf.urls import url, include
+from django.views.decorators.cache import cache_page
 
-# from sea_app.views import reports, personal_center, account_manager, report, store
 from sea_app.views import reports, personal_center, account_manager, report, store
 
 v1_urlpatterns = [
@@ -18,8 +18,8 @@ v1_urlpatterns = [
     # url(r'role/(?P<pk>[0-9]+)/$', personal_center.RoleOperView.as_view()),
 
     # 报告
-    url(r'dashboard/change_part/$', report.DashBoardChangePartView.as_view()),
-    url(r'dashboard/fixed_part/$', report.DashBoardFixedPartView.as_view()),
+     url(r'dashboard/change_part/$', cache_page(60 * 15)(report.DashBoardChangePartView.as_view())),
+    url(r'dashboard/fixed_part/$', cache_page(60 * 15)(report.DashBoardFixedPartView.as_view())),
     url(r'daily_report/$', report.DailyReportView.as_view()),
     url(r'subaccount_report/(?P<type>[a-zA-Z]+)/$', report.SubAccountReportView.as_view()),
 
