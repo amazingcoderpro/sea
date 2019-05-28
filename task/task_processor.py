@@ -54,7 +54,7 @@ class PinterestOpt:
         image.thumbnail(size).save(image_thumb)
         return True
 
-    def image_2_base64(self, image_src, is_thumb=True, size=(100, 100)):
+    def image_2_base64(self, image_src, is_thumb=True, size=(100, 100), format='png'):
         if not os.path.exists(image_src):
             response = requests.get(image_src)
             image = Image.open(BytesIO(response.content))
@@ -65,7 +65,7 @@ class PinterestOpt:
             image.thumbnail(size)
 
         output_buffer = BytesIO()
-        image.save(output_buffer, format='PNG')
+        image.save(output_buffer, format='png')
         byte_data = output_buffer.getvalue()
         base64_str = base64.b64encode(byte_data)
         base64_str = base64_str.decode("utf-8")
@@ -162,7 +162,7 @@ class PinterestOpt:
                 # site_url = data["original_link"]
                 thumbnail = self.image_2_base64(record["img_url"])
                 time_now = datetime.datetime.now()
-                cursor.execute('''insert into `pin` (`pin_uri`, `url`, `description`, `site_url`, `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                cursor.execute('''insert into `pin` (`pin_uri`, `url`, `description`, `origin_link`, `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ''', (pin_uri, url, note, link, thumbnail, time_now, time_now, board_id, product_id))
                 pin_id = cursor.lastrowid
 
@@ -252,8 +252,15 @@ class PinterestOpt:
         select id, board_uri from `board` where id>=0''')
         exist_boards = cursor.fetchall()
         exist_boards_dict = {}
-        for bod in exist_boards:
-            exist_boards_dict[bod[1]] = bod[0]
+        for exb in exist_boards:
+            exist_boards_dict[exb[1]] = exb[0]
+
+        cursor.execute('''
+        select id, pin_uri from `pin` where id>=0''')
+        exist_pins = cursor.fetchall()
+        exist_pins_dict = {}
+        for exp in exist_pins:
+            exist_pins_dict[exp[1]] = exp[0]
 
         for account in accounts:
             account_id, token = account
@@ -264,7 +271,7 @@ class PinterestOpt:
             p_api = PinterestApi(access_token=token)
             ret = p_api.get_user_boards()
 
-            if ret["code"] == 100:
+            if ret["code"] == 1:
                 boards = ret["data"]
                 print(boards)
                 if boards:
@@ -295,7 +302,7 @@ class PinterestOpt:
                             board_id = cursor.lastrowid
 
                         cursor.execute('''insert into `pinterest_history_data`　
-                        (`board_uri`, `board_name`, `board_follower`, `board_id`, `pinterest_account_id`, `update_time`) 
+                        (`board_uri`, `board_name`, `board_followers`, `board_id`, `pinterest_account_id`, `update_time`) 
                         values (%s, %s, %s, %s, %s, %s)''', (uri, name, board_followers, board_id, account_id, time_now))
 
                     con.commit()
@@ -303,26 +310,73 @@ class PinterestOpt:
                 logger.error("update boards get_user_boards error, account token={}, ret={}".format(token, ret))
 
             ret = p_api.get_user_pins()
+
             if ret["code"] == 1:
-                pins = ret["data"]
+                pins = ret["data"]["data"]
                 if pins:
                     time_now = datetime.datetime.now()
                     for pin in pins:
                         uri = pin.get("id", "")
-                        name = pin.get("name", "")
-                        description = pin.get("description", "")
-                        state = 1 if pin.get('privacy') == "public" else 0
                         create_time = datetime.datetime.strptime(pin["created_at"], "%Y-%m-%dT%H:%M:%S")
-                        add_time = time_now
                         update_time = time_now
                         url = pin.get("url", "")
+                        media_type = pin.get("media",{}).get("type", 'image')
+                        note = pin.get("note", "")
+                        link = pin.get("link", "")
+                        original_link = pin.get("original_link", "")
+                        board_url = pin.get("board", {}).get("url", "")
+                        board_uri = pin.get("board", {}).get("id", "")
+                        board_name = pin.get("board", {}).get("name", "")
 
                         counts = pin.get("counts", {})
-                        board_pins = counts.get("pins", 0)
-                        board_collaborators = counts.get("collaborators", 0)
-                        board_followers = counts.get("followers", 0)
+                        pin_saves = counts.get("saves", 0)
+                        pin_comments = counts.get("comments", 0)
 
+                        image = pin.get("image", {}).get("original", {})
+                        image_path = image.get("url", "")
+                        image_width, image_height = image.get("width", 200), image.get("height", 200)
+                        metadata = pin.get("metadata", {})
 
+                        pin_thumbnail = self.image_2_base64(image_path)
+                        pin_like = 0
+                        pin_views = 0
+                        pin_clicks = 0
+
+                        # 如果pin　uri 已经存在，则进行更新即可
+                        if uri in exist_pins_dict.keys():
+                            # , saves = % s, comments = % s
+                            pin_id = exist_pins_dict[uri]
+                            cursor.execute(
+                                '''update `pin` set description=%s, update_time=%s''',
+                                (note, update_time))
+                        else:
+                            board_id = None
+                            product_id = None
+                            # 通过uri找到对应的board
+                            cursor.execute("select id from `board` where board_uri=%s", board_uri)
+                            board = cursor.fetchone()
+                            if board:
+                                board_id = board[0]
+
+                            # 通过pin背后的链接，找到他对应的产品
+                            cursor.execute("select id from `product` where url=%s", original_link)
+                            product = cursor.fetchone()
+                            if product:
+                                product_id = product[0]
+
+                            cursor.execute('''insert into `pin` (`pin_uri`, `url`, `note`, `origin_link`, 
+                        `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
+                                           (uri, url, note, original_link, pin_thumbnail, create_time, update_time, board_id, product_id))
+                            pin_id = cursor.lastrowid
+
+                        con.commit()
+
+                        #　更新历史数据表
+                        cursor.execute('''insert into `pinterest_history_data` (`pin_uri`, `pin_note`, `pin_thumbnail`, `pin_likes`, `pin_comments`, `pin_saves`, `pin_views`, `pin_clicks`, `update_time`, `board_id`, `pin_id`, `pinterest_account_id`, `product_id`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                                       (uri, note, pin_thumbnail, pin_like, pin_comments, pin_saves, pin_views, pin_clicks,
+                                    update_time, board_id, pin_id, account_id, product_id))
+
+                        con.commit()
             else:
                 logger.error("update pins get_user_pins error, account token={}, ret={}".format(token, ret))
 

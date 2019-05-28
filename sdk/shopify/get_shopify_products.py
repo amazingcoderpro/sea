@@ -20,6 +20,7 @@ class ProductsApi:
         self.scopes = SHOPIFY_CONFIG.get("scopes")
         self.callback_uri = SHOPIFY_CONFIG.get("callback_uri")
         self.version_url = "/admin/api/2019-04/"
+        self.headers = {'Content-Type': 'application/json'}
 
     def get_shop_info(self):
         shop_url = f"https://{self.client_id}:{self.access_token}@{self.shop_name}{self.version_url}shop.json"
@@ -27,13 +28,13 @@ class ProductsApi:
             result = requests.get(shop_url)
             if result.status_code == 200:
                 logger.info("get shopify info is success")
-                return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
+                return {"code": 1, "msg": "", "data": json.loads(result.text)}
             else:
                 logger.info("get shopify info is failed")
                 return {"code": 2, "msg": json.loads(result.text).get("errors", ""), "data": ""}
         except Exception as e:
-            logger.error("get shopify info is failed info={}".format(e))
-            return {"code": -1, "msg": e, "data": ""}
+            logger.error("get shopify info is failed info={}".format(str(e)))
+            return {"code": -1, "msg": str(e), "data": ""}
 
     def get_all_products(self):
         products_url = f"https://{self.client_id}:{self.access_token}@{self.shop_name}{self.version_url}products.json"
@@ -41,13 +42,13 @@ class ProductsApi:
             result = requests.get(products_url)
             if result.status_code == 200:
                 logger.info("get shopify all prodects is success")
-                return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
+                return {"code": 1, "msg": "", "data": json.loads(result.text)}
             else:
                 logger.info("get shopify all prodects is failed")
                 return {"code": 2, "msg": json.loads(result.text).get("errors", ""), "data": ""}
         except Exception as e:
-            logger.error("get shopify all prodects is failed info={}".format(e))
-            return {"code": -1, "msg": e, "data": ""}
+            logger.error("get shopify all prodects is failed info={}".format(str(e)))
+            return {"code": -1, "msg": str(e), "data": ""}
 
     def get_product_id(self, id):
         products_url = f"https://{self.client_id}:{self.access_token}@{self.shop_name}{self.version_url}products/{id}.json"
@@ -55,13 +56,13 @@ class ProductsApi:
             result = requests.get(products_url)
             if result.status_code == 200:
                 logger.info("get shopify all prodects by id is success")
-                return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
+                return {"code": 1, "msg": "", "data": json.loads(result.text)}
             else:
                 logger.info("get shopify all prodects by id is failed")
                 return {"code": 2, "msg": json.loads(result.text).get("errors", ""), "data": ""}
         except Exception as e:
-            logger.error("get shopify all prodects by id is failed info={}".format(e))
-            return {"code": -1, "msg": e, "data": ""}
+            logger.error("get shopify all prodects by id is failed info={}".format(str(e)))
+            return {"code": -1, "msg": str(e), "data": ""}
 
 
 if __name__ == '__main__':

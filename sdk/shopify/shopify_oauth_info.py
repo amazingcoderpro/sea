@@ -19,6 +19,7 @@ class ShopifyBase():
         self.client_secret = SHOPIFY_CONFIG.get("client_secret")
         self.redirect_uri = SHOPIFY_CONFIG.get("redirect_uri")
         self.scopes = SHOPIFY_CONFIG.get("scopes")
+        self.headers = {'Content-Type': 'application/json'}
 
     def ask_permission(self, nonce):
         """
@@ -51,9 +52,7 @@ class ShopifyBase():
         }
         url = f"https://{self.shop_name}.myshopify.com/admin/oauth/access_token"
         try:
-            headers = {'Content-Type': 'application/json'}
-            result = requests.post(url, json.dumps(display), headers=headers)
-            # print(result.status_code)
+            result = requests.post(url, json.dumps(display), headers=self.headers)
             if result.status_code == 200:
                 logger.info("get shopify token is successed, shopname={}".format(self.shop_name))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("access_token")}
@@ -61,8 +60,8 @@ class ShopifyBase():
                 logger.err("get shopify token is successed, shopname={}".format(self.shop_name))
                 return {"code": 2, "msg": json.loads(result.text).get("errors", ""), "data": ""}
         except Exception as e:
-            logger.error("get shopify token is failed".format(e))
-            return {"code": -1, "msg": e, "data": ""}
+            logger.error("get shopify token is failed".format(str(e)))
+            return {"code": -1, "msg": str(e), "data": ""}
 
 
 if __name__ == '__main__':
