@@ -145,11 +145,13 @@ class ShopifyCallback(APIView):
     def get(self, request):
         code = request.query_params.get("code", None)
         shop = request.query_params.get("shop", None)
-        if not code or not shop:
-            return Response({"message": "auth faild"})
+        state = request.query_params.get("state", None)
         print("####", code)
         print("####", shop)
-        result = ShopifyBase(shop).get_token(code)
+        if not code or not shop or not state:
+            return Response({"message": "auth faild"})
+        result = ShopifyBase(state).get_token(code)
+        print("1111",result)
         if result["code"] == 1:
             instance = models.Store.objects.filter(url=shop).first()
             if instance:
@@ -157,7 +159,7 @@ class ShopifyCallback(APIView):
                 instance.save()
             else:
                 print(shop, result["data"])
-                store_data = {"name": shop, "url": shop, "platform": 1, "token": result["data"]}
+                store_data = {"name": state, "url": shop, "platform": 1, "token": result["data"]}
                 store_instance = models.Store.objects.create(**store_data)
                 # TDD 调接口获取邮箱
                 info = ProductsApi(access_token=result["data"], shop_name=shop).get_shop_info()
