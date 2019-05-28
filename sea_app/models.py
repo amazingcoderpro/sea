@@ -131,6 +131,7 @@ class Product(models.Model):
     class Meta:
         # managed = False
         db_table = 'product'
+        ordering = ["-id"]
 
 
 class PinterestAccount(models.Model):
