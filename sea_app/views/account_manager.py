@@ -198,7 +198,7 @@ class BoardManageView(generics.RetrieveUpdateDestroyAPIView):
     def put(self, request, *args, **kwargs):
         data = request.data
         access_token = models.Board.objects.get(board_uri=data["board_uri"]).pinterest_account.token
-        result = PinterestApi(access_token=access_token).edit_board_id(data["board_uri"], data["name"], data["description"])
+        result = PinterestApi(access_token=access_token).edit_board(data["board_uri"], data["name"], data["description"])
         if result["code"] == 1:
             return self.update(request, *args, **kwargs)
         else:
@@ -225,7 +225,7 @@ class PinManageView(generics.RetrieveUpdateDestroyAPIView):
         pin_obj = models.Pin.objects.get(pin_uri=data["pin_uri"])
         access_token = pin_obj.board.pinterest_account.token
         board_uri = models.Board.objects.get(pk=data["board"]).board_uri
-        result = PinterestApi(access_token=access_token).edit_pin_id(data["pin_uri"], board_uri, data["description"], data["url"])
+        result = PinterestApi(access_token=access_token).edit_pin(data["pin_uri"], board_uri, data["description"], data["url"])
         if result["code"] == 1:
             return self.update(request, *args, **kwargs)
         else:
@@ -233,7 +233,7 @@ class PinManageView(generics.RetrieveUpdateDestroyAPIView):
 
     def delete(self, request, *args, **kwargs):
         pin_obj = models.Pin.objects.get(pk=kwargs["pk"])
-        result = PinterestApi(access_token=pin_obj.board.pinterest_account.token).delete_pin_id(pin_obj.pin_uri)
+        result = PinterestApi(access_token=pin_obj.board.pinterest_account.token).delete_pin(pin_obj.pin_uri)
         if result["code"] == 1:
             return self.destroy(request, *args, **kwargs)
         else:

@@ -121,7 +121,7 @@ class PinterestApi():
             logger.error("get user boards failed: {}".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
-    def get_board_id(self, board_id):
+    def get_board_by_id(self, board_id):
         """
         查询指定ID的board
         :param fields:
@@ -160,7 +160,7 @@ class PinterestApi():
             logger.error("delete board is failed: {}".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
-    def edit_board_id(self, board_id, name, description):
+    def edit_board(self, board_id, name, description):
         """
         编辑 board
         :param board_id:
@@ -240,7 +240,7 @@ class PinterestApi():
             logger.error("get user pins is failed: {}".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
-    def get_pin_id(self, pin_id):
+    def get_pin_by_id(self, pin_id):
         """
         查询指定ID的pin信息
         :param pin_id:
@@ -263,7 +263,7 @@ class PinterestApi():
             logger.error("get pin by id is failed: {}".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
-    def edit_pin_id(self, pin_id, board, note, link):
+    def edit_pin(self, pin_id, board, note, link):
         """
         编辑 pin
         :param pin_id:
@@ -293,7 +293,7 @@ class PinterestApi():
             logger.error("edit pin by id is failed: {}".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
-    def delete_pin_id(self, pin_id):
+    def delete_pin(self, pin_id):
         """
         # 删除 pin
         :param pin_id:
@@ -345,9 +345,9 @@ if __name__ == '__main__':
     # all_pinterest_api.get_user_pins(access_token=access_token)
     # all_pinterest_api.get_user_info()
     # all_pinterest_api.get_pinterest_url(state="twobercancan@gmail.com")
-    # all_pinterest_api.delete_pin_id(pin_id="55451266411112")
+    # all_pinterest_api.delete_pin(pin_id="55451266411112")
     all_pinterest_api.get_user_pins()
     # all_pinterest_api.get_user_boards()
-    # all_pinterest_api.get_pin_id(pin_id="753790056365099389")
-    # all_pinterest_api.edit_board_id(board_id="753790125070479475", name="jjjjj", description="jjjjjjjjjjjjjjjjjjjjjjj")
-    # all_pinterest_api.edit_pin_id(pin_id="753790056365099389", board="753790125070473943", note="tianchang", link="www.baidu.com")
+    # all_pinterest_api.get_pin_by_id(pin_id="753790056365099389")
+    # all_pinterest_api.edit_board(board_id="753790125070479475", name="jjjjj", description="jjjjjjjjjjjjjjjjjjjjjjj")
+    # all_pinterest_api.edit_pin(pin_id="753790056365099389", board="753790125070473943", note="tianchang", link="www.baidu.com")
