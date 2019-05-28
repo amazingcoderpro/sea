@@ -212,10 +212,11 @@ class PinterestApi():
                 logger.info("create new pin is success; board_id={}".format(board_id))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
+                logger.error("create new pin is failed; board_id={}".format(board_id))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("create new pin is failed:{}".format(e))
-            return {"code": -1, "msg": e, "data": ""}
+            return {"code": -1, "msg": str(e), "data": ""}
 
     def get_user_pins(self):
         """
@@ -233,10 +234,11 @@ class PinterestApi():
                 logger.info("get user pins is success")
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
+                logger.error("get user pins is failed")
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("get user pins is failed: {}".format(e))
-            return {"code": -1, "msg": e, "data": ""}
+            return {"code": -1, "msg": str(e), "data": ""}
 
     def get_pin_id(self, pin_id):
         """
@@ -255,10 +257,11 @@ class PinterestApi():
                 logger.info("get pin by id is success, pin_id={}".format(pin_id))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
+                logger.info("get pin by id is failed, pin_id={}".format(pin_id))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("get pin by id is failed: {}".format(e))
-            return {"code": -1, "msg": e, "data": ""}
+            return {"code": -1, "msg": str(e), "data": ""}
 
     def edit_pin_id(self, pin_id, board, note, link):
         """
@@ -284,10 +287,11 @@ class PinterestApi():
                 logger.info("edit pin by id is success; pin_id={}".format(pin_id))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
+                logger.info("edit pin by id is failed; pin_id={}".format(pin_id))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("edit pin by id is failed: {}".format(e))
-            return {"code": -1, "msg": e, "data": ""}
+            return {"code": -1, "msg": str(e), "data": ""}
 
     def delete_pin_id(self, pin_id):
         """
@@ -306,7 +310,7 @@ class PinterestApi():
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("delete pin by id is failed: {}".format(e))
-            return {"code": -1, "msg": e, "data": ""}
+            return {"code": -1, "msg": str(e), "data": ""}
 
     def get_user_suggested(self, count):
         """
@@ -325,10 +329,11 @@ class PinterestApi():
                 logger.info("get user suggest: {} is success".format(count))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
+                logger.info("get user suggest: {} is failed".format(count))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("get user suggest is failed:{}".format(e))
-            return {"code": -1, "msg": e, "data": ""}
+            return {"code": -1, "msg": str(e), "data": ""}
             
 
 if __name__ == '__main__':
@@ -339,8 +344,8 @@ if __name__ == '__main__':
     all_pinterest_api = PinterestApi(access_token=access_token)
     # all_pinterest_api.get_user_pins(access_token=access_token)
     # all_pinterest_api.get_user_info()
-    all_pinterest_api.get_pinterest_url(state="twobercancan@gmail.com")
-    all_pinterest_api.delete_pin_id(pin_id="55451266411112")
+    # all_pinterest_api.get_pinterest_url(state="twobercancan@gmail.com")
+    # all_pinterest_api.delete_pin_id(pin_id="55451266411112")
     all_pinterest_api.get_user_pins()
     # all_pinterest_api.get_user_boards()
     # all_pinterest_api.get_pin_id(pin_id="753790056365099389")
