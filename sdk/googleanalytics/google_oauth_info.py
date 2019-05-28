@@ -39,9 +39,15 @@ class GoogleApi():
                             ],
                             "metrics": [
                                 {"expression": "ga:pageviews"},
-                                {"expression": "ga:sessions"}
+                                {"expression": "ga:sessions"},
+                                {"expression": "ga:hits"}
                             ],
-                            "dimensions": [{"name": "ga:browser"}, {"name": "ga:country"}],
+                            "dimensions": [
+                                {"name": "ga:browser"},
+                                {"name": "ga:country"},
+                                {"name": 'ga:dimension1'}
+
+                            ],
                             "dimensionFilterClauses": [
                                 {
                                     "filters": [
