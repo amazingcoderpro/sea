@@ -72,7 +72,7 @@ class Platform(models.Model):
 class Store(models.Model):
     """店铺表"""
     name = models.CharField(blank=True, null=True, max_length=255, verbose_name="店铺名称")
-    url = models.CharField(blank=True, null=True, max_length=255, unique=True, verbose_name="店铺URL")
+    url = models.CharField(blank=True, null=False, max_length=255, unique=True, verbose_name="店铺URL")#店铺的url不能为null
     # email = models.EmailField(
     #     verbose_name='email address',
     #     max_length=255,
@@ -125,7 +125,8 @@ class Product(models.Model):
     publish_time = models.DateTimeField(blank=True, null=True, verbose_name="发布时间")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, blank=True, null=True)
+    store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, null=False)   # 产品的店铺不能为空
+    uri = models.CharField(max_length=100, verbose_name="产品唯一标识", unique=True)
 
     class Meta:
         # managed = False
