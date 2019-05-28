@@ -165,7 +165,9 @@ class Board(models.Model):
     state = models.SmallIntegerField(choices=state_choices, default=1, verbose_name="账号状态")
     add_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="修改时间")
-
+    pins = models.IntegerField(default=0, verbose_name=u"board的下的pin个数")
+    followers = models.IntegerField(default=0, verbose_name=u"board的follow数")
+    collaborators = models.IntegerField(default=0, verbose_name=u"board的合作者个数")
     pinterest_account = models.ForeignKey(PinterestAccount, related_name='board_pinterest_account', on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:

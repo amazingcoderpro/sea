@@ -230,32 +230,101 @@ class PinterestOpt:
                 insert into `publish_record` (`execute_time`, `board_id`, `product_id`, `rule_id`, `create_time`, `update_time`, `state`) values (%s, %s, %s, %s, %s, %s, %s)''', (exe_time, board_id, product_id, rule_id, time_now, time_now, 0))
             con.commit()
 
-    def update_boards(self):
+    def update_pins(self):
+        pass
+
+    def update_boards(self, account_state=0):
         """
-        拉取所有pinteres账号下的所有board, 并增量式的插入数据库
+        拉取所有pinteres 正常账号下的所有board, 并增量式的插入数据库，有则更新，无则插入
         :return:
         """
+
+        # 拉取所有账号
         con = DBUtil().get_instance()
         cursor = con.cursor()
         cursor.execute('''
-        select id, account_uri, token from `pinterest_account` where state=%s
-        ''', 0)
-
+        select id, token from `pinterest_account` where state=%s
+        ''', account_state)
         accounts = cursor.fetchall()
+
+        # 拿到所有已经存在的board
+        cursor.execute('''
+        select id, board_uri from `board` where id>=0''')
+        exist_boards = cursor.fetchall()
+        exist_boards_dict = {}
+        for bod in exist_boards:
+            exist_boards_dict[bod[1]] = bod[0]
+
         for account in accounts:
-            account_id, account_uri, token = account
+            account_id, token = account
+            if not token:
+                logger.warning("pinterest account token is None")
+                continue
+
             p_api = PinterestApi(access_token=token)
             ret = p_api.get_user_boards()
-            if ret[0] in [200, 201]:
-                boards = json.loads(ret[1])["data"]
+
+            if ret["code"] == 100:
+                boards = ret["data"]
                 print(boards)
-                time_now = datetime.datetime.now()
-                sql_values = [(board["id"], board["name"], datetime.datetime.strptime(board["created_at"], "%Y-%m-%dT%H:%M:%S"), board["description"], True if board['privacy']=="public" else False, time_now, time_now, account_id) for board in boards]
-                sql_values = [(1,2,3,4,5,6,7,8)]
-                cursor.executemany('''insert into `board` (`board_uri`, `name`, `create_time`, `description`, `state`, 
-                `add_time`, `update_time`, `pinterest_account_id`) values (%s, %s, %s, %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE name, description, update_time=VALUES(name, description, update_time)
-                ''', sql_values)
-                con.commit()
+                if boards:
+                    time_now = datetime.datetime.now()
+                    for board in boards:
+                        uri = board.get("id", "")
+                        name = board.get("name", "")
+                        description = board.get("description", "")
+                        state = 1 if board.get('privacy') == "public" else 0
+                        create_time = datetime.datetime.strptime(board["created_at"], "%Y-%m-%dT%H:%M:%S")
+                        add_time = time_now
+                        update_time = time_now
+                        url = board.get("url", "")
+
+                        counts = board.get("counts", {})
+                        board_pins = counts.get("pins", 0)
+                        board_collaborators = counts.get("collaborators", 0)
+                        board_followers = counts.get("followers", 0)
+                        # 如果board　uri 已经存在，则进行更新即可
+                        if uri in exist_boards_dict.keys():
+                            board_id = exist_boards_dict[uri]
+                            cursor.execute('''update `board` set name=%s, description=%s, state=%s, update_time=%s, pins=%s, followers=%s, collaborators=%s''',
+                                           (name, description, state, update_time, board_pins, board_followers, board_collaborators))
+                        else:
+                            cursor.execute('''insert into `board` (`board_uri`, `name`, `create_time`, `description`, `state`, 
+                    `add_time`, `update_time`, `pinterest_account_id`, `url`, `pins`, `followers`, `collaborators`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
+                                           (uri, name, create_time, description, state, add_time, update_time, account_id, url, board_pins, board_followers, board_collaborators))
+                            board_id = cursor.lastrowid
+
+                        cursor.execute('''insert into `pinterest_history_data`　
+                        (`board_uri`, `board_name`, `board_follower`, `board_id`, `pinterest_account_id`, `update_time`) 
+                        values (%s, %s, %s, %s, %s, %s)''', (uri, name, board_followers, board_id, account_id, time_now))
+
+                    con.commit()
+            else:
+                logger.error("update boards get_user_boards error, account token={}, ret={}".format(token, ret))
+
+            ret = p_api.get_user_pins()
+            if ret["code"] == 1:
+                pins = ret["data"]
+                if pins:
+                    time_now = datetime.datetime.now()
+                    for pin in pins:
+                        uri = pin.get("id", "")
+                        name = pin.get("name", "")
+                        description = pin.get("description", "")
+                        state = 1 if pin.get('privacy') == "public" else 0
+                        create_time = datetime.datetime.strptime(pin["created_at"], "%Y-%m-%dT%H:%M:%S")
+                        add_time = time_now
+                        update_time = time_now
+                        url = pin.get("url", "")
+
+                        counts = pin.get("counts", {})
+                        board_pins = counts.get("pins", 0)
+                        board_collaborators = counts.get("collaborators", 0)
+                        board_followers = counts.get("followers", 0)
+
+
+            else:
+                logger.error("update pins get_user_pins error, account token={}, ret={}".format(token, ret))
 
 
 class ShopifyOpt:
@@ -324,10 +393,12 @@ def test_pinterest_opt():
     pt = PinterestOpt()
     # pt.produce_records_by_rule()
 
-    records = pt.get_pending_records()
-    if records:
-        print(records)
-        pt.create_pins(records)
+    # records = pt.get_pending_records()
+    # if records:
+    #     print(records)
+    #     pt.create_pins(records)
+    pt.update_boards()
+
     # base64_str = pt.image_2_base64("https://www.theadultman.com/wp-content/uploads/2016/08/Things-Every-Man-Should-Own-1-1.jpg", is_thumb=False)
     # pt.base64_2_image(base64_str, "123.jpg")
     # pt.update_boards()
