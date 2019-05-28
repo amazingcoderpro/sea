@@ -4,8 +4,6 @@
 import json
 
 from django.db.models import Q
-from django.http import JsonResponse
-from rest_framework import status
 from rest_framework.response import Response
 
 import datetime
@@ -97,7 +95,7 @@ def daily_report(pin_set_list, product_set_list):
             group_dict[date]["products"].append(item.product_id)
     for day, info in group_dict.items():
         data = {
-            "date": day,
+            "date": day.strftime("%Y-%m-%d"),
             "account_following": info["account_following"],
             "account_follower": info["account_follower"],
             "boards": len(set(filter(lambda x: x, info["boards"]))),
@@ -135,7 +133,7 @@ def daily_report_view(request):
     """日报视图函数"""
     pin_set_list, product_set_list = get_common_data(request)
     data_list = daily_report(pin_set_list, product_set_list)
-    return JsonResponse({"data": data_list, "status": status.HTTP_200_OK})
+    return data_list
 
 
 def subaccount_report_view(request, type):
@@ -169,7 +167,7 @@ def subaccount_report_view(request, type):
         # 请求有误
         data_list = "An error occurred in the request and data could not be retrieved"
 
-    return JsonResponse({"data": data_list, "status": status.HTTP_200_OK})
+    return data_list
 
 
 def subaccount_report(pin_set_list, product_set_list):
@@ -237,7 +235,7 @@ def board_report(pin_set_list, product_set_list):
     # board report
     data_list = []
     group_dict = {}
-    set_list = pin_set_list.filter(~Q(board_id=None), ~Q(board_id=""))
+    set_list = pin_set_list.filter(~Q(board_id=None))
     # 取时间范围内最新board数据及board下所有pin总数
     for item in set_list:
         board_id = item.board_id
@@ -351,8 +349,8 @@ def pins_report(pin_set_list, product_set_list):
     return data_list
 
 
-def dash_board_view(request):
-    """DashBoard视图"""
+def dash_board_change_part(request):
+    """DashBoard视图 随筛选变动部分"""
     pin_set_list, product_set_list = get_common_data(request)
     # 账户总览 图数据
     overview_list = account_overview_chart(pin_set_list, product_set_list, request)
@@ -360,19 +358,19 @@ def dash_board_view(request):
     total_data = account_overview_table(overview_list)
     # 最新新增数据
     latest_update = latest_updates(pin_set_list, product_set_list, request)
+
+    return {"overview_list": overview_list, "total_data": total_data, "latest_update": latest_update}
+
+
+def dash_board_fixed_part(request):
+    """DashBoard视图 固定部分"""
     # top pins
     top_5_pins = top_pins(request, period=7)
     # top board
     top_5_board = top_board(request, period=7)
     # activity log
     record_list = operation_record(request)
-    return JsonResponse({"overview_dict": overview_list,
-                         "total_data": total_data,
-                         "latest_update": latest_update,
-                         "top_5_pins": top_5_pins,
-                         "top_5_board": top_5_board,
-                         "record_list": record_list,
-                         "status": status.HTTP_200_OK})
+    return {"top_5_pins": top_5_pins, "top_5_board": top_5_board, "record_list": record_list}
 
 
 def get_num(queryset, fieldname):
@@ -468,7 +466,7 @@ def account_overview_chart(pin_set_list, product_set_list, request, reslut_num=N
     overview_list = []
     for day in time_list[::-1]:
         day_count = site_count(pin_set_list, product_set_list, day)
-        day_count["date"] = day
+        day_count["date"] = day.strftime("%Y-%m-%d %H:%M:%S")
         overview_list.append(day_count)
         if reslut_num and len(overview_list) >= reslut_num:
             break
@@ -538,14 +536,14 @@ def top_pins(request, period=7):
     # 过滤PinterestHistoryData数据(时间范围内最新的一次数据)
     query_time = start_time
     while query_time <= end_time:
-        old_queryset = models.PinterestHistoryData.objects.filter(Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
+        old_queryset = models.PinterestHistoryData.objects.filter(Q(update_time__range=(query_time.date() + datetime.timedelta(days=-1), query_time.date())),
                                                               Q(product_id__in=product_id_list))
         if old_queryset:
             break
         query_time += datetime.timedelta(days=1)
     query_time = end_time
     while query_time >= start_time:
-        new_queryset = models.PinterestHistoryData.objects.filter(Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
+        new_queryset = models.PinterestHistoryData.objects.filter(Q(update_time__range=(query_time.date() + datetime.timedelta(days=-1), query_time.date())),
                                                               Q(product_id__in=product_id_list))
         if new_queryset:
             break
@@ -555,7 +553,7 @@ def top_pins(request, period=7):
     query_time = prev_start_time
     while query_time <= start_time:
         prev_old_queryset = models.PinterestHistoryData.objects.filter(
-            Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
+            Q(update_time__range=(query_time.date() + datetime.timedelta(days=-1), query_time.date())),
             Q(product_id__in=product_id_list))
         if prev_old_queryset:
             break
@@ -563,7 +561,7 @@ def top_pins(request, period=7):
     query_time = start_time
     while query_time >= prev_start_time:
         prev_new_queryset = models.PinterestHistoryData.objects.filter(
-            Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
+            Q(update_time__range=(query_time.date() + datetime.timedelta(days=-1), query_time.date())),
             Q(product_id__in=product_id_list))
         if prev_new_queryset:
             break
@@ -597,7 +595,7 @@ def pins_period(new_queryset, old_queryset):
             pin_dict[pin_obj.pin_id] = {
                 "SKU": pin_obj.product.sku,
                 "image": pin_obj.pin_thumbnail,
-                "pin_date": pin_obj.pin.publish_time,
+                "pin_date": pin_obj.pin.publish_time.strftime("%Y-%m-%d %H:%M:%S"),
                 "repins": pin_obj.pin_repin,
                 "increment": pin_obj.pin_repin - old_repin
             }
@@ -697,7 +695,7 @@ def board_period_part(queryset):
                 "board_name": board_obj.board_name,
                 "pins": [] if not board_obj.pin_id else [board_obj.pin_id],  # pin数
                 "repins": board_obj.pin_repin,
-                "create_date": board_obj.board.create_time,
+                "create_date": board_obj.board.create_time.strftime("%Y-%m-%d %H:%M:%S"),
                 "followers": board_obj.board_follower
             }
         else:
@@ -715,21 +713,21 @@ def operation_record(request, result_num=None):
         start_time = datetime.datetime(*map(int, start_time.split('-')))
     if isinstance(end_time, str):
         end_time = datetime.datetime(*map(int, end_time.split('-')))
-    username_id = request.GET.get("user_id")  # 必传
+    # username_id = request.GET.get("user_id")  # 必传
     # 获取当前用户及下属用户的所有操作记录
-    if username_id:
-        current_user_id = username_id
-    else:
-        current_user_id = request.user.id
+    # if username_id:
+    #     current_user_id = username_id
+    # else:
+    current_user_id = request.user.id
     # current_user_id 不能为空
     if current_user_id is None:
         return None
-    sub_user_set = models.User.objects.filter(Q(parent_id=current_user_id))
-    id_list = [current_user_id,]
-    for sub_user in sub_user_set:
-        id_list.append(sub_user.id)
+    # sub_user_set = models.User.objects.filter(Q(id=current_user_id))
+    # id_list = [current_user_id]
+    # for sub_user in sub_user_set:
+    #     id_list.append(sub_user.id)
     # 查找记录表
-    record_set = models.OperationRecord.objects.filter(Q(user_id__in=id_list),
+    record_set = models.OperationRecord.objects.filter(Q(user_id=current_user_id),
                  Q(operation_time__range=(start_time, end_time))).order_by("-operation_time")
     record_list = []
     for index, record in enumerate(record_set[:result_num]):
@@ -738,15 +736,9 @@ def operation_record(request, result_num=None):
             "username": record.user.username,
             "action": record.action,
             "record": record.record,
-            "operation_time": record.operation_time
+            "operation_time": record.operation_time.strftime("%Y-%m-%d %H:%M:%S")
         })
     return record_list
 
 
-def operation_record_listview(request):
-    """操作记录 视图"""
-    record_list = operation_record(request)
-    if record_list is None:
-        return JsonResponse({"data": record_list, "status": status.HTTP_404_NOT_FOUND})
-    return JsonResponse({"data": record_list, "status": status.HTTP_200_OK})
 

@@ -2,7 +2,6 @@ from django.db import transaction
 from rest_framework import serializers
 
 from sea_app import models
-from sdk.pinterest import pinterest_api
 
 
 class BoardSerializer(serializers.ModelSerializer):
@@ -41,10 +40,12 @@ class RuleSerializer(serializers.ModelSerializer):
     schedule_rule = RuleScheduleSerializer(many=True, read_only=True)
     scan_sign_name = serializers.CharField(source="get_scan_sign_display", read_only=True)
     sale_sign_name = serializers.CharField(source="get_sale_sign_display", read_only=True)
-    baord_name = serializers.CharField(source="board.pinterest_account.name", read_only=True)
+    baord_name = serializers.CharField(source="board.board_uri", read_only=True)
+    account_name = serializers.CharField(source="board.pinterest_account.account_uri", read_only=True)
 
     class Meta:
         model = models.Rule
+        # depth = 2
         fields = ("id",
                   "scan_sign",
                   "scan_sign_name",
@@ -61,7 +62,8 @@ class RuleSerializer(serializers.ModelSerializer):
                   "start_time",
                   "end_time",
                   "state",
-                  "baord_name"
+                  "baord_name",
+                  "account_name"
         )
 
     def create(self, validated_data):
@@ -102,6 +104,7 @@ class PinterestAccountCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.PinterestAccount
         fields = (
+            "id",
             "account_uri",
             "nickname",
             "email",
@@ -116,6 +119,4 @@ class PinterestAccountCreateSerializer(serializers.ModelSerializer):
         instance = super(PinterestAccountCreateSerializer, self).create(validated_data)
         instance.user = self.context["request"].user
         instance.save()
-        pinterest_api.PinterestApi()
-
         return instance

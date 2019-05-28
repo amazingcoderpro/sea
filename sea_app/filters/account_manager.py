@@ -1,12 +1,36 @@
 from rest_framework.filters import BaseFilterBackend
 from django.db.models import Q
 
+from sea_app import models
+
 
 class PinterestAccountFilter(BaseFilterBackend):
     """pinterest账号列表过滤"""
 
     def filter_queryset(self, request, queryset, view):
         return queryset.filter(user=request.user)
+
+
+class BoardListFilter(BaseFilterBackend):
+    """board列表过滤"""
+
+    def filter_queryset(self, request, queryset, view):
+        account_id = request.query_params.dict().get("pinterest_account_id")
+        if account_id:
+            return queryset.filter(Q(pinterest_account_id=account_id))
+        else:
+            return queryset.filter(pinterest_account__user=request.user)
+
+
+class PinListFilter(BaseFilterBackend):
+    """board列表过滤"""
+
+    def filter_queryset(self, request, queryset, view):
+        board_id = request.query_params.dict().get("board")
+        if board_id:
+            return queryset.filter(board_id=board_id)
+        else:
+            return queryset.filter(board__pinterest_account__user=request.user)
 
 
 class ProductFilter(BaseFilterBackend):
@@ -28,6 +52,12 @@ class RuleFilter(BaseFilterBackend):
 
     def filter_queryset(self, request, queryset, view):
         filte_kwargs = {"state__in": [0, 2, 3, 4, 5]}
+
+        account_id = request.query_params.get("account_id", '')
+        if account_id:
+            border_list = models.Board.objects.filter(pinterest_account=account_id).values_list("id")
+            border_list = map(lambda x: x[0], border_list)
+            return queryset.filter(board_id__in=border_list)
         for filter_key in self.filter_keys.keys():
             val = request.query_params.get(filter_key, '')
             if val is not '':

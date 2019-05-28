@@ -1,3 +1,5 @@
+import json
+
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
@@ -5,13 +7,17 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework.response import Response
 from django.db.models import Sum
+from rest_framework.views import APIView
+from rest_framework import status
 
+from sdk.pinterest.pinterest_api import PinterestApi
 from sea_app import models
-from sea_app.filters.report import AccountListFilter
+from sea_app.filters import report as report_filters
 from sea_app.serializers import account_manager, report
 from sea_app.filters import account_manager as account_manager_filters
 from sea_app.pageNumber.pageNumber import PNPagination
-from sea_app.permission.permission import RolePermission
+# from sea_app.permission.permission import RolePermission
+from sdk.pinterest import pinterest_api
 
 
 class PinterestAccountView(generics.ListAPIView):
@@ -36,7 +42,7 @@ class RuleView(generics.ListCreateAPIView):
 class RuleOperView(generics.UpdateAPIView):
     queryset = models.Rule.objects.all()
     serializer_class = account_manager.RuleSerializer
-    permission_classes = (IsAuthenticated, RolePermission)
+    permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 
 
@@ -90,13 +96,52 @@ class ReportView(generics.ListAPIView):
     filterset_fields = ("product__sku", "state")
 
 
-class AccountListView(generics.ListAPIView):
+class AccountListManageView(generics.ListAPIView):
+    """账号管理 -- 账号 列表显示"""
     queryset = models.PinterestHistoryData.objects.all()
     serializer_class = report.DailyReportSerializer
     pagination_class = PNPagination
-    filter_backends = (AccountListFilter,)
-    # permission_classes = (IsAuthenticated,)
-    # authentication_classes = (JSONWebTokenAuthentication,)
+    filter_backends = (report_filters.AccountListFilter,)
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(queryset)
+        return Response(queryset)
+
+
+class BoardListManageView(generics.ListAPIView):
+    """账号管理 -- board 列表显示"""
+    queryset = models.PinterestHistoryData.objects.all()
+    serializer_class = report.DailyReportSerializer
+    pagination_class = PNPagination
+    filter_backends = (report_filters.BoardListFilter,)
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(queryset)
+        return Response(queryset)
+
+
+class PinListManageView(generics.ListAPIView):
+    """账号管理 -- pin 列表显示"""
+    queryset = models.PinterestHistoryData.objects.all()
+    serializer_class = report.DailyReportSerializer
+    pagination_class = PNPagination
+    filter_backends = (report_filters.PinListFilter,)
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -109,9 +154,107 @@ class AccountListView(generics.ListAPIView):
 
 
 class PinterestAccountCreateView(generics.CreateAPIView):
-    """增加Pinterest 账号"""
+    """增加账号"""
     queryset = models.PinterestAccount.objects.all()
     serializer_class = account_manager.PinterestAccountCreateSerializer
-    # filter_backends = (account_manager_filters.ProductCountFilter,)
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+
+# class PinterestAccountAuthView(APIView):
+#     """账户授权"""
+#     permission_classes = (IsAuthenticated,)
+#     authentication_classes = (JSONWebTokenAuthentication,)
+#
+#     def post(self, request, *args, **kwargs):
+#         instance = models.PinterestAccount.objects.filter(id=kwargs["pk"]).first()
+#         if instance.authorized == 1:
+#             return Response({"detail": "This account is authorized"}, status=status.HTTP_400_BAD_REQUEST)
+#         url = pinterest_api.PinterestApi().get_pinterest_url(instance.account_uri)
+#         return Response({"message": url})
+
+
+class PinterestAccountListView(generics.ListAPIView):
+    """账号 select框显示"""
+    queryset = models.PinterestAccount.objects.all()
+    serializer_class = report.PinterestAccountListSerializer
+    filter_backends = (account_manager_filters.PinterestAccountFilter,)
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+
+class BoardListView(generics.ListAPIView):
+    """board select框显示"""
+    queryset = models.Board.objects.all()
+    serializer_class = report.BoardListSerializer
+    filter_backends = (account_manager_filters.BoardListFilter,)
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+
+class PinListView(generics.ListAPIView):
+    """pin select框显示"""
+    queryset = models.Pin.objects.all()
+    serializer_class = report.PinListSerializer
+    filter_backends = (account_manager_filters.PinListFilter,)
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+
+class BoardManageView(generics.RetrieveUpdateDestroyAPIView):
+    """Board管理 更新 删除"""
+    queryset = models.Board.objects.all()
+    serializer_class = report.BoardListSerializer
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def put(self, request, *args, **kwargs):
+        data = request.data
+        access_token = models.Board.objects.get(board_uri=data["board_uri"]).pinterest_account.token
+        result = PinterestApi(access_token=access_token).edit_board_id(data["board_uri"], data["name"], data["description"])
+        if result["code"] == 1:
+            return self.update(request, *args, **kwargs)
+        else:
+            return Response({"detail": result["msg"]}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, *args, **kwargs):
+        board_obj = models.Board.objects.get(pk=kwargs["pk"])
+        result = PinterestApi(access_token=board_obj.pinterest_account.token).delete_board(board_obj.board_uri)
+        if result["code"] == 1:
+            return self.destroy(request, *args, **kwargs)
+        else:
+            return Response({"detail": result["msg"]}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PinManageView(generics.RetrieveUpdateDestroyAPIView):
+    """pin管理 更新 删除"""
+    queryset = models.Pin.objects.all()
+    serializer_class = report.PinListSerializer
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def put(self, request, *args, **kwargs):
+        data = request.data
+        pin_obj = models.Pin.objects.get(pin_uri=data["pin_uri"])
+        access_token = pin_obj.board.pinterest_account.token
+        board_uri = models.Board.objects.get(pk=data["board"]).board_uri
+        result = PinterestApi(access_token=access_token).edit_pin_id(data["pin_uri"], board_uri, data["description"], data["url"])
+        if result["code"] == 1:
+            return self.update(request, *args, **kwargs)
+        else:
+            return Response({"detail": result["msg"]}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, *args, **kwargs):
+        pin_obj = models.Pin.objects.get(pk=kwargs["pk"])
+        result = PinterestApi(access_token=pin_obj.board.pinterest_account.token).delete_pin_id(pin_obj.pin_uri)
+        if result["code"] == 1:
+            return self.destroy(request, *args, **kwargs)
+        else:
+            return Response({"detail": result["msg"]}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AccountManageView(generics.DestroyAPIView):
+    """Pin账号管理 删除"""
+    queryset = models.PinterestAccount.objects.all()
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
