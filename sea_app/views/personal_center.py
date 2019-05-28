@@ -19,6 +19,7 @@ from sea_app.filters import personal_center as personal_center_filters
 from sdk.shopify.shopify_oauth_info import ShopifyBase
 from sdk.shopify.get_shopify_products import ProductsApi
 from sdk.pinterest import pinterest_api
+from sea_app.views import reports
 
 
 class LoginView(generics.CreateAPIView):
@@ -164,3 +165,13 @@ class PinterestCallback(APIView):
         if result["code"] == 1:
             models.PinterestAccount.objects.filter(account_uri=account_uri).update(token=result["data"]["access_token"], authorized=1)
         return HttpResponseRedirect(redirect_to="http://www.baidu.com")
+
+
+class OperationRecord(generics.ListAPIView):
+    """操作记录 视图"""
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def get(self, request, *args, **kwargs):
+        data = reports.operation_record(request)
+        return Response(data)
