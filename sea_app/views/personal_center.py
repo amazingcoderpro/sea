@@ -145,12 +145,13 @@ class ShopifyCallback(APIView):
     def get(self, request):
         code = request.query_params.get("code", None)
         shop = request.query_params.get("shop", None)
-        state = request.query_params.get("state", None)
         print("####", code)
         print("####", shop)
-        if not code or not shop or not state:
+        if not code or not shop:
             return HttpResponseRedirect(redirect_to="http://www.baidu.com/")
-        result = ShopifyBase(state).get_token(code)
+        shop_name = shop.split(".")[0]
+        print("####", shop_name)
+        result = ShopifyBase(shop).get_token(code)
         if result["code"] == 1:
             instance = models.Store.objects.filter(url=shop).first()
             if instance:
@@ -160,10 +161,10 @@ class ShopifyCallback(APIView):
                 email = user_instance.email
             else:
                 print(shop, result["data"])
-                store_data = {"name": state, "url": shop, "platform": 1, "token": result["data"]}
+                store_data = {"name": shop_name, "url": shop, "platform": 1, "token": result["data"]}
                 instance = models.Store.objects.create(**store_data)
                 # TDD 调接口获取邮箱
-                info = ProductsApi(access_token=result["data"], shop_name=state).get_shop_info()
+                info = ProductsApi(access_token=result["data"], shop_uri=shop).get_shop_info()
                 print("#info", info)
                 email = "163.com"
                 user_data = {"username": email, "email": email}
