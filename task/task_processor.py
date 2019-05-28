@@ -65,7 +65,7 @@ class PinterestOpt:
             image.thumbnail(size)
 
         output_buffer = BytesIO()
-        image.save(output_buffer, format='JPEG')
+        image.save(output_buffer, format='PNG')
         byte_data = output_buffer.getvalue()
         base64_str = base64.b64encode(byte_data)
         base64_str = base64_str.decode("utf-8")
@@ -79,7 +79,7 @@ class PinterestOpt:
         img.save(image_path)
         return True
 
-    def get_records(self, status=0):
+    def get_pending_records(self, status=0):
         """
         获取所有待发布的pins记录, 数据来源PublishRecord表
         :param status: 发布状态　0－－未发布，１－－已发布
@@ -87,44 +87,83 @@ class PinterestOpt:
         """
         con = DBUtil().get_instance()
         cursor = con.cursor()
+
+        # 先拿到所有状态为0的record
         cursor.execute('''
                 select id, execute_time, board_id, product_id, rule_id from `publish_record` where state=%s and execute_time between %s and %s
-                ''', (status, datetime.datetime.now(), datetime.datetime.now() + datetime.timedelta(days=120)))
+                ''', (status, datetime.datetime.now(), datetime.datetime.now() + datetime.timedelta(seconds=3000)))
         records = cursor.fetchall()
 
+        pending_records = []
+        # 遍历每一个record, 收集发布所需的所有参数
         for record in records:
             record_id, execute_time, board_id, product_id, rule_id = record
+
+            # 取到待发布的pin所隶属的board信息
             cursor.execute('''
                     select board_uri, name, pinterest_account_id, state from `board` where id=%s
                     ''', board_id)
             board = cursor.fetchone()
-            board_uri, board_name, pinterest_account_id, state = board
+            board_uri, board_name, pinterest_account_id, board_state = board
 
+            # 取到待发布的pin所隶属的账号信息，　主要是token
             cursor.execute('''
                     select account_uri, state, token from `pinterest_account` where id=%s
                     ''', pinterest_account_id)
             account = cursor.fetchone()
-            account_uri, state, token = account
-            pin_api = PinterestApi(access_token="ArVPxolYdQAXgzr0-FFoRGAF682xFaDsz-o3I1FF0n-lswCyYAp2ADAAAk1KRdOSuUEgxv0AAAAA")
-            boards = pin_api.get_user_boards()
-            note = ""
-            link = ""
-            image_url = "https://img-blog.csdn.net/20180509111334917"
-            ret = pin_api.create_pin(board_id="753790125070471656", note="123", image_url=image_url, link=link)
+
+            account_uri, account_state, token = account
+
+            # 取到待发布的pin所关联的产品信息
+            cursor.execute('''
+                    select sku, url, name, image_url, price, tag from `product` where id=%s
+                    ''', product_id)
+            product = cursor.fetchone()
+            sku, product_url, name, image_url, price, tag = product
+            pending_record = {"id": record_id,
+                              "execute_time": execute_time,
+                              "board_id": board_id,
+                              "board_uri": board_uri,
+                              "board_state": board_state,
+                              "account_id": pinterest_account_id,
+                              "account_uri": account_uri,
+                              "account_state": account_state,
+                              "token": token,
+                              "product_id": product_id,
+                              "img_url": image_url,
+                              "note": name,
+                              "link": product_url}
+
+            pending_records.append(pending_record)
+
+        return pending_records
+
+    def create_pins(self, records):
+        con = DBUtil().get_instance()
+        cursor = con.cursor()
+        utm_params = ""
+        for record in records:
+            #"ArVPxolYdQAXgzr0-FFoRGAF682xFaDsz-o3I1FF0n-lswCyYAp2ADAAAk1KRdOSuUEgxv0AAAAA"
+            pin_api = PinterestApi(access_token=record["token"])
+            # image_url = "https://img-blog.csdn.net/20180509111334917"
+            # # "753790125070471656"
+
+            note = record["note"]
+            link = record["link"] + utm_params
+            board_id = record["board_id"]
+            product_id = record["product_id"]
+            ret = pin_api.create_pin(board_id=record["board_uri"], note=record["note"], image_url=record["img_url"], link=link)
             print(ret)
 
             if ret[0] in [200, 201]:
                 data = json.loads(ret[1])["data"]
                 pin_uri = data["id"]
                 url = data["url"]
-                description = note
-                site_url = data["original_link"]
-                thumbnail = ""
-                board_id = board_id
-                product_id = product_id
+                # site_url = data["original_link"]
+                thumbnail = self.image_2_base64(record["img_url"])
                 time_now = datetime.datetime.now()
                 cursor.execute('''insert into `pin` (`pin_uri`, `url`, `description`, `site_url`, `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ''', (pin_uri, url, description, site_url, thumbnail, time_now, time_now, board_id, product_id))
+                ''', (pin_uri, url, note, link, thumbnail, time_now, time_now, board_id, product_id))
                 pin_id = cursor.lastrowid
 
                 state = 1
@@ -133,7 +172,7 @@ class PinterestOpt:
 
                 cursor.execute('''
                         update `publish_record` set state=%s, remark=%s, finished_time=%s, pin_id=%s, update_time=%s where id=%s
-                        ''', (state, remark, finished_time, pin_id, update_time, record_id))
+                        ''', (state, remark, finished_time, pin_id, update_time, record["id"]))
 
                 con.commit()
 
@@ -151,7 +190,7 @@ class PinterestOpt:
         cursor = con.cursor()
         cursor.execute('''
         select id,product_list,update_time,board_id,start_time,end_time from `rule` where update_time>%s
-        ''', datetime.datetime.now()-datetime.timedelta(days=5))
+        ''', datetime.datetime.now()-datetime.timedelta(days=100))
         rules = cursor.fetchall()
 
         for rule in rules:
@@ -188,8 +227,35 @@ class PinterestOpt:
                     continue
                 product_id = product_list[idx % len(product_list)]
                 cursor.execute('''
-                insert into `publish_record` (`execute_time`, `board_id`, `product_id`, `rule_id`, `create_time`, `update_time`) values (%s, %s, %s, %s, %s, %s)''', (exe_time, board_id, product_id, rule_id, time_now, time_now))
+                insert into `publish_record` (`execute_time`, `board_id`, `product_id`, `rule_id`, `create_time`, `update_time`, `state`) values (%s, %s, %s, %s, %s, %s, %s)''', (exe_time, board_id, product_id, rule_id, time_now, time_now, 0))
             con.commit()
+
+    def update_boards(self):
+        """
+        拉取所有pinteres账号下的所有board, 并增量式的插入数据库
+        :return:
+        """
+        con = DBUtil().get_instance()
+        cursor = con.cursor()
+        cursor.execute('''
+        select id, account_uri, token from `pinterest_account` where state=%s
+        ''', 0)
+
+        accounts = cursor.fetchall()
+        for account in accounts:
+            account_id, account_uri, token = account
+            p_api = PinterestApi(access_token=token)
+            ret = p_api.get_user_boards()
+            if ret[0] in [200, 201]:
+                boards = json.loads(ret[1])["data"]
+                print(boards)
+                time_now = datetime.datetime.now()
+                sql_values = [(board["id"], board["name"], datetime.datetime.strptime(board["created_at"], "%Y-%m-%dT%H:%M:%S"), board["description"], True if board['privacy']=="public" else False, time_now, time_now, account_id) for board in boards]
+                sql_values = [(1,2,3,4,5,6,7,8)]
+                cursor.executemany('''insert into `board` (`board_uri`, `name`, `create_time`, `description`, `state`, 
+                `add_time`, `update_time`, `pinterest_account_id`) values (%s, %s, %s, %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE name, description, update_time=VALUES(name, description, update_time)
+                ''', sql_values)
+                con.commit()
 
 
 class ShopifyOpt:
@@ -258,9 +324,13 @@ def test_pinterest_opt():
     pt = PinterestOpt()
     # pt.produce_records_by_rule()
 
-    # pt.get_records()
-    base64_str = pt.image_2_base64("https://www.theadultman.com/wp-content/uploads/2016/08/Things-Every-Man-Should-Own-1-1.jpg", is_thumb=False)
-    pt.base64_2_image(base64_str, "123.jpg")
+    records = pt.get_pending_records()
+    if records:
+        print(records)
+        pt.create_pins(records)
+    # base64_str = pt.image_2_base64("https://www.theadultman.com/wp-content/uploads/2016/08/Things-Every-Man-Should-Own-1-1.jpg", is_thumb=False)
+    # pt.base64_2_image(base64_str, "123.jpg")
+    # pt.update_boards()
 
 if __name__ == '__main__':
     test_pinterest_opt()
