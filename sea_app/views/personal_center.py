@@ -121,9 +121,22 @@ class StoreAuthView(APIView):
 
     def post(self, request, *args, **kwargs):
         instance = models.Store.objects.filter(id=kwargs["pk"]).first()
-        if instance.authorized == 1:
-            return Response({"detail": "This store is authorized"}, status=status.HTTP_400_BAD_REQUEST)
+        # if instance.authorized == 1:
+        #     return Response({"detail": "This store is authorized"}, status=status.HTTP_400_BAD_REQUEST)
         url = ShopifyBase(instance.name).ask_permission(instance.name)
+        return Response({"message": url})
+
+
+class PinterestAccountAuthView(APIView):
+    """账户授权"""
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def post(self, request, *args, **kwargs):
+        instance = models.PinterestAccount.objects.filter(id=kwargs["pk"]).first()
+        if instance.authorized == 1:
+            return Response({"detail": "This account is authorized"}, status=status.HTTP_400_BAD_REQUEST)
+        url = pinterest_api.PinterestApi().get_pinterest_url(instance.account_uri)
         return Response({"message": url})
 
 
@@ -134,19 +147,26 @@ class ShopifyCallback(APIView):
         shop = request.query_params.get("shop", None)
         if not code or not shop:
             return Response({"message": "auth faild"})
-        status, token = ShopifyBase(shop).get_token(code)
-        if status == 200 and token:
-            if models.User.objects.filter(username=shop).first():
-                return Response({"message": "shop already auth"})
-            store_data = {"name": shop, "url": shop, "platform": 1, "token": token}
-            store_instance = models.Store.objects.create(**store_data)
-            # TDD 调接口获取邮箱
-            info = ProductsApi(token).get_shop_info()
-            email = "163.com"
-            user_data = {"username": email, "email": email}
-            user_instance = models.User.objects.create(**user_data)
-            store_instance.user = user_instance
-            store_instance.save()
+        print("####", code)
+        print("####", shop)
+        result = ShopifyBase(shop).get_token(code)
+        if result["code"] == 1:
+            instance = models.Store.objects.filter(url=shop).first()
+            if instance:
+                instance.token = result["data"]
+                instance.save()
+            else:
+                print(shop, result["data"])
+                store_data = {"name": shop, "url": shop, "platform": 1, "token": result["data"]}
+                store_instance = models.Store.objects.create(**store_data)
+                # TDD 调接口获取邮箱
+                info = ProductsApi(access_token=result["data"], shop_name=shop).get_shop_info()
+                print("#info", info)
+                email = "163.com"
+                user_data = {"username": email, "email": email}
+                user_instance = models.User.objects.create(**user_data)
+                store_instance.user = user_instance
+                store_instance.save()
             return HttpResponseRedirect(redirect_to="http://www.baidu.com/?shop={}&email={}&id={}".format(shop, email, user_instance.id))
         return Response({"message": "auth faild"})
 

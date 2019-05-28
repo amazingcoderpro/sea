@@ -10,6 +10,10 @@ class PinterestApi():
     """
 
     def __init__(self, access_token="", host=None):
+        """
+        :param access_token:
+        :param host:
+        """
         self.access_token = access_token
         self.pinterest_host = "https://api.pinterest.com/v1" if not host else host
         self.redirect_uri = "https://pinbooster.seamarketings.com/api/v1/pinterest/callback/"
@@ -47,7 +51,7 @@ class PinterestApi():
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("pinterest token failed = {}".format(e))
-            return {"code": 2, "msg": e, "data": ""}
+            return {"code": -1, "msg": e, "data": ""}
 
     def get_user_info(self):
         """
@@ -67,7 +71,7 @@ class PinterestApi():
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("get user info failed".format(e))
-            return {"code": 2, "msg": e, "data": ""}
+            return {"code": -1, "msg": e, "data": ""}
 
     def create_board(self, name, description):
         """
@@ -93,7 +97,7 @@ class PinterestApi():
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("post user boards is failed:{}".format(e))
-            return {"code": 2, "msg": e, "data": ""}
+            return {"code": -1, "msg": e, "data": ""}
 
     def get_user_boards(self):
         """
@@ -114,7 +118,7 @@ class PinterestApi():
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("get user boards failed: {}".format(e))
-            return {"code": 2, "msg": e, "data": ""}
+            return {"code": -1, "msg": e, "data": ""}
 
     def get_board_id(self, board_id):
         """
@@ -135,7 +139,7 @@ class PinterestApi():
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("get by id board failed:{}".format(e))
-            return {"code": 2, "msg": e, "data": ""}
+            return {"code": -1, "msg": e, "data": ""}
 
     def delete_board(self, board_id):
         """
@@ -153,7 +157,7 @@ class PinterestApi():
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("delete board is failed: {}".format(e))
-            return {"code": 2, "msg": e, "data": ""}
+            return {"code": -1, "msg": e, "data": ""}
 
     def edit_board_id(self, board_id, name, description):
         """
@@ -180,7 +184,7 @@ class PinterestApi():
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("edit board is failed".format(e))
-            return {"code": 2, "msg": e, "data": ""}
+            return {"code": -1, "msg": e, "data": ""}
 
     def create_pin(self, board_id, note, image_url, link):
         """
@@ -210,7 +214,7 @@ class PinterestApi():
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("create new pin is failed:{}".format(e))
-            return {"code": 2, "msg": e, "data": ""}
+            return {"code": -1, "msg": e, "data": ""}
 
     def get_user_pins(self):
         """
@@ -231,7 +235,7 @@ class PinterestApi():
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("get user pins is failed: {}".format(e))
-            return {"code": 2, "msg": e, "data": ""}
+            return {"code": -1, "msg": e, "data": ""}
 
     def get_pin_id(self, pin_id):
         """
@@ -250,7 +254,7 @@ class PinterestApi():
                 logger.info("get pin by id is success, pin_id={}".format(pin_id))
         except Exception as e:
             logger.error("get pin by id is failed: {}".format(e))
-            return {"code": 2, "msg": e, "data": ""}
+            return {"code": -1, "msg": e, "data": ""}
 
     def edit_pin_id(self, pin_id, board, note, link):
         """
@@ -279,7 +283,7 @@ class PinterestApi():
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("edit pin by id is failed: {}".format(e))
-            return {"code": 2, "msg": e, "data": ""}
+            return {"code": -1, "msg": e, "data": ""}
 
     def delete_pin_id(self, pin_id):
         """
@@ -298,7 +302,7 @@ class PinterestApi():
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("delete pin by id is failed: {}".format(e))
-            return {"code": 2, "msg": e, "data": ""}
+            return {"code": -1, "msg": e, "data": ""}
 
     def get_user_suggested(self, count):
         """
@@ -320,7 +324,7 @@ class PinterestApi():
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("get user suggest is failed:{}".format(e))
-            return {"code": 2, "msg": e, "data": ""}
+            return {"code": -1, "msg": e, "data": ""}
             
 
 if __name__ == '__main__':
