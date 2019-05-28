@@ -156,11 +156,11 @@ class ShopifyCallback(APIView):
                 instance.token = result["data"]
                 instance.save()
             else:
-                print(shop,result["data"])
+                print(shop, result["data"])
                 store_data = {"name": shop, "url": shop, "platform": 1, "token": result["data"]}
                 store_instance = models.Store.objects.create(**store_data)
                 # TDD 调接口获取邮箱
-                info = ProductsApi(access_token=result["data"]).get_shop_info()
+                info = ProductsApi(access_token=result["data"], shop_name=shop).get_shop_info()
                 print("#info", info)
                 email = "163.com"
                 user_data = {"username": email, "email": email}
