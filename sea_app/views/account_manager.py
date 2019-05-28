@@ -59,7 +59,7 @@ class ProductView(generics.ListAPIView):
 class ProductCount(generics.ListAPIView):
     """获取符合条件的产品"""
     queryset = models.ProductHistoryData.objects.all()
-    serializer_class = account_manager.ProductSerializer
+    serializer_class = account_manager.ProductHistorySerializer
     filter_backends = (account_manager_filters.ProductCountFilter,)
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
@@ -225,7 +225,7 @@ class PinManageView(generics.RetrieveUpdateDestroyAPIView):
         pin_obj = models.Pin.objects.get(pin_uri=data["pin_uri"])
         access_token = pin_obj.board.pinterest_account.token
         board_uri = models.Board.objects.get(pk=data["board"]).board_uri
-        result = PinterestApi(access_token=access_token).edit_pin(data["pin_uri"], board_uri, data["description"], data["url"])
+        result = PinterestApi(access_token=access_token).edit_pin(data["pin_uri"], board_uri, data["note"], data["url"])
         if result["code"] == 1:
             return self.update(request, *args, **kwargs)
         else:
