@@ -4,8 +4,6 @@
 import json
 
 from django.db.models import Q
-from django.http import JsonResponse
-from rest_framework import status
 from rest_framework.response import Response
 
 import datetime
@@ -715,21 +713,21 @@ def operation_record(request, result_num=None):
         start_time = datetime.datetime(*map(int, start_time.split('-')))
     if isinstance(end_time, str):
         end_time = datetime.datetime(*map(int, end_time.split('-')))
-    username_id = request.GET.get("user_id")  # 必传
+    # username_id = request.GET.get("user_id")  # 必传
     # 获取当前用户及下属用户的所有操作记录
-    if username_id:
-        current_user_id = username_id
-    else:
-        current_user_id = request.user.id
+    # if username_id:
+    #     current_user_id = username_id
+    # else:
+    current_user_id = request.user.id
     # current_user_id 不能为空
     if current_user_id is None:
         return None
-    sub_user_set = models.User.objects.filter(Q(parent_id=current_user_id))
-    id_list = [current_user_id,]
-    for sub_user in sub_user_set:
-        id_list.append(sub_user.id)
+    # sub_user_set = models.User.objects.filter(Q(id=current_user_id))
+    # id_list = [current_user_id]
+    # for sub_user in sub_user_set:
+    #     id_list.append(sub_user.id)
     # 查找记录表
-    record_set = models.OperationRecord.objects.filter(Q(user_id__in=id_list),
+    record_set = models.OperationRecord.objects.filter(Q(user_id=current_user_id),
                  Q(operation_time__range=(start_time, end_time))).order_by("-operation_time")
     record_list = []
     for index, record in enumerate(record_set[:result_num]):
@@ -743,10 +741,4 @@ def operation_record(request, result_num=None):
     return record_list
 
 
-def operation_record_listview(request):
-    """操作记录 视图"""
-    record_list = operation_record(request)
-    if record_list is None:
-        return JsonResponse({"data": record_list, "status": status.HTTP_404_NOT_FOUND})
-    return JsonResponse({"data": record_list, "status": status.HTTP_200_OK})
 
