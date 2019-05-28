@@ -151,18 +151,22 @@ class ShopifyCallback(APIView):
         print("####", shop)
         result = ShopifyBase(shop).get_token(code)
         if result["code"] == 1:
-            if models.Store.objects.filter(url=shop).first():
-                return Response({"message": "shop already auth"})
-            store_data = {"name": shop, "url": shop, "platform": 1, "token": result["data"]}
-            store_instance = models.Store.objects.create(**store_data)
-            # TDD 调接口获取邮箱
-            info = ProductsApi(access_toke=result["data"]).get_shop_info()
-            print("#info", info)
-            email = "163.com"
-            user_data = {"username": email, "email": email}
-            user_instance = models.User.objects.create(**user_data)
-            store_instance.user = user_instance
-            store_instance.save()
+            instance = models.Store.objects.filter(url=shop).first()
+            if instance:
+                instance.token = result["data"]
+                instance.save()
+            else:
+                print(shop,result["data"])
+                store_data = {"name": shop, "url": shop, "platform": 1, "token": result["data"]}
+                store_instance = models.Store.objects.create(**store_data)
+                # TDD 调接口获取邮箱
+                info = ProductsApi(access_toke=result["data"]).get_shop_info()
+                print("#info", info)
+                email = "163.com"
+                user_data = {"username": email, "email": email}
+                user_instance = models.User.objects.create(**user_data)
+                store_instance.user = user_instance
+                store_instance.save()
             return HttpResponseRedirect(redirect_to="http://www.baidu.com/?shop={}&email={}&id={}".format(shop, email, user_instance.id))
         return Response({"message": "auth faild"})
 
