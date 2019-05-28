@@ -24,9 +24,9 @@ class DailyReportFilter(BaseFilterBackend):
         search_word = condtions.get('search', '').strip()
 
         if search_word:
-            # 查询pin_uri or board_uri or pin_description or board_nam
+            # 查询pin_uri or board_uri or pin_note or board_nam
             set_list = set_list.filter(
-                Q(pin_uri=search_word) | Q(pin_description__icontains=search_word) | Q(board_uri=search_word) | Q(
+                Q(pin_uri=search_word) | Q(pin_note__icontains=search_word) | Q(board_uri=search_word) | Q(
                     board_name=search_word))
         else:
             # 按选择框输入查询
@@ -127,13 +127,13 @@ class AccountListFilter(BaseFilterBackend):
                     "account_crawl_time": today.pinterest_account.update_time.strftime("%Y-%m-%d %H:%M:%S"),
                     "pins": [] if not today.pin_id else [today.pin_id],  # pin数
                     "saves": today.pin_saves,
-                    "likes": today.pin_likess,
+                    "likes": today.pin_likes,
                     "comments": today.pin_comments,
                 }
             else:
                 group_dict[today.pinterest_account_id]["pins"].append(today.pin_id)
                 group_dict[today.pinterest_account_id]["saves"] += today.pin_saves
-                group_dict[today.pinterest_account_id]["likes"] += today.pin_likess
+                group_dict[today.pinterest_account_id]["likes"] += today.pin_likes
                 group_dict[today.pinterest_account_id]["comments"] += today.pin_comments
         return group_dict
 
@@ -195,13 +195,13 @@ class BoardListFilter(BaseFilterBackend):
                     "board_state": today.board.state,
                     "pins": [] if not today.pin_id else [today.pin_id],  # pin数
                     "saves": today.pin_saves,
-                    "likes": today.pin_likess,
+                    "likes": today.pin_likes,
                     "comments": today.pin_comments,
                 }
             else:
                 group_dict[today.board_id]["pins"].append(today.pin_id)
                 group_dict[today.board_id]["saves"] += today.pin_saves
-                group_dict[today.board_id]["likes"] += today.pin_likess
+                group_dict[today.board_id]["likes"] += today.pin_likes
                 group_dict[today.board_id]["comments"] += today.pin_comments
         return group_dict
 
@@ -260,18 +260,18 @@ class PinListFilter(BaseFilterBackend):
                 group_dict[today.pin_id] = {
                     "pin_uri": today.pin.pin_uri,
                     "pin_thumbnail": today.pin.thumbnail,
-                    "pin_description": today.pin.description,
+                    "pin_note": today.pin.note,
                     "pin_url": today.pin.url,
                     "product_sku": today.pin.product.sku,
                     "views": today.pin_views,
                     "saves": today.pin_saves,
-                    "likes": today.pin_likess,
+                    "likes": today.pin_likes,
                     "comments": today.pin_comments,
                 }
             else:
                 group_dict[today.pin_id]["views"] += today.pin_views
                 group_dict[today.pin_id]["saves"] += today.pin_saves
-                group_dict[today.pin_id]["likes"] += today.pin_likess
+                group_dict[today.pin_id]["likes"] += today.pin_likes
                 group_dict[today.pin_id]["comments"] += today.pin_comments
         return group_dict
 
@@ -404,7 +404,7 @@ class AccountListFilter_b(BaseFilterBackend):
                     # "boards": [] if not today.board_id else [today.board_id],  # board数
                     "pins": [] if not today.pin_id else [today.pin_id],  # pin数
                     "saves": today.pin_saves,
-                    "likes": today.pin_likess,
+                    "likes": today.pin_likes,
                     "comments": today.pin_comments,
                     "board_list": {}
                 }
@@ -412,7 +412,7 @@ class AccountListFilter_b(BaseFilterBackend):
                 # group_dict[today.pinterest_account_id]["boards"].append(today.board_id)
                 group_dict[today.pinterest_account_id]["pins"].append(today.pin_id)
                 group_dict[today.pinterest_account_id]["saves"] += today.pin_saves
-                group_dict[today.pinterest_account_id]["likes"] += today.pin_likess
+                group_dict[today.pinterest_account_id]["likes"] += today.pin_likes
                 group_dict[today.pinterest_account_id]["comments"] += today.pin_comments
             # 获取board数据
             if today.board_id and today.board_id not in group_dict[today.pinterest_account_id]["board_list"]:
@@ -421,32 +421,32 @@ class AccountListFilter_b(BaseFilterBackend):
                     "board_state": "Public" if today.board.state else "Private",
                     "pins": [] if not today.pin_id else [today.pin_id],  # pin数
                     "saves": today.pin_saves,
-                    "likes": today.pin_likess,
+                    "likes": today.pin_likes,
                     "comments": today.pin_comments,
                     "pin_list": {}
                 }
             elif today.board_id and today.board_id in group_dict[today.pinterest_account_id]["board_list"]:
                 group_dict[today.pinterest_account_id]["board_list"][today.board_id]["pins"].append(today.pin_id)
                 group_dict[today.pinterest_account_id]["board_list"][today.board_id]["saves"] += today.pin_saves
-                group_dict[today.pinterest_account_id]["board_list"][today.board_id]["likes"] += today.pin_likess
+                group_dict[today.pinterest_account_id]["board_list"][today.board_id]["likes"] += today.pin_likes
                 group_dict[today.pinterest_account_id]["board_list"][today.board_id]["comments"] += today.pin_comments
 
             # 获取pin数据
             if today.pin_id and today.pin_id not in group_dict[today.pinterest_account_id]["board_list"][today.board_id]["pin_list"]:
                 group_dict[today.pinterest_account_id]["board_list"][today.board_id]["pin_list"][today.pin_id] = {
                     "pin_thumbnail": today.pin.thumbnail,
-                    "pin_description": today.pin.description,
+                    "pin_note": today.pin.note,
                     "pin_url": today.pin.url,
                     "product_sku": today.pin.product.sku,
                     "views": today.pin_views,
                     "saves": today.pin_saves,
-                    "likes": today.pin_likess,
+                    "likes": today.pin_likes,
                     "comments": today.pin_comments,
                 }
             elif today.pin_id and today.pin_id in group_dict[today.pinterest_account_id]["board_list"][today.board_id]["pin_list"]:
                 group_dict[today.pinterest_account_id]["board_list"][today.board_id]["pin_list"][today.pin_id]["views"] += today.pin_views
                 group_dict[today.pinterest_account_id]["board_list"][today.board_id]["pin_list"][today.pin_id]["saves"] += today.pin_saves
-                group_dict[today.pinterest_account_id]["board_list"][today.board_id]["pin_list"][today.pin_id]["likes"] += today.pin_likess
+                group_dict[today.pinterest_account_id]["board_list"][today.board_id]["pin_list"][today.pin_id]["likes"] += today.pin_likes
                 group_dict[today.pinterest_account_id]["board_list"][today.board_id]["pin_list"][today.pin_id]["comments"] += today.pin_comments
 
         return group_dict
