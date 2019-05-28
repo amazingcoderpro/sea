@@ -51,8 +51,8 @@ class PinterestApi():
             else:
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
-            logger.error("pinterest token failed = {}".format(e))
-            return {"code": -1, "msg": e, "data": ""}
+            logger.error("pinterest token failed = {}".format(str(e)))
+            return {"code": -1, "msg": str(e), "data": ""}
 
     def get_user_info(self):
         """
@@ -71,8 +71,8 @@ class PinterestApi():
             else:
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
-            logger.error("get user info failed".format(e))
-            return {"code": -1, "msg": e, "data": ""}
+            logger.error("get user info failed".format(str(e)))
+            return {"code": -1, "msg": str(e), "data": ""}
 
     def create_board(self, name, description):
         """
@@ -97,8 +97,8 @@ class PinterestApi():
             else:
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
-            logger.error("post user boards is failed:{}".format(e))
-            return {"code": -1, "msg": e, "data": ""}
+            logger.error("post user boards is failed:{}".format(str(e)))
+            return {"code": -1, "msg": str(e), "data": ""}
 
     def get_user_boards(self):
         """
@@ -118,8 +118,8 @@ class PinterestApi():
             else:
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
-            logger.error("get user boards failed: {}".format(e))
-            return {"code": -1, "msg": e, "data": ""}
+            logger.error("get user boards failed: {}".format(str(e)))
+            return {"code": -1, "msg": str(e), "data": ""}
 
     def get_board_id(self, board_id):
         """
@@ -139,8 +139,8 @@ class PinterestApi():
             else:
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
-            logger.error("get by id board failed:{}".format(e))
-            return {"code": -1, "msg": e, "data": ""}
+            logger.error("get by id board failed:{}".format(str(e)))
+            return {"code": -1, "msg": str(e), "data": ""}
 
     def delete_board(self, board_id):
         """
@@ -157,8 +157,8 @@ class PinterestApi():
             else:
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
-            logger.error("delete board is failed: {}".format(e))
-            return {"code": -1, "msg": e, "data": ""}
+            logger.error("delete board is failed: {}".format(str(e)))
+            return {"code": -1, "msg": str(e), "data": ""}
 
     def edit_board_id(self, board_id, name, description):
         """
@@ -184,8 +184,8 @@ class PinterestApi():
             else:
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
-            logger.error("edit board is failed".format(e))
-            return {"code": -1, "msg": e, "data": ""}
+            logger.error("edit board is failed".format(str(e)))
+            return {"code": -1, "msg": str(e), "data": ""}
 
     def create_pin(self, board_id, note, image_url, link):
         """
@@ -215,7 +215,7 @@ class PinterestApi():
                 logger.error("create new pin is failed; board_id={}".format(board_id))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
-            logger.error("create new pin is failed:{}".format(e))
+            logger.error("create new pin is failed:{}".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
     def get_user_pins(self):
@@ -237,7 +237,7 @@ class PinterestApi():
                 logger.error("get user pins is failed")
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
-            logger.error("get user pins is failed: {}".format(e))
+            logger.error("get user pins is failed: {}".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
     def get_pin_id(self, pin_id):
@@ -260,7 +260,7 @@ class PinterestApi():
                 logger.info("get pin by id is failed, pin_id={}".format(pin_id))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
-            logger.error("get pin by id is failed: {}".format(e))
+            logger.error("get pin by id is failed: {}".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
     def edit_pin_id(self, pin_id, board, note, link):
@@ -290,7 +290,7 @@ class PinterestApi():
                 logger.info("edit pin by id is failed; pin_id={}".format(pin_id))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
-            logger.error("edit pin by id is failed: {}".format(e))
+            logger.error("edit pin by id is failed: {}".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
     def delete_pin_id(self, pin_id):
@@ -309,7 +309,7 @@ class PinterestApi():
                 logger.info("delete pin by id:{} is failed".format(pin_id))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
-            logger.error("delete pin by id is failed: {}".format(e))
+            logger.error("delete pin by id is failed: {}".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
     def get_user_suggested(self, count):
@@ -332,7 +332,7 @@ class PinterestApi():
                 logger.info("get user suggest: {} is failed".format(count))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
-            logger.error("get user suggest is failed:{}".format(e))
+            logger.error("get user suggest is failed:{}".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
             
 

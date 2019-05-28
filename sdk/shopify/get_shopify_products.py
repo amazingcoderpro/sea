@@ -33,7 +33,7 @@ class ProductsApi:
                 logger.info("get shopify info is failed")
                 return {"code": 2, "msg": json.loads(result.text).get("errors", ""), "data": ""}
         except Exception as e:
-            logger.error("get shopify info is failed info={}".format(e))
+            logger.error("get shopify info is failed info={}".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
     def get_all_products(self):
@@ -47,7 +47,7 @@ class ProductsApi:
                 logger.info("get shopify all prodects is failed")
                 return {"code": 2, "msg": json.loads(result.text).get("errors", ""), "data": ""}
         except Exception as e:
-            logger.error("get shopify all prodects is failed info={}".format(e))
+            logger.error("get shopify all prodects is failed info={}".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
     def get_product_id(self, id):
@@ -61,7 +61,7 @@ class ProductsApi:
                 logger.info("get shopify all prodects by id is failed")
                 return {"code": 2, "msg": json.loads(result.text).get("errors", ""), "data": ""}
         except Exception as e:
-            logger.error("get shopify all prodects by id is failed info={}".format(e))
+            logger.error("get shopify all prodects by id is failed info={}".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
 

@@ -61,7 +61,7 @@ class ShopifyBase():
                 logger.err("get shopify token is successed, shopname={}".format(self.shop_name))
                 return {"code": 2, "msg": json.loads(result.text).get("errors", ""), "data": ""}
         except Exception as e:
-            logger.error("get shopify token is failed".format(e))
+            logger.error("get shopify token is failed".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
 
