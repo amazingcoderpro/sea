@@ -157,6 +157,7 @@ class ShopifyCallback(APIView):
                 instance.token = result["data"]
                 instance.save()
                 user_instance = models.User.objects.filter(id=instance.user_id)
+                email = user_instance.email
             else:
                 print(shop, result["data"])
                 store_data = {"name": state, "url": shop, "platform": 1, "token": result["data"]}
