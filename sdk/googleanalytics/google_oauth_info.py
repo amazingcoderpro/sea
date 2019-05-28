@@ -11,7 +11,8 @@ class GoogleApi():
         self.VIEW_ID = '195406097'
 
     def initialize_analyticsreporting(self):
-        """Initializes an Analytics Reporting API V4 service object.
+        """
+          Initializes an Analytics Reporting API V4 service object.
         Returns:
           An authorized Analytics Reporting API V4 service object.
         """
@@ -34,31 +35,28 @@ class GoogleApi():
                         {
                             "viewId": self.VIEW_ID,
                             "dateRanges": [
-                                # {'startDate': '7daysAgo', 'endDate': 'today'},
-                                {"startDate": "1daysAgo", "endDate": "1daysAgo"}
+                                {'startDate': '15daysAgo', 'endDate': 'today'},
                             ],
                             "metrics": [
-                                {"expression": "ga:pageviews"},
-                                {"expression": "ga:sessions"},
-                                {"expression": "ga:hits"}
+                                {"expression": "ga:pageviews"},  # pv
+                                {"expression": "ga:uniquePageviews"},  # uv
+                                {"expression": "ga:hits"},  # 点击量
+                                {"expression": "ga:transactions"}  # 交易数量
                             ],
                             "dimensions": [
-                                {"name": "ga:browser"},
-                                {"name": "ga:country"},
-                                {"name": 'ga:dimension1'}
-
+                                {"name": "ga:source"},
                             ],
                             "dimensionFilterClauses": [
                                 {
                                     "filters": [
                                         {
-                                            "dimensionName": "ga:browser",
-                                            "operator": "EXACT",
-                                            "expressions": ["Chrome"]
+                                            "dimensionName": "ga:source",
+                                            # "operator": "EXACT",
+                                            # "expressions": ["baidu"]
                                         }]
-                                   }]
+                                    }]
                                 }]
-                           }).execute()
+                            }).execute()
 
     def print_response(self, response):
         """Parses and prints the Analytics Reporting API V4 response.
