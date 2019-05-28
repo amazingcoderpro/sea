@@ -127,6 +127,19 @@ class StoreAuthView(APIView):
         return Response({"message": url})
 
 
+class PinterestAccountAuthView(APIView):
+    """账户授权"""
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def post(self, request, *args, **kwargs):
+        instance = models.PinterestAccount.objects.filter(id=kwargs["pk"]).first()
+        if instance.authorized == 1:
+            return Response({"detail": "This account is authorized"}, status=status.HTTP_400_BAD_REQUEST)
+        url = pinterest_api.PinterestApi().get_pinterest_url(instance.account_uri)
+        return Response({"message": url})
+
+
 class ShopifyCallback(APIView):
     """shopify 回调接口"""
     def get(self, request):

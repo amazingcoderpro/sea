@@ -42,7 +42,7 @@ v1_urlpatterns = [
 
     # 店铺和账户授权
     url(r'store_auth/(?P<pk>[0-9]+)/$', personal_center.StoreAuthView.as_view()),
-    url(r'pinterest_account_auth/(?P<pk>[0-9]+)/$', account_manager.PinterestAccountAuthView.as_view()),
+    url(r'pinterest_account_auth/(?P<pk>[0-9]+)/$', personal_center.PinterestAccountAuthView.as_view()),
     url(r'shopify/callback/$', personal_center.ShopifyCallback.as_view()),
     url(r'pinterest/callback/$', personal_center.PinterestCallback.as_view()),
 

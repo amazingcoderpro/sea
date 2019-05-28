@@ -161,19 +161,6 @@ class PinterestAccountCreateView(generics.CreateAPIView):
     authentication_classes = (JSONWebTokenAuthentication,)
 
 
-# class PinterestAccountAuthView(APIView):
-#     """账户授权"""
-#     permission_classes = (IsAuthenticated,)
-#     authentication_classes = (JSONWebTokenAuthentication,)
-#
-#     def post(self, request, *args, **kwargs):
-#         instance = models.PinterestAccount.objects.filter(id=kwargs["pk"]).first()
-#         if instance.authorized == 1:
-#             return Response({"detail": "This account is authorized"}, status=status.HTTP_400_BAD_REQUEST)
-#         url = pinterest_api.PinterestApi().get_pinterest_url(instance.account_uri)
-#         return Response({"message": url})
-
-
 class PinterestAccountListView(generics.ListAPIView):
     """账号 select框显示"""
     queryset = models.PinterestAccount.objects.all()
