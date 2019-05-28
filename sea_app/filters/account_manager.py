@@ -75,6 +75,8 @@ class ProductCountFilter(BaseFilterBackend):
     filter_keys = {
         "begin_time": "update_time__gte",
         "end_time": "update_time__lte",
+        "publish_begin_time": "product__publish_time__gte",
+        "publish_end_time": "product__publish_time__lte",
         "product__name": "product__name__contains",
         "store": "store"
     }
@@ -87,3 +89,4 @@ class ProductCountFilter(BaseFilterBackend):
                 filte_kwargs[self.filter_keys[filter_key]] = val
         queryset = queryset.filter(**filte_kwargs)
         return queryset
+

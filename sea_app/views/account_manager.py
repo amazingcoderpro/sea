@@ -59,7 +59,7 @@ class ProductView(generics.ListAPIView):
 class ProductCount(generics.ListAPIView):
     """获取符合条件的产品"""
     queryset = models.ProductHistoryData.objects.all()
-    serializer_class = account_manager.ProductSerializer
+    serializer_class = account_manager.ProductHistorySerializer
     filter_backends = (account_manager_filters.ProductCountFilter,)
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
