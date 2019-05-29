@@ -1,3 +1,4 @@
+# -*-coding:utf-8-*-
 import requests
 from config import logger
 import json
@@ -115,7 +116,7 @@ class ProductsApi:
                 logger.info("get shopify all order by id is failed")
                 return {"code": 2, "msg": json.loads(result.text).get("errors", ""), "data": ""}
         except Exception as e:
-            logger.error("get shopify all order by id is failed info={}".format(str(e)))
+            logger.error("get shopify all order by id is failed; info={}".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
 
