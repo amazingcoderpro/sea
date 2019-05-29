@@ -33,25 +33,24 @@ class LoginView(generics.CreateAPIView):
         if serializer.is_valid():
             username = request.data.get('username', '')
             password = request.data.get('password', '')
+            code = request.data.get("code", "")
+            obj = models.User.objects.filter(username=username).first()
+            if obj and obj.is_active == 0:
+                if code:
+                    if obj.code == code:
+                        obj.is_active = 1
+                        obj.save()
+                else:
+                    return Response({"detail": "该账户未激活"}, status=status.HTTP_400_BAD_REQUEST)
             user = auth.authenticate(username=username, password=password)
             if not user:
                 return Response({"detail": "用户名密码错误"}, status=status.HTTP_400_BAD_REQUEST)
-            if user is not None and user.is_active:
+            if user:
                 res = {}
                 res["user"] = personal_center.LoginSerializer(instance=user, many=False).data
                 payload = jwt_payload_handler(user)
                 res["token"] = "jwt {}".format(jwt_encode_handler(payload))
                 return Response(res, status=status.HTTP_200_OK)
-            elif request.data.get("code", "") and not user.is_active:
-                if user.code == request.data.get("code", ""):
-                    user.is_active = 1
-                    res = {}
-                    res["user"] = personal_center.LoginSerializer(instance=user, many=False).data
-                    payload = jwt_payload_handler(user)
-                    res["token"] = "jwt {}".format(jwt_encode_handler(payload))
-                    return Response(res, status=status.HTTP_200_OK)
-                else:
-                    return Response({"detail": "该账户未激活"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -175,6 +174,7 @@ class ShopifyCallback(APIView):
             user_data = {"username": shop, "email": email, "is_active": 0, "code": random_code.create_random_code(6, True)}
             user_instance = models.User.objects.create(**user_data)
             instance.user = user_instance
+            instance.email = email
             instance.save()
         return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/shopfy_regist?shop={}&email={}&id={}".format(shop, email, user_instance.id))
 
