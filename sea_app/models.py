@@ -63,7 +63,7 @@ class Platform(models.Model):
     """平台表"""
     name = models.CharField(max_length=64, unique=True, verbose_name="平台名称")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="平台URL")
-    add_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
+    create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
     class Meta:
@@ -87,7 +87,7 @@ class Store(models.Model):
     # authorized_choices = ((0, 'no_authorized'), (1, 'authorized'))
     # authorized = models.SmallIntegerField(choices=authorized_choices, default=0, verbose_name="是否认证")
     token = models.CharField(blank=True, null=True, max_length=255, verbose_name="账号使用标识")
-    platform = models.ForeignKey(Platform, on_delete=models.DO_NOTHING, blank=True, null=True)
+    platform = models.ForeignKey(Platform, on_delete=models.DO_NOTHING)
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
@@ -237,7 +237,7 @@ class PinterestHistoryData(models.Model):
 
 class ProductHistoryData(models.Model):
     """Product历史数据表"""
-    Platform = models.ForeignKey(Platform, on_delete=models.DO_NOTHING, blank=True, null=True)
+    Platform = models.ForeignKey(Platform, on_delete=models.DO_NOTHING)
 
     store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, blank=True, null=True)
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING)

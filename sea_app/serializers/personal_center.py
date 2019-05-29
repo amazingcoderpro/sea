@@ -69,7 +69,7 @@ class SetPasswordSerializer(serializers.ModelSerializer):
         fields = ("id", "username", "password", "password2", "create_time")
         extra_kwargs = {
             'password': {'write_only': True},
-            'username': {'write_only': False, "read_only":True},
+            'username': {'write_only': True, "read_only":True},
         }
 
     def validate(self, attrs):
@@ -79,11 +79,13 @@ class SetPasswordSerializer(serializers.ModelSerializer):
         return attrs
 
     def update(self, instance, validated_data):
+        if instance.usernmae == validated_data["username"] and instance.is_active == 1:
+            raise serializers.ValidationError("请检查输入或账户已经激活")
         instance.set_password(validated_data["password"])
         instance.save()
-        comment = {"username": instance.username, "password": validated_data["password"],"code":instance.code}
+        comment = {"username": instance.username, "password": validated_data["password"], "code": instance.code}
         # msg = send_sms_agent.SMS(content=comment, to=(instance.email,))
-        msg = send_sms_agent.SMS(content=comment, to=("victor.fang@orderplus.com",))
+        msg = send_sms_agent.SMS(content=comment, to=(instance.email,))
         msg.send_email()
         return instance
 
