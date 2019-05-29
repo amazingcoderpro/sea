@@ -69,15 +69,22 @@ class ProductCount(generics.ListAPIView):
         scan = request.query_params.get("scan", '')
         sale_sign = request.query_params.get("sale_sign", '')
         sale = request.query_params.get("sale", '')
+        if not sale_sign or not sale:
+            if scan_sign not in [">", "<", ">=", "<=", "=="] or type(scan) != str or not scan.isdigit():
+                return Response({"deails": "请求参数错误"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            if scan_sign not in [">", "<",">=","<=","=="] or sale_sign not in [">","<",">=","<=","=="]\
+                    or type(scan) != str or type(sale) != str or not sale.isdigit() or not scan.isdigit():
+                return Response({"deails": "请求参数错误"}, status=status.HTTP_400_BAD_REQUEST)
         res = []
         queryset = self.filter_queryset(self.get_queryset())
         if not queryset:
-            return Response([])
-        result = queryset.values("product").annotate(scan=Sum("product_scan"), sale=Sum("product_sale"))
+            return Response(res)
+        result = queryset.values("product").annotate(scan=Sum("product_scan"), sales=Sum("product_sales"))
         if scan and sale:
             for item in result:
                 scan_codition = "{} {} {}".format(item["scan"], scan_sign, scan)
-                sale_codition = "{} {} {}".format(item["sale"], sale_sign, sale)
+                sale_codition = "{} {} {}".format(item["sales"], sale_sign, sale)
                 if eval(scan_codition) and eval(sale_codition):
                     res.append(item["product"])
         else:

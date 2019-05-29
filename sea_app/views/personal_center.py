@@ -130,7 +130,7 @@ class StoreAuthView(APIView):
         instance = models.Store.objects.filter(id=kwargs["pk"]).first()
         # if instance.authorized == 1:
         #     return Response({"detail": "This store is authorized"}, status=status.HTTP_400_BAD_REQUEST)
-        url = ShopifyBase(instance.name).ask_permission(instance.name)
+        url = ShopifyBase("ordersea.myshopify.com").ask_permission("d")
         return Response({"message": url})
 
 
