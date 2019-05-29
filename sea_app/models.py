@@ -208,6 +208,7 @@ class PinterestHistoryData(models.Model):
     account_name = models.CharField(max_length=64, blank=True, null=True, verbose_name="账户名称")
     account_followings = models.IntegerField(default=0, verbose_name="账户关注量")
     account_followers = models.IntegerField(default=0, verbose_name="账户粉丝")
+    account_views = models.IntegerField(default=0, verbose_name="账户访问量")
     board = models.ForeignKey(Board, on_delete=models.DO_NOTHING, blank=True, null=True)
     board_uri = models.CharField(max_length=32, blank=True, null=True, verbose_name="Board唯一标识码")
     board_name = models.CharField(max_length=64, blank=True, null=True, verbose_name="Board名称")
