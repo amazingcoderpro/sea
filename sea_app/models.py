@@ -43,12 +43,14 @@ class User(AbstractUser):
     site_name = models.CharField(max_length=45, blank=True, null=True, verbose_name="站点名称")
     site_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="站点URL")
     link = models.CharField(max_length=255, blank=True, null=True, verbose_name="链接参数")
-    state_choices = ((0, '正常'), (1, '隐蔽'), (2, '关闭'))
-    state = models.SmallIntegerField(choices=state_choices, default=0, verbose_name="用户状态")
+    # state_choices = ((0, '正常'), (1, '隐蔽'), (2, '关闭'))
+    # state = models.SmallIntegerField(choices=state_choices, default=0, verbose_name="用户状态")
     # parent_id = models.IntegerField(db_index=True, blank=True, null=True, verbose_name="站长ID")
     # parent = models.ForeignKey("self", on_delete=models.DO_NOTHING, blank=True, null=True)
+    code = models.CharField(max_length=255, blank=True, null=True, unique=True, verbose_name="用户唯一标识")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+
     # role = models.ForeignKey(Role, on_delete=models.DO_NOTHING)
 
     class Meta:
@@ -72,13 +74,12 @@ class Platform(models.Model):
 class Store(models.Model):
     """店铺表"""
     name = models.CharField(blank=True, null=True, max_length=255, verbose_name="店铺名称")
-    url = models.CharField(blank=True, null=False, max_length=255, unique=True, verbose_name="店铺URL")#店铺的url不能为null
-    # email = models.EmailField(
-    #     verbose_name='email address',
-    #     max_length=255,
-    #     blank=True,
-    #     null=True
-    # )
+    url = models.CharField(blank=True, null=False, max_length=255, unique=True, verbose_name="店铺URL")
+    email = models.EmailField(
+        verbose_name='email address',
+        max_length=255,
+        blank=True,
+    )
     visitors = models.IntegerField(blank=True, null=True, default=0, verbose_name="访问量")
     scan = models.IntegerField(blank=True, null=True, default=0, verbose_name="浏览量")
     sale = models.FloatField(blank=True, null=True, default=0.00, verbose_name="营收额")
@@ -130,6 +131,7 @@ class Product(models.Model):
     class Meta:
         # managed = False
         db_table = 'product'
+        ordering = ["-id"]
 
 
 class PinterestAccount(models.Model):

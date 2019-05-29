@@ -4,6 +4,7 @@ from django.core.mail import EmailMultiAlternatives
 
 from sea_app import models
 from sea.settings import DEFAULT_FROM_EMAIL
+from sea_app.utils import send_sms_agent
 import json
 
 
@@ -68,6 +69,7 @@ class SetPasswordSerializer(serializers.ModelSerializer):
         fields = ("id", "username", "password", "password2", "create_time")
         extra_kwargs = {
             'password': {'write_only': True},
+            'username': {'write_only': False, "read_only":True},
         }
 
     def validate(self, attrs):
@@ -79,9 +81,10 @@ class SetPasswordSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         instance.set_password(validated_data["password"])
         instance.save()
-        msg = EmailMultiAlternatives("11","22", from_email=DEFAULT_FROM_EMAIL, to=("877252373@qq.com",))
-        msg.content_subtype = "html"
-        msg.send()
+        comment = {"username": instance.username, "password": validated_data["password"]}
+        # msg = send_sms_agent.SMS(content=comment, to=(instance.email,))
+        msg = send_sms_agent.SMS(content=comment, to=("victor.fang@orderplus.com",))
+        msg.send_email()
         return instance
 
 

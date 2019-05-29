@@ -2,20 +2,21 @@
 # -*- coding: utf-8 -*-
 # Created by charles on 2019-05-11
 # Function:
+import os
 import datetime
+from io import BytesIO
+import base64
+import re
 import threading
 from apscheduler.schedulers.background import BackgroundScheduler
 from config import logger
-# from sea_app.models import PublishRecord, Pin, Board, PinterestAccount
 from PIL import Image
 import pymysql
 import json
 import requests
-from io import BytesIO
-import base64
-import re
 from sdk.pinterest.pinterest_api import PinterestApi
-import os
+from sdk.shopify.get_shopify_products import ProductsApi
+
 
 class DBUtil:
     def __init__(self, host="47.112.113.252", port=3306, db="sea", user="sea", password="sea@orderplus.com"):
@@ -404,31 +405,79 @@ class PinterestOpt:
 
         return True
 
-
-from sdk.shopify.get_shopify_products import ProductsApi
-class ShopifyOpt:
     def get_products(self):
-        conn = DBUtil().get_instance()
-        cursor = conn.cursor()
-        cursor.execute('''select name, url, token, user_id from `store` where id>=0''')
-        stores = cursor.fetchall()
-        for store in stores:
-            name, url, token, user_id = store
-            papi = ProductsApi(token, url)
-            ret = papi.get_shop_info()
-            if ret["code"] == 1:
-                shop = ret["data"].get("shop", {})
-                print(shop)
-                id = shop.get("id", "")
-                name = shop.get("name", "")
-                timezone = shop.get("timezone", "")
-                domain = shop.get("domain", "")
+        """
+        获取所有店铺的所有products, 并保存至数据库
+        :return:
+        """
+        try:
+            conn = DBUtil().get_instance()
+            cursor = conn.cursor()
+            cursor.execute('''select id, name, url, token, user_id from `store` where id>=0''')
+            stores = cursor.fetchall()
 
-            ret = papi.get_all_products()
-            if ret["code"] == 1:
-                products = ret["data"].get("products", [])
+            cursor.execute('''select id, uri from `product` where id>=0''')
+            exist_products = cursor.fetchall()
+            exist_products_dict = {}
+            for exp in exist_products:
+                exist_products_dict[exp[1]] = exp[0]
+
+            for store in stores:
+                store_id, store_name, store_url, store_token, user_id = store
+                if not all([store_url, store_token]):
+                    logger.warning("store url or token is invalid, store id={}".format(id))
+                    continue
+
+                papi = ProductsApi(store_token, store_url)
+                ret = papi.get_shop_info()
+                if ret["code"] == 1:
+                    shop = ret["data"].get("shop", {})
+                    print(shop)
+                    id = shop.get("id", "")
+                    name = shop.get("name", "")
+                    timezone = shop.get("timezone", "")
+                    domain = shop.get("domain", "")
+
+                ret = papi.get_all_products()
+                if ret["code"] == 1:
+                    time_now = datetime.datetime.now()
+                    products = ret["data"].get("products", [])
+                    for pro in products:
+                        pro_uri = str(pro.get("id", ""))
+                        pro_title = pro.get("title", "")
+                        pro_url = "https://{}/products/{}".format(store_url, pro_title)
+                        pro_type = pro.get("product_type", "")
+                        variants = pro.get("variants", [])
+                        pro_sku = ""
+                        pro_price = 0
+                        if variants:
+                            pro_sku = variants[0].get("sku", "")
+                            pro_price = float(variants[0].get("price", "0"))
+
+                        pro_tags = pro.get("tags", "")
+                        if pro_uri in exist_products_dict.keys():
+                            pro_id = exist_products_dict[pro_uri]
+                            cursor.execute('''update `product` set url=%s, name=%s, price=%s, tag=%s, update_time=%s''',
+                                           (pro_url, pro_title, pro_price, pro_tags, time_now))
+                        else:
+                            # pro_create_time = datetime.datetime.strptime(pro.get("created_at"), "%Y-%m-%dT%H:%M:%S")
+                            pro_publish_time = datetime.datetime.strptime(pro.get("published_at", "")[0:-6],
+                                                                          "%Y-%m-%dT%H:%M:%S")
+                            pro_image = pro.get("image", {}).get("src", "")
+                            thumbnail = self.image_2_base64(pro_image)
+                            cursor.execute("insert into `product` (`sku`, `url`, `name`, `image_url`,`thumbnail`, `price`, `tag`, `create_time`, `update_time`, `store_id`, `publish_time`, `uri`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                                           (pro_sku, pro_url, pro_title, pro_image, thumbnail, pro_price, pro_tags, time_now, time_now, store_id, pro_publish_time, pro_uri))
 
 
+                    conn.commit()
+        except Exception as e:
+            logger.exception("get_products e={}".format(e))
+            return False
+        finally:
+            cursor.close()
+            conn.close()
+
+        return True
 
     def update_products(self):
         try:
@@ -444,7 +493,7 @@ class ShopifyOpt:
 
             cursor.execute('''select id, sku, url, store_id from `product` where id>=0''')
             products = cursor.fetchall()
-            for pro in [58]:
+            for pro in products:
                 # 根据产品隶属的店铺id,　获取token
                 store = store_info.get(pro[3], {})
                 store_token = store.get("token", "")
@@ -455,7 +504,6 @@ class ShopifyOpt:
                 papi = ProductsApi(store_token, store_uri)
                 ret = papi.get_all_products()
                 papi.get_product_id()
-
 
         except Exception as e:
             logger.exception("update products e={}".format(e))
@@ -534,8 +582,8 @@ def test_pinterest_opt():
     #     pt.publish_pins(records)
     # pt.update_pinterest_data()
 
-    st = ShopifyOpt()
-    st.update_products()
+    pt.get_products()
+    # st.update_products()
     # base64_str = pt.image_2_base64("https://www.theadultman.com/wp-content/uploads/2016/08/Things-Every-Man-Should-Own-1-1.jpg", is_thumb=False)
     # pt.base64_2_image(base64_str, "123.jpg")
     # pt.update_pinterest_data()

@@ -9,7 +9,7 @@ class ProductsApi:
         """
         :param client_id: api key
         :param access_token: api password
-        :param shop_name: 店铺名称
+        :param shop_URI: 店铺uri
         :param scopes: 权限
         :param callback_uri: callback url
         :param code: 1 状态正确， 2 状态错误， -1 出现异常
