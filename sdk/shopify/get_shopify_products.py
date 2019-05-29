@@ -23,6 +23,10 @@ class ProductsApi:
         self.headers = {'Content-Type': 'application/json'}
 
     def get_shop_info(self):
+        """
+        获取用户信息
+        :return:
+        """
         shop_url = f"https://{self.client_id}:{self.access_token}@{self.shop_uri}{self.version_url}shop.json"
         try:
             result = requests.get(shop_url)
@@ -37,6 +41,10 @@ class ProductsApi:
             return {"code": -1, "msg": str(e), "data": ""}
 
     def get_all_products(self):
+        """
+        获取所有商品的信息
+        :return:
+        """
         products_url = f"https://{self.client_id}:{self.access_token}@{self.shop_uri}{self.version_url}products.json"
         try:
             result = requests.get(products_url)
@@ -51,6 +59,11 @@ class ProductsApi:
             return {"code": -1, "msg": str(e), "data": ""}
 
     def get_product_id(self, id):
+        """
+        通过 id 获取商品的信息
+        :param id: 商品id
+        :return:
+        """
         products_url = f"https://{self.client_id}:{self.access_token}@{self.shop_uri}{self.version_url}products/{id}.json"
         try:
             result = requests.get(products_url)
@@ -65,7 +78,21 @@ class ProductsApi:
             return {"code": -1, "msg": str(e), "data": ""}
 
     def get_order(self, create_start_time, create_end_time, key_word, financial_status="paid"):
-        # order_url = f"https://{self.client_id}:{self.access_token}@{self.shop_uri}{self.version_url}orders.json"
+        """
+         获取订单
+        :param create_start_time: 创建订单之前的时间
+        :param create_end_time: 创建订单之后的时间
+        :param key_word:  搜索关键字
+        :param financial_status: 订单状态
+             pending：付款待定。在这种状态下付款可能会失败。再次检查以确认付款是否已成功支付。
+             authorized：付款已获得授权。
+             partially_paid：订单已部分支付。
+             paid：付款已付款。
+             partial_refunded：付款已部分退还。
+             refunded：付款已退款。
+             voided：付款已无效
+        :return:
+        """
         order_url = f"https://{self.client_id}:{self.access_token}@{self.shop_uri}{self.version_url}orders.json" \
             f"?created_at_min={create_start_time}&created_at_max={create_end_time}&financial_status={financial_status}"
         try:
@@ -80,7 +107,7 @@ class ProductsApi:
                         order_count += 1
                         order_price = float(order_info.get("total_price"))
                         total_price += order_price
-                result_info = {"order_count": order_count, "total_price": total_price}
+                result_info = {"order_count": order_count, "total_price": round(total_price, 4)}
                 print(result_info)
                 logger.info("get shopify all order by id is success")
                 return {"code": 1, "msg": "", "data": result_info}
@@ -102,6 +129,6 @@ if __name__ == '__main__':
     shop_uri = "arealook.myshopify.com"
     products_api = ProductsApi(access_token=access_token, shop_uri=shop_uri)
     # products_api.get_all_products()
-    products_api.get_order(create_start_time="2019-05-27T0:0:0-04:00", create_end_time="2019-05-28T0:0:0-04:00", key_word="google", financial_status="paid")
-    products_api.get_shop_info()
+    products_api.get_order(create_start_time="2019-05-22T0:0:0-04:00", create_end_time="2019-05-28T0:0:0-04:00", key_word="google", financial_status="paid")
+    # products_api.get_shop_info()
     # products_api.get_product_id()
