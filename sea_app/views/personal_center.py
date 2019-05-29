@@ -34,16 +34,24 @@ class LoginView(generics.CreateAPIView):
             username = request.data.get('username', '')
             password = request.data.get('password', '')
             user = auth.authenticate(username=username, password=password)
+            if not user:
+                return Response({"detail": "用户名密码错误"}, status=status.HTTP_400_BAD_REQUEST)
             if user is not None and user.is_active:
                 res = {}
                 res["user"] = personal_center.LoginSerializer(instance=user, many=False).data
                 payload = jwt_payload_handler(user)
                 res["token"] = "jwt {}".format(jwt_encode_handler(payload))
                 return Response(res, status=status.HTTP_200_OK)
-            else:
-                if not user.is_active:
+            elif request.data.get("code", "") and not user.is_active:
+                if user.code == request.data.get("code", ""):
+                    user.is_active = 1
+                    res = {}
+                    res["user"] = personal_center.LoginSerializer(instance=user, many=False).data
+                    payload = jwt_payload_handler(user)
+                    res["token"] = "jwt {}".format(jwt_encode_handler(payload))
+                    return Response(res, status=status.HTTP_200_OK)
+                else:
                     return Response({"detail": "该账户未激活"}, status=status.HTTP_400_BAD_REQUEST)
-                return Response({"detail": "用户名密码错误"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -156,6 +164,7 @@ class ShopifyCallback(APIView):
             instance.save()
             user_instance = models.User.objects.filter(id=instance.user_id).first()
             user_instance.is_active = 0
+            user_instance.code = random_code.create_random_code(6, True)
             user_instance.save()
             email = user_instance.email
         else:
@@ -165,7 +174,7 @@ class ShopifyCallback(APIView):
             instance.save()
             info = ProductsApi(access_token=result["data"], shop_uri=shop).get_shop_info()
             email = info["data"]["shop"]["email"]
-            user_data = {"username": shop, "email": email, "is_active": 0}
+            user_data = {"username": shop, "email": email, "is_active": 0, "code": random_code.create_random_code(6, True)}
             user_instance = models.User.objects.create(**user_data)
             instance.user = user_instance
             instance.save()

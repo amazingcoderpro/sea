@@ -33,7 +33,7 @@ PinBooster Customer Support
 class SMS(EmailMultiAlternatives):
     """发送邮件"""
     def __init__(self, content, to,):
-        email_comtents = contents.format(username=content["username"], password=content["password"], code="123")
+        email_comtents = contents.format(username=content["username"], password=content["password"], code=content["code"])
         super(SMS, self).__init__(subject=sub.format(shop=content["username"]), body=email_comtents, from_email=DEFAULT_FROM_EMAIL, to=to)
 
     def send_email(self,):

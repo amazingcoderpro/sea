@@ -43,7 +43,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.User
-        fields = ("id", "username", "password", "password2", "create_time", "nickname")
+        fields = ("id", "username", "password", "password2", "create_time",)
         extra_kwargs = {
             'password': {'write_only': True},
         }
@@ -81,7 +81,7 @@ class SetPasswordSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         instance.set_password(validated_data["password"])
         instance.save()
-        comment = {"username": instance.username, "password": validated_data["password"]}
+        comment = {"username": instance.username, "password": validated_data["password"],"code":instance.code}
         # msg = send_sms_agent.SMS(content=comment, to=(instance.email,))
         msg = send_sms_agent.SMS(content=comment, to=("victor.fang@orderplus.com",))
         msg.send_email()

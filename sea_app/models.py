@@ -69,6 +69,7 @@ class Platform(models.Model):
     class Meta:
         # managed = False
         db_table = 'platform'
+        ordering = ["-id"]
 
 
 class Store(models.Model):
@@ -159,6 +160,7 @@ class PinterestAccount(models.Model):
     class Meta:
         # managed = False
         db_table = 'pinterest_account'
+        ordering = ["-id"]
 
 
 class Board(models.Model):
@@ -180,6 +182,7 @@ class Board(models.Model):
     class Meta:
 
         db_table = 'board'
+        ordering = ["-id"]
 
 
 class Pin(models.Model):
@@ -200,6 +203,7 @@ class Pin(models.Model):
     class Meta:
         # managed = False
         db_table = 'pin'
+        ordering = ["-id"]
 
 
 class PinterestHistoryData(models.Model):
@@ -290,6 +294,7 @@ class RuleSchedule(models.Model):
     class Meta:
         # managed = False
         db_table = 'rule_schedule'
+        ordering = ["-id"]
 
 
 class PublishRecord(models.Model):
@@ -309,6 +314,7 @@ class PublishRecord(models.Model):
     class Meta:
         # managed = False
         db_table = 'publish_record'
+        ordering = ["-id"]
 
 
 class OperationRecord(models.Model):
@@ -320,3 +326,4 @@ class OperationRecord(models.Model):
     class Meta:
         # managed = False
         db_table = 'operation_record'
+        ordering = ["-id"]
