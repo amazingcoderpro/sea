@@ -71,6 +71,8 @@ class ProductCount(generics.ListAPIView):
         sale = request.query_params.get("sale", '')
         res = []
         queryset = self.filter_queryset(self.get_queryset())
+        if not queryset:
+            return Response([])
         result = queryset.values("product").annotate(scan=Sum("product_scan"), sale=Sum("product_sale"))
         if scan and sale:
             for item in result:
