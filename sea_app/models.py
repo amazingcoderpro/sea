@@ -40,9 +40,9 @@ class User(AbstractUser):
     email = models.EmailField(max_length=255, blank=True, null=True, verbose_name="账户邮箱")
     # nickname = models.CharField(max_length=45, verbose_name="昵称")
     password = models.CharField(max_length=128, blank=True, null=True,  verbose_name="密码")
-    site_name = models.CharField(max_length=45, blank=True, null=True, verbose_name="站点名称")
-    site_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="站点URL")
-    link = models.CharField(max_length=255, blank=True, null=True, verbose_name="链接参数")
+    # site_name = models.CharField(max_length=45, blank=True, null=True, verbose_name="站点名称")
+    # site_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="站点URL")
+    # link = models.CharField(max_length=255, blank=True, null=True, verbose_name="链接参数")
     # state_choices = ((0, '正常'), (1, '隐蔽'), (2, '关闭'))
     # state = models.SmallIntegerField(choices=state_choices, default=0, verbose_name="用户状态")
     # parent_id = models.IntegerField(db_index=True, blank=True, null=True, verbose_name="站长ID")
@@ -117,17 +117,17 @@ class Product(models.Model):
     """产品表"""
     sku = models.CharField(max_length=64, verbose_name="产品标识符")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
+    uuid = models.CharField(max_length=255, verbose_name="产品唯一标识", unique=True)
     name = models.CharField(max_length=255, verbose_name="产品名称")
     image_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="图片URL")
     thumbnail = models.TextField(verbose_name="缩略图", default="")
-    price = models.FloatField(verbose_name="产品价格")
+    price = models.CharField(max_length=255, verbose_name="产品价格")
     category = models.ForeignKey(ProductCategory, on_delete=models.DO_NOTHING, blank=True, null=True)
-    tag = models.CharField(max_length=64, verbose_name="所属标签")
+    tag = models.CharField(max_length=255, verbose_name="所属标签")
+    store = models.ForeignKey(Store, on_delete=models.DO_NOTHING)
     publish_time = models.DateTimeField(blank=True, null=True, verbose_name="发布时间")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, null=False)   # 产品的店铺不能为空
-    uri = models.CharField(max_length=100, verbose_name="产品唯一标识", unique=True)
 
     class Meta:
         # managed = False

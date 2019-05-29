@@ -7,7 +7,6 @@ INSERT INTO `user` (`id`, `last_login`, `is_superuser`, `first_name`, `last_name
 VALUES
 	(1, NULL, 0, '', '', 0, 1, '2019-06-01 00:00:00.852191', 'admin', 'victor.fang@orderplus.com', 'pbkdf2_sha256$120000$M0cY6Z6wcYr9$iwqYBe/MJfOLkpx2/2mMWtt2f1X7GBSt7D0EKRdjdV8=', NULL, NULL, NULL, NULL, '2019-06-01 00:00:00.899300', '2019-06-01 00:00:00.744339');
 
-
 INSERT INTO `platform` (`id`, `name`, `url`, `update_time`, `create_time`)
 VALUES
 	(1, 'Shopify', NULL, '2019-06-01 00:00:00.852191', '2019-06-01 00:00:00.852191'),
