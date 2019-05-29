@@ -12,9 +12,9 @@ You have already download the "PinBooster" and this email is notice to you that 
 <br/>
 The information of the register are:<br/>
 <br/>
-Usename: {username}<br/>
+<span style="font-weight:600;">Usename:</span> {username}<br/>
 <br/>
-Registration Password:  {password}<br/>
+<span style="font-weight:600;">Registration Password::</span> {password}<br/>
 <br/>
 Here you need to click the following link to activete your PinBooster account.<br/>
 <br/>
