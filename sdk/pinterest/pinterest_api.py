@@ -9,7 +9,6 @@ class PinterestApi():
     """
     pinterest api接口
     """
-
     def __init__(self, access_token="", host=None):
         """
         :param access_token:
