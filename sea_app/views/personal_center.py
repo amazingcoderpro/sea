@@ -168,10 +168,8 @@ class ShopifyCallback(APIView):
             user_instance.save()
             email = user_instance.email
         else:
-            store_data = {"name": shop_name, "url": shop, "token": result["data"]}
+            store_data = {"name": shop_name, "url": shop, "token": result["data"], "platform": models.Platform.objects.filter(id=1).first()}
             instance = models.Store.objects.create(**store_data)
-            instance.platform_id = 1
-            instance.save()
             info = ProductsApi(access_token=result["data"], shop_uri=shop).get_shop_info()
             email = info["data"]["shop"]["email"]
             user_data = {"username": shop, "email": email, "is_active": 0, "code": random_code.create_random_code(6, True)}
