@@ -117,7 +117,6 @@ class Product(models.Model):
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
     name = models.CharField(max_length=255, verbose_name="产品名称")
     image_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="图片URL")
-
     thumbnail = models.TextField(verbose_name="缩略图", default="")
     price = models.FloatField(verbose_name="产品价格")
     category = models.ForeignKey(ProductCategory, on_delete=models.DO_NOTHING, blank=True, null=True)
@@ -145,6 +144,8 @@ class PinterestAccount(models.Model):
     description = models.TextField(blank=True, null=True, verbose_name="账户描述")
     create_time = models.DateTimeField(blank=True, null=True, verbose_name="账号创建时间")
     token = models.CharField(blank=True, null=True, max_length=255, verbose_name="账号使用标识")
+    boards = models.IntegerField(default=0, verbose_name=u"account下的board个数")
+    views = models.IntegerField(default=0, verbose_name="访问量")
     authorized_choices = ((0, 'no_authorized'), (1, 'authorized'))
     authorized = models.SmallIntegerField(choices=authorized_choices, default=0, verbose_name="是否认证")
     add_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
@@ -216,8 +217,6 @@ class PinterestHistoryData(models.Model):
     pin_likes = models.IntegerField(default=0, verbose_name="喜欢量, pinteres平台已经没有了, 暂时保留")
     pin_comments = models.IntegerField(default=0, verbose_name="评论量")
     pin_saves = models.IntegerField(default=0, verbose_name="转发量")
-    pin_views = models.IntegerField(default=0, verbose_name="浏览量")
-    pin_clicks = models.IntegerField(default=0, verbose_name="点击量")
 
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
 
@@ -234,12 +233,13 @@ class ProductHistoryData(models.Model):
     Platform = models.ForeignKey(Platform, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, blank=True, null=True)
-    store_visitors = models.IntegerField(default=0, verbose_name="访问量")
-    store_new_visitors = models.IntegerField(default=0, verbose_name="新增访问量")
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING)
+    product_visitors = models.IntegerField(default=0, verbose_name="访客总数")
+    product_new_visitors = models.IntegerField(default=0, verbose_name="新访客数")
+    product_clicks = models.IntegerField(default=0, verbose_name="点击量")
     product_scan = models.IntegerField(default=0, verbose_name="浏览量")
-    product_sale = models.FloatField(default=0.00, verbose_name="销售额")
-    product_revenue = models.FloatField(default=0.00, verbose_name="收益")
+    product_sales = models.FloatField(default=0.00, verbose_name="订单数")
+    product_revenue = models.FloatField(default=0.00, verbose_name="销售额")
     update_time = models.DateTimeField(auto_now=True, db_index=True, verbose_name="数据更新时间")
 
     class Meta:
