@@ -64,15 +64,44 @@ class ProductsApi:
             logger.error("get shopify all prodects by id is failed info={}".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
+    def get_order(self, create_start_time, create_end_time, key_word, financial_status="paid"):
+        # order_url = f"https://{self.client_id}:{self.access_token}@{self.shop_uri}{self.version_url}orders.json"
+        order_url = f"https://{self.client_id}:{self.access_token}@{self.shop_uri}{self.version_url}orders.json" \
+            f"?created_at_min={create_start_time}&created_at_max={create_end_time}&financial_status={financial_status}"
+        try:
+            result = requests.get(order_url)
+            if result.status_code == 200:
+                order_list = json.loads(result.text).get("orders", "")
+                order_count = 0
+                total_price = 0
+                for order_info in order_list:
+                    referring_site = str(order_info.get("referring_site"))
+                    if str(key_word) in referring_site:
+                        order_count += 1
+                        order_price = float(order_info.get("total_price"))
+                        total_price += order_price
+                result_info = {"order_count": order_count, "total_price": total_price}
+                print(result_info)
+                logger.info("get shopify all order by id is success")
+                return {"code": 1, "msg": "", "data": result_info}
+            else:
+                logger.info("get shopify all order by id is failed")
+                return {"code": 2, "msg": json.loads(result.text).get("errors", ""), "data": ""}
+        except Exception as e:
+            logger.error("get shopify all order by id is failed info={}".format(str(e)))
+            return {"code": -1, "msg": str(e), "data": ""}
+
 
 if __name__ == '__main__':
     client_id = "f9cd4d9b7362ae81038635518edfd98f"
-    access_token = "0e4143eb45f2519b6b40a57a2834acd0"
+    access_token = "fa7fadd554e238cc6aafc0f15b9553f9"
     shop = "ordersea.myshopify.com"
     scopes = "write_orders,read_customers"
     callback_uri = "http://www.orderplus.com/index.html"
     id = "3583116148816"
-    products_api = ProductsApi(client_id, access_token)
+    shop_uri = "arealook.myshopify.com"
+    products_api = ProductsApi(access_token=access_token, shop_uri=shop_uri)
     # products_api.get_all_products()
+    products_api.get_order(create_start_time="2019-05-27T0:0:0-04:00", create_end_time="2019-05-28T0:0:0-04:00", key_word="google", financial_status="paid")
     products_api.get_shop_info()
     # products_api.get_product_id()

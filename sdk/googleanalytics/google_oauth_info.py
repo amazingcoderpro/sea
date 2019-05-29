@@ -46,15 +46,15 @@ class GoogleApi():
                             "dimensions": [
                                 {"name": "ga:source"},
                             ],
-                            "dimensionFilterClauses": [
-                                {
-                                    "filters": [
-                                        {
-                                            "dimensionName": "ga:source",
-                                            # "operator": "EXACT",
-                                            # "expressions": ["baidu"]
-                                        }]
-                                    }]
+                            # "dimensionFilterClauses": [
+                            #     {
+                            #         "filters": [
+                            #             {
+                            #                 "dimensionName": "ga:source",
+                            #                 "operator": "EXACT",
+                            #                 "expressions": ["baidu"]
+                            #             }]
+                            #         }]
                                 }]
                             }).execute()
 
@@ -72,9 +72,9 @@ class GoogleApi():
             for row in report.get('data', {}).get('rows', []):
                 dimensions = row.get('dimensions', [])
                 dateRangeValues = row.get('metrics', [])
-
                 for header, dimension in zip(dimensionHeaders, dimensions):
-                    print(header + ': ' + dimension)
+                    if dimension.index("baidu"):
+                        print(header + ': ' + dimension)
 
                 for i, values in enumerate(dateRangeValues):
                     print('Date range: ' + str(i))
@@ -85,7 +85,6 @@ class GoogleApi():
         analytics = self.initialize_analyticsreporting()
         response = self.get_report(analytics)
         response_data = self.print_response(response)
-        print(response_data)
 
 
 if __name__ == '__main__':

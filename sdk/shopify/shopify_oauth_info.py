@@ -18,7 +18,6 @@ class ShopifyBase():
         self.client_secret = SHOPIFY_CONFIG.get("client_secret")
         self.redirect_uri = SHOPIFY_CONFIG.get("redirect_uri")
         self.shop_uri = shop_uri
-        self.shop_name = shop_uri.split(".")[0]
         self.scopes = SHOPIFY_CONFIG.get("scopes")
         self.headers = {'Content-Type': 'application/json'}
 
@@ -32,7 +31,7 @@ class ShopifyBase():
         """
         redirect_uri = parse.quote(self.redirect_uri)
         scopes_info = ",".join(self.scopes)
-        permission_url = f"https://{self.shop_name}/admin/oauth/authorize" \
+        permission_url = f"https://{self.shop_uri}/admin/oauth/authorize" \
                          f"?client_id={self.client_id}" \
                          f"&scope={scopes_info}" \
                          f"&redirect_uri={redirect_uri}" \
@@ -51,14 +50,14 @@ class ShopifyBase():
             "client_secret": self.client_secret,
             "code": code
         }
-        url = f"https://{self.shop_name}.myshopify.com/admin/oauth/access_token"
+        url = f"https://{self.shop_uri}/admin/oauth/access_token"
         try:
             result = requests.post(url, json.dumps(display), headers=self.headers)
             if result.status_code == 200:
-                logger.info("get shopify token is successed, shopname={}".format(self.shop_name))
+                logger.info("get shopify token is successed, shopname={}".format(self.shop_uri))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("access_token")}
             else:
-                logger.error("get shopify token is successed, shopname={}".format(self.shop_name))
+                logger.error("get shopify token is successed, shopname={}".format(self.shop_uri))
                 return {"code": 2, "msg": json.loads(result.text).get("errors", ""), "data": ""}
         except Exception as e:
             logger.error("get shopify token is failed".format(str(e)))
@@ -66,7 +65,10 @@ class ShopifyBase():
 
 
 if __name__ == '__main__':
-    ShopifyBase = ShopifyBase(shop_name="ordersea")
+    # ShopifyBase = ShopifyBase(shop_uri="ordersea.myshopify.com")
+
+    ShopifyBase = ShopifyBase(shop_uri="arealook.myshopify.com")
     # ShopifyBase.reRequest(shop="ordersea", method="get", url="", headers=None, data=None)
-    # ShopifyBase.ask_permission(nonce="ordersea")
+    url = ShopifyBase.ask_permission(nonce="arealook")
+    back_url = requests.get(url)
     ShopifyBase.get_token(code="9d905c868fd21585bb8ef3955e814e51")
