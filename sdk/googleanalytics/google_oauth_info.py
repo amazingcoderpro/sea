@@ -5,10 +5,10 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 
 class GoogleApi():
-    def __init__(self):
+    def __init__(self, view_id):
         self.SCOPES = ['https://www.googleapis.com/auth/analytics.readonly']
         self.KEY_FILE_LOCATION = 'client_secrets.json'
-        self.VIEW_ID = '195406097'
+        self.VIEW_ID = view_id
 
     def initialize_analyticsreporting(self):
         """
@@ -73,8 +73,7 @@ class GoogleApi():
                 dimensions = row.get('dimensions', [])
                 dateRangeValues = row.get('metrics', [])
                 for header, dimension in zip(dimensionHeaders, dimensions):
-                    if dimension.index("baidu"):
-                        print(header + ': ' + dimension)
+                    print(header + ': ' + dimension)
 
                 for i, values in enumerate(dateRangeValues):
                     print('Date range: ' + str(i))
@@ -88,7 +87,7 @@ class GoogleApi():
 
 
 if __name__ == '__main__':
-    google_data = GoogleApi()
+    google_data = GoogleApi(view_id="195406097")
     google_data.main()
 
 

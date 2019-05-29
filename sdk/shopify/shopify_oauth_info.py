@@ -51,16 +51,17 @@ class ShopifyBase():
             "code": code
         }
         url = f"https://{self.shop_uri}/admin/oauth/access_token"
+        logger.info(url, display, self.shop_uri)
         try:
             result = requests.post(url, json.dumps(display), headers=self.headers)
             if result.status_code == 200:
                 logger.info("get shopify token is successed, shopname={}".format(self.shop_uri))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("access_token")}
             else:
-                logger.error("get shopify token is successed, shopname={}".format(self.shop_uri))
+                logger.error("get shopify token is failed, shopname={}".format(self.shop_uri))
                 return {"code": 2, "msg": json.loads(result.text).get("errors", ""), "data": ""}
         except Exception as e:
-            logger.error("get shopify token is failed".format(str(e)))
+            logger.error("get shopify token is exception".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
 
