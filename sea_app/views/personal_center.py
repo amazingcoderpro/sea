@@ -20,6 +20,7 @@ from sdk.shopify.shopify_oauth_info import ShopifyBase
 from sdk.shopify.get_shopify_products import ProductsApi
 from sdk.pinterest import pinterest_api
 from sea_app.views import reports
+from sea_app.utils import random_code
 
 
 class LoginView(generics.CreateAPIView):
@@ -33,14 +34,24 @@ class LoginView(generics.CreateAPIView):
             username = request.data.get('username', '')
             password = request.data.get('password', '')
             user = auth.authenticate(username=username, password=password)
+            if not user:
+                return Response({"detail": "用户名密码错误"}, status=status.HTTP_400_BAD_REQUEST)
             if user is not None and user.is_active:
                 res = {}
                 res["user"] = personal_center.LoginSerializer(instance=user, many=False).data
                 payload = jwt_payload_handler(user)
                 res["token"] = "jwt {}".format(jwt_encode_handler(payload))
                 return Response(res, status=status.HTTP_200_OK)
-            else:
-                return Response({"detail": "用户名密码错误"}, status=status.HTTP_400_BAD_REQUEST)
+            elif request.data.get("code", "") and not user.is_active:
+                if user.code == request.data.get("code", ""):
+                    user.is_active = 1
+                    res = {}
+                    res["user"] = personal_center.LoginSerializer(instance=user, many=False).data
+                    payload = jwt_payload_handler(user)
+                    res["token"] = "jwt {}".format(jwt_encode_handler(payload))
+                    return Response(res, status=status.HTTP_200_OK)
+                else:
+                    return Response({"detail": "该账户未激活"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -55,10 +66,6 @@ class SetPasswordView(generics.UpdateAPIView):
     """设置密码"""
     queryset = models.User.objects.all()
     serializer_class = personal_center.SetPasswordSerializer
-
-
-
-
 
 
 # class UserView(generics.ListCreateAPIView):
@@ -149,27 +156,29 @@ class ShopifyCallback(APIView):
             return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
         shop_name = shop.split(".")[0]
         result = ShopifyBase(shop).get_token(code)
-        if result["code"] == 1:
-            instance = models.Store.objects.filter(url=shop).first()
-            if instance:
-                instance.token = result["data"]
-                instance.save()
-                user_instance = models.User.objects.filter(id=instance.user_id).first()
-                email = user_instance.email
-            else:
-                store_data = {"name": shop_name, "url": shop, "token": result["data"]}
-                instance = models.Store.objects.create(**store_data)
-                instance.platform_id = 1
-                instance.save()
-                # TDD 调接口获取邮箱
-                info = ProductsApi(access_token=result["data"], shop_uri=shop).get_shop_info()
-                email = info["data"]["shop"]["email"]
-                user_data = {"username": shop, "email": email}
-                user_instance = models.User.objects.create(**user_data)
-                instance.user = user_instance
-                instance.save()
-            return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/shopfy_regist?shop={}&email={}&id={}".format(shop, email, user_instance.id))
-        return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
+        if result["code"] != 1:
+            return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
+        instance = models.Store.objects.filter(url=shop).first()
+        if instance:
+            instance.token = result["data"]
+            instance.save()
+            user_instance = models.User.objects.filter(id=instance.user_id).first()
+            user_instance.is_active = 0
+            user_instance.code = random_code.create_random_code(6, True)
+            user_instance.save()
+            email = user_instance.email
+        else:
+            store_data = {"name": shop_name, "url": shop, "token": result["data"]}
+            instance = models.Store.objects.create(**store_data)
+            instance.platform_id = 1
+            instance.save()
+            info = ProductsApi(access_token=result["data"], shop_uri=shop).get_shop_info()
+            email = info["data"]["shop"]["email"]
+            user_data = {"username": shop, "email": email, "is_active": 0, "code": random_code.create_random_code(6, True)}
+            user_instance = models.User.objects.create(**user_data)
+            instance.user = user_instance
+            instance.save()
+        return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/shopfy_regist?shop={}&email={}&id={}".format(shop, email, user_instance.id))
 
 
 class PinterestCallback(APIView):

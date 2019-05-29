@@ -87,6 +87,8 @@ class ProductCountFilter(BaseFilterBackend):
             val = request.query_params.get(filter_key, '')
             if val is not '':
                 filte_kwargs[self.filter_keys[filter_key]] = val
+        if not filte_kwargs:
+            return []
         queryset = queryset.filter(**filte_kwargs)
         return queryset
 

@@ -40,15 +40,17 @@ class User(AbstractUser):
     email = models.EmailField(max_length=255, blank=True, null=True, verbose_name="账户邮箱")
     # nickname = models.CharField(max_length=45, verbose_name="昵称")
     password = models.CharField(max_length=128, blank=True, null=True,  verbose_name="密码")
-    site_name = models.CharField(max_length=45, blank=True, null=True, verbose_name="站点名称")
-    site_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="站点URL")
-    link = models.CharField(max_length=255, blank=True, null=True, verbose_name="链接参数")
-    state_choices = ((0, '正常'), (1, '隐蔽'), (2, '关闭'))
-    state = models.SmallIntegerField(choices=state_choices, default=0, verbose_name="用户状态")
+    # site_name = models.CharField(max_length=45, blank=True, null=True, verbose_name="站点名称")
+    # site_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="站点URL")
+    # link = models.CharField(max_length=255, blank=True, null=True, verbose_name="链接参数")
+    # state_choices = ((0, '正常'), (1, '隐蔽'), (2, '关闭'))
+    # state = models.SmallIntegerField(choices=state_choices, default=0, verbose_name="用户状态")
     # parent_id = models.IntegerField(db_index=True, blank=True, null=True, verbose_name="站长ID")
     # parent = models.ForeignKey("self", on_delete=models.DO_NOTHING, blank=True, null=True)
+    code = models.CharField(max_length=255, blank=True, null=True, unique=True, verbose_name="用户唯一标识")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+
     # role = models.ForeignKey(Role, on_delete=models.DO_NOTHING)
 
     class Meta:
@@ -61,31 +63,31 @@ class Platform(models.Model):
     """平台表"""
     name = models.CharField(max_length=64, unique=True, verbose_name="平台名称")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="平台URL")
-    add_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
+    create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
     class Meta:
         # managed = False
         db_table = 'platform'
+        ordering = ["-id"]
 
 
 class Store(models.Model):
     """店铺表"""
     name = models.CharField(blank=True, null=True, max_length=255, verbose_name="店铺名称")
-    url = models.CharField(blank=True, null=False, max_length=255, unique=True, verbose_name="店铺URL")#店铺的url不能为null
-    # email = models.EmailField(
-    #     verbose_name='email address',
-    #     max_length=255,
-    #     blank=True,
-    #     null=True
-    # )
+    url = models.CharField(blank=True, null=False, max_length=255, unique=True, verbose_name="店铺URL")
+    email = models.EmailField(
+        verbose_name='email address',
+        max_length=255,
+        blank=True,
+    )
     visitors = models.IntegerField(blank=True, null=True, default=0, verbose_name="访问量")
     scan = models.IntegerField(blank=True, null=True, default=0, verbose_name="浏览量")
     sale = models.FloatField(blank=True, null=True, default=0.00, verbose_name="营收额")
     # authorized_choices = ((0, 'no_authorized'), (1, 'authorized'))
     # authorized = models.SmallIntegerField(choices=authorized_choices, default=0, verbose_name="是否认证")
     token = models.CharField(blank=True, null=True, max_length=255, verbose_name="账号使用标识")
-    platform = models.ForeignKey(Platform, on_delete=models.DO_NOTHING, blank=True, null=True)
+    platform = models.ForeignKey(Platform, on_delete=models.DO_NOTHING)
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
@@ -115,18 +117,17 @@ class Product(models.Model):
     """产品表"""
     sku = models.CharField(max_length=64, verbose_name="产品标识符")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
+    uuid = models.CharField(max_length=255, verbose_name="产品唯一标识", unique=True)
     name = models.CharField(max_length=255, verbose_name="产品名称")
     image_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="图片URL")
-
     thumbnail = models.TextField(verbose_name="缩略图", default="")
-    price = models.FloatField(verbose_name="产品价格")
+    price = models.CharField(max_length=255, verbose_name="产品价格")
     category = models.ForeignKey(ProductCategory, on_delete=models.DO_NOTHING, blank=True, null=True)
-    tag = models.CharField(max_length=64, verbose_name="所属标签")
+    tag = models.CharField(max_length=255, verbose_name="所属标签")
+    store = models.ForeignKey(Store, on_delete=models.DO_NOTHING)
     publish_time = models.DateTimeField(blank=True, null=True, verbose_name="发布时间")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, null=False)   # 产品的店铺不能为空
-    uri = models.CharField(max_length=100, verbose_name="产品唯一标识", unique=True)
 
     class Meta:
         # managed = False
@@ -146,6 +147,8 @@ class PinterestAccount(models.Model):
     description = models.TextField(blank=True, null=True, verbose_name="账户描述")
     create_time = models.DateTimeField(blank=True, null=True, verbose_name="账号创建时间")
     token = models.CharField(blank=True, null=True, max_length=255, verbose_name="账号使用标识")
+    boards = models.IntegerField(default=0, verbose_name=u"account下的board个数")
+    views = models.IntegerField(default=0, verbose_name="访问量")
     authorized_choices = ((0, 'no_authorized'), (1, 'authorized'))
     authorized = models.SmallIntegerField(choices=authorized_choices, default=0, verbose_name="是否认证")
     add_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
@@ -157,6 +160,7 @@ class PinterestAccount(models.Model):
     class Meta:
         # managed = False
         db_table = 'pinterest_account'
+        ordering = ["-id"]
 
 
 class Board(models.Model):
@@ -178,6 +182,7 @@ class Board(models.Model):
     class Meta:
 
         db_table = 'board'
+        ordering = ["-id"]
 
 
 class Pin(models.Model):
@@ -198,6 +203,7 @@ class Pin(models.Model):
     class Meta:
         # managed = False
         db_table = 'pin'
+        ordering = ["-id"]
 
 
 class PinterestHistoryData(models.Model):
@@ -206,6 +212,7 @@ class PinterestHistoryData(models.Model):
     account_name = models.CharField(max_length=64, blank=True, null=True, verbose_name="账户名称")
     account_followings = models.IntegerField(default=0, verbose_name="账户关注量")
     account_followers = models.IntegerField(default=0, verbose_name="账户粉丝")
+    account_views = models.IntegerField(default=0, verbose_name="账户访问量")
     board = models.ForeignKey(Board, on_delete=models.DO_NOTHING, blank=True, null=True)
     board_uri = models.CharField(max_length=32, blank=True, null=True, verbose_name="Board唯一标识码")
     board_name = models.CharField(max_length=64, blank=True, null=True, verbose_name="Board名称")
@@ -217,8 +224,6 @@ class PinterestHistoryData(models.Model):
     pin_likes = models.IntegerField(default=0, verbose_name="喜欢量, pinteres平台已经没有了, 暂时保留")
     pin_comments = models.IntegerField(default=0, verbose_name="评论量")
     pin_saves = models.IntegerField(default=0, verbose_name="转发量")
-    pin_views = models.IntegerField(default=0, verbose_name="浏览量")
-    pin_clicks = models.IntegerField(default=0, verbose_name="点击量")
 
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
 
@@ -232,15 +237,16 @@ class PinterestHistoryData(models.Model):
 
 class ProductHistoryData(models.Model):
     """Product历史数据表"""
-    Platform = models.ForeignKey(Platform, on_delete=models.DO_NOTHING, blank=True, null=True)
+    Platform = models.ForeignKey(Platform, on_delete=models.DO_NOTHING)
 
     store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, blank=True, null=True)
-    store_visitors = models.IntegerField(default=0, verbose_name="访问量")
-    store_new_visitors = models.IntegerField(default=0, verbose_name="新增访问量")
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING)
+    product_visitors = models.IntegerField(default=0, verbose_name="访客总数")
+    product_new_visitors = models.IntegerField(default=0, verbose_name="新访客数")
+    product_clicks = models.IntegerField(default=0, verbose_name="点击量")
     product_scan = models.IntegerField(default=0, verbose_name="浏览量")
-    product_sale = models.FloatField(default=0.00, verbose_name="销售额")
-    product_revenue = models.FloatField(default=0.00, verbose_name="收益")
+    product_sales = models.FloatField(default=0.00, verbose_name="订单数")
+    product_revenue = models.FloatField(default=0.00, verbose_name="销售额")
     update_time = models.DateTimeField(auto_now=True, db_index=True, verbose_name="数据更新时间")
 
     class Meta:
@@ -288,6 +294,7 @@ class RuleSchedule(models.Model):
     class Meta:
         # managed = False
         db_table = 'rule_schedule'
+        ordering = ["-id"]
 
 
 class PublishRecord(models.Model):
@@ -307,6 +314,7 @@ class PublishRecord(models.Model):
     class Meta:
         # managed = False
         db_table = 'publish_record'
+        ordering = ["-id"]
 
 
 class OperationRecord(models.Model):
@@ -318,3 +326,4 @@ class OperationRecord(models.Model):
     class Meta:
         # managed = False
         db_table = 'operation_record'
+        ordering = ["-id"]
