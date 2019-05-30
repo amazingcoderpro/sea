@@ -70,6 +70,7 @@ class PinterestApi():
                 print(json.loads(result.text).get("data", {}))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
+                logger.error("get user info is failed msg={}".format(json.loads(result.text).get("message", "")))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("get user info failed".format(str(e)))
@@ -96,6 +97,7 @@ class PinterestApi():
                 logger.info("create user boards is success name={}".format(name))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
+                logger.error("create user boards is failed,  name={}, msg= {}".format(name, json.loads(result.text).get("message", "")))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("post user boards is failed:{}".format(str(e)))
@@ -114,9 +116,11 @@ class PinterestApi():
         try:
             result = requests.get(url)
             if result.status_code == 200:
+                print(result.text)
                 logger.info("get user boards is success")
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
+                logger.error("get user boards is failed, msg= {}".format(json.loads(result.text).get("message", "")))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("get user boards failed: {}".format(str(e)))
@@ -138,6 +142,8 @@ class PinterestApi():
                 logger.info("get by id board is success; board_id={}".format(board_id))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
+                logger.error("get by id board is failed, msg= {}".format(json.loads(result.text).get(
+                    "message", "")))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("get by id board failed:{}".format(str(e)))
@@ -156,6 +162,7 @@ class PinterestApi():
                 logger.info("delete board is success, board_id={}".format(board_id))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
+                logger.error("delete board is failed, msg= {}".format(json.loads(result.text).get("message", "")))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("delete board is failed: {}".format(str(e)))
@@ -183,6 +190,7 @@ class PinterestApi():
                 logger.info("edit board is success; board_id={},name={} ".format(board_id, name))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
+                logger.error("edit board is failed, msg= {}".format(json.loads(result.text).get("message", "")))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("edit board is failed".format(str(e)))
@@ -208,13 +216,13 @@ class PinterestApi():
             "link": link
         }
         try:
-            result = requests.post(api_request_url, payload)
+            result = requests.post(api_request_url, json=payload)
             if result.status_code == 200:
                 logger.info("create new pin is success; board_id={}".format(board_id))
                 print(json.loads(result.text).get("data", {}))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
-                logger.error("create new pin is failed; board_id={}".format(board_id))
+                logger.error("create new pin is failed, msg= {}, board_id={}".format(json.loads(result.text).get("message", ""), board_id))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("create new pin is failed:{}".format(str(e)))
@@ -237,7 +245,7 @@ class PinterestApi():
                 print(json.loads(result.text).get("data", {}))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
-                logger.error("get user pins is failed")
+                logger.error("get user pin is failed, msg= {}".format(json.loads(result.text).get("message", "")))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("get user pins is failed: {}".format(str(e)))
@@ -260,7 +268,7 @@ class PinterestApi():
                 logger.info("get pin by id is success, pin_id={}".format(pin_id))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
-                logger.info("get pin by id is failed, pin_id={}".format(pin_id))
+                logger.error("get pin by id is failed, msg= {}".format(json.loads(result.text).get("message", "")))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("get pin by id is failed: {}".format(str(e)))
@@ -290,7 +298,7 @@ class PinterestApi():
                 logger.info("edit pin by id is success; pin_id={}".format(pin_id))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
-                logger.info("edit pin by id is failed; pin_id={}".format(pin_id))
+                logger.error("edit pin by id is failed, msg= {}".format(json.loads(result.text).get("message", "")))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("edit pin by id is failed: {}".format(str(e)))
@@ -309,7 +317,7 @@ class PinterestApi():
                 logger.info("delete pin by id:{} is success".format(pin_id))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
-                logger.info("delete pin by id:{} is failed".format(pin_id))
+                logger.error("delete pin by id is failed, msg= {}".format(json.loads(result.text).get("message", "")))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("delete pin by id is failed: {}".format(str(e)))
@@ -332,7 +340,7 @@ class PinterestApi():
                 logger.info("get user suggest: {} is success".format(count))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
-                logger.info("get user suggest: {} is failed".format(count))
+                logger.error("get user suggest failed, msg= {}".format(json.loads(result.text).get("message", "")))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("get user suggest is failed:{}".format(str(e)))
@@ -347,10 +355,10 @@ if __name__ == '__main__':
     # all_pinterest_api.get_user_pins(access_token=access_token)
     # all_pinterest_api.get_token(code=code)
     # all_pinterest_api.get_user_info()
-    # all_pinterest_api.create_pin(board_id="753790125070471758", note="xiaoning44777", image_url="http://www.vikilife.com/wp-content/uploads/2013/01/01214-1.jpg", link="我这事在哪里")
+    all_pinterest_api.create_pin(board_id="753790125070474023", note="时间是最好的礼物", image_url="https://cdn.shopify.com/s/files/1/0225/2131/5408/products/Selection_019.png?v=1557998280", link="www.baidu.com")
     # all_pinterest_api.get_pinterest_url(state="shaowei580@gmail.com")
     # all_pinterest_api.delete_pin(pin_id="55451266411112")
-    all_pinterest_api.get_user_pins()
+    # all_pinterest_api.get_user_pins()
     # all_pinterest_api.get_user_boards()
     # all_pinterest_api.get_pin_by_id(pin_id="753790056365099389")
     # all_pinterest_api.edit_board(board_id="753790125070479475", name="jjjjj", description="jjjjjjjjjjjjjjjjjjjjjjj")
