@@ -44,7 +44,7 @@ rule_urlpatterns = [
     # 修改规则状态
     url(r'state/(?P<pk>[0-9]+)/$', account_manager.RuleStatusView.as_view()),
 
-    # 发布记录
+    # 发布记录和发布列表
     url(r'report/$', account_manager.ReportView.as_view()),
     # 发布pin
     url(r'report/send_pin/(?P<pk>[0-9]+)/$', account_manager.SendPinView.as_view()),
