@@ -16,7 +16,7 @@ from sea_app.filters import report as report_filters
 from sea_app.serializers import account_manager, report
 from sea_app.filters import account_manager as account_manager_filters
 from sea_app.pageNumber.pageNumber import PNPagination
-# from sea_app.permission.permission import RolePermission
+from sea_app.permission.permission import RulePermission
 from sdk.pinterest import pinterest_api
 
 
@@ -56,7 +56,7 @@ class ProductView(generics.ListAPIView):
     search_fields = ("name",)
 
 
-class ProductCount(generics.ListAPIView):
+class SearchProductView(generics.ListAPIView):
     """获取符合条件的产品"""
     queryset = models.ProductHistoryData.objects.all()
     serializer_class = account_manager.ProductHistorySerializer
@@ -249,8 +249,19 @@ class PinManageView(generics.RetrieveUpdateDestroyAPIView):
             return Response({"detail": result["msg"]}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class AccountManageView(generics.DestroyAPIView):
+class AccountManageView(generics.UpdateAPIView):
     """Pin账号管理 删除"""
     queryset = models.PinterestAccount.objects.all()
+    serializer_class = report.PinterestAccountListSerializer
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
+
+
+class RuleStatusView(generics.UpdateAPIView):
+    """修改规则状态"""
+    queryset = models.Rule.objects.all()
+    serializer_class = account_manager.RuleStatusSerializer
+    permission_classes = (IsAuthenticated, RulePermission)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+

@@ -142,7 +142,7 @@ class PinterestAccount(models.Model):
     email = models.CharField(blank=True, null=True, max_length=255, verbose_name="登陆邮箱")
     type_choices = ((0, 'business'), (1, 'individual'))
     type = models.SmallIntegerField(choices=type_choices, default=0, verbose_name="账号类型")
-    state_choices = ((0, 'normal'), (1, 'forbidden'))
+    state_choices = ((0, 'normal'), (1, 'forbidden'), (2, 'deleted'))
     state = models.SmallIntegerField(choices=state_choices, default=0, verbose_name="账号状态")
     description = models.TextField(blank=True, null=True, verbose_name="账户描述")
     create_time = models.DateTimeField(blank=True, null=True, verbose_name="账号创建时间")
@@ -245,7 +245,7 @@ class ProductHistoryData(models.Model):
     product_new_visitors = models.IntegerField(default=0, verbose_name="新访客数")
     product_clicks = models.IntegerField(default=0, verbose_name="点击量")
     product_scan = models.IntegerField(default=0, verbose_name="浏览量")
-    product_sales = models.FloatField(default=0.00, verbose_name="订单数")
+    product_sales = models.IntegerField(default=0, verbose_name="订单数")
     product_revenue = models.FloatField(default=0.00, verbose_name="销售额")
     update_time = models.DateTimeField(auto_now=True, db_index=True, verbose_name="数据更新时间")
 
@@ -288,7 +288,7 @@ class RuleSchedule(models.Model):
     end_time = models.TimeField(verbose_name="每天结束时间")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    interval_time = models.FloatField(verbose_name="发布间隔时间（秒）")
+    interval_time = models.IntegerField(default=3600, verbose_name="发布间隔时间（秒）")
     rule = models.ForeignKey(Rule, related_name="schedule_rule", on_delete=models.DO_NOTHING)
 
     class Meta:

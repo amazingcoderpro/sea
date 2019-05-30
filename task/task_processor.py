@@ -416,7 +416,7 @@ class PinterestOpt:
             cursor.execute('''select id, name, url, token, user_id from `store` where id>=0''')
             stores = cursor.fetchall()
 
-            cursor.execute('''select id, uri from `product` where id>=0''')
+            cursor.execute('''select id, uuid from `product` where id>=0''')
             exist_products = cursor.fetchall()
             exist_products_dict = {}
             for exp in exist_products:
@@ -425,14 +425,14 @@ class PinterestOpt:
             for store in stores:
                 store_id, store_name, store_url, store_token, user_id = store
                 if not all([store_url, store_token]):
-                    logger.warning("store url or token is invalid, store id={}".format(id))
+                    logger.warning("store url or token is invalid, store id={}".format(store_id))
                     continue
 
                 papi = ProductsApi(store_token, store_url)
                 ret = papi.get_shop_info()
                 if ret["code"] == 1:
                     shop = ret["data"].get("shop", {})
-                    print(shop)
+                    logger.info("shop info={}".format(shop))
                     id = shop.get("id", "")
                     name = shop.get("name", "")
                     timezone = shop.get("timezone", "")
@@ -465,7 +465,7 @@ class PinterestOpt:
                                                                           "%Y-%m-%dT%H:%M:%S")
                             pro_image = pro.get("image", {}).get("src", "")
                             thumbnail = self.image_2_base64(pro_image)
-                            cursor.execute("insert into `product` (`sku`, `url`, `name`, `image_url`,`thumbnail`, `price`, `tag`, `create_time`, `update_time`, `store_id`, `publish_time`, `uri`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                            cursor.execute("insert into `product` (`sku`, `url`, `name`, `image_url`,`thumbnail`, `price`, `tag`, `create_time`, `update_time`, `store_id`, `publish_time`, `uuid`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                                            (pro_sku, pro_url, pro_title, pro_image, thumbnail, pro_price, pro_tags, time_now, time_now, store_id, pro_publish_time, pro_uri))
 
 
@@ -580,7 +580,7 @@ def test_pinterest_opt():
     # if records:
     #     print(records)
     #     pt.publish_pins(records)
-    # pt.update_pinterest_data()
+    pt.update_pinterest_data()
 
     pt.get_products()
     # st.update_products()

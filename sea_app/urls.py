@@ -13,32 +13,21 @@ v1_urlpatterns = [
     # 用户 角色管理
     # url(r'users/$', personal_center.UserView.as_view()),
     # url(r'users/(?P<pk>[0-9]+)/$', personal_center.UserOperView.as_view()),
-    url(r'users/operation_record/$', cache_page(60 * 2)(personal_center.OperationRecord.as_view())),
+    url(r'users/operation_record/$', cache_page(5)(personal_center.OperationRecord.as_view())),
     # url(r'role/$', personal_center.RoleView.as_view()),
     # url(r'role/(?P<pk>[0-9]+)/$', personal_center.RoleOperView.as_view()),
 
     # 报告
-    url(r'dashboard/change_part/$', cache_page(60 * 5)(report.DashBoardChangePartView.as_view())),
-    url(r'dashboard/fixed_part/$', cache_page(60 * 15)(report.DashBoardFixedPartView.as_view())),
-    url(r'daily_report/$', cache_page(60 * 15)(report.DailyReportView.as_view())),
+    url(r'dashboard/change_part/$', cache_page(5)(report.DashBoardChangePartView.as_view())),
+    url(r'dashboard/fixed_part/$', cache_page(5)(report.DashBoardFixedPartView.as_view())),
+    url(r'daily_report/$', cache_page(5)(report.DailyReportView.as_view())),
     url(r'subaccount_report/(?P<type>[a-zA-Z]+)/$', cache_page(60 * 15)(report.SubAccountReportView.as_view())),
 
     # 选择列表
-    url(r'select/account/$', cache_page(60 * 30)(account_manager.PinterestAccountListView.as_view())),
-    url(r'select/board/$', cache_page(60 * 30)(account_manager.BoardListView.as_view())),
-    url(r'select/pin/$', cache_page(60 * 30)(account_manager.PinListView.as_view())),
+    url(r'select/account/$', cache_page(5)(account_manager.PinterestAccountListView.as_view())),
+    url(r'select/board/$', cache_page(5)(account_manager.BoardListView.as_view())),
+    url(r'select/pin/$', cache_page(5)(account_manager.PinListView.as_view())),
 
-    # 规则管理
-    url(r'rule/$', account_manager.RuleView.as_view()),
-    url(r'rule/(?P<pk>[0-9]+)/$', account_manager.RuleOperView.as_view()),
-    # 查询符合条件的 账号列表
-    url(r'product_count/$', account_manager.ProductCount.as_view()),
-    # 获取某用户的pinterest账号和board
-    url(r'pinterest_account_board/$', account_manager.PinterestAccountView.as_view()),
-    # 获取产品
-    url(r'product/$', account_manager.ProductView.as_view()),
-    # 发布记录
-    url(r'report/$', account_manager.ReportView.as_view()),
 
     # 店铺和账户授权
     url(r'store_auth/(?P<pk>[0-9]+)/$', personal_center.StoreAuthView.as_view()),
@@ -57,12 +46,36 @@ v1_urlpatterns = [
     url(r'pinterest_account/$', account_manager.PinterestAccountCreateView.as_view()),
 
     # 店铺管理
-    url(r'store/$', store.StoreView.as_view()),
-    url(r'store/(?P<pk>[0-9]+)/$', store.StoreOperView.as_view()),
+    # url(r'store/$', store.StoreView.as_view()),
+    # url(r'store/(?P<pk>[0-9]+)/$', store.StoreOperView.as_view()),
 
+]
+
+
+# 规则管理 `/v1/rule/`
+rule_urlpatterns = [
+
+    # 增加规则 规则列表
+    url(r'^$', account_manager.RuleView.as_view()),
+    # 增加规则: 查询符合条件的产品列表
+    url(r'search_product/$', account_manager.SearchProductView.as_view()),
+    # 增加规则: 获取某用户的pinterest账号和board
+    url(r'pinterest_account_board/$', account_manager.PinterestAccountView.as_view()),
+
+    # 修改规则状态
+    url(r'state/(?P<pk>[0-9]+)/$', account_manager.RuleStatusView.as_view()),
+
+    # 发布记录
+    url(r'report/$', account_manager.ReportView.as_view()),
+
+    # 修改规则
+    # url(r'rule/(?P<pk>[0-9]+)/$', account_manager.RuleOperView.as_view()),
+    # 发布列表
+    # url(r'rule/product/$', account_manager.ProductView.as_view()),
 ]
 
 
 urlpatterns = [
     url(r'^v1/', include(v1_urlpatterns)),
+    url(r'^v1/rule/', include(rule_urlpatterns)),
 ]
