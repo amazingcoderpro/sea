@@ -245,7 +245,7 @@ class ProductHistoryData(models.Model):
     product_new_visitors = models.IntegerField(default=0, verbose_name="新访客数")
     product_clicks = models.IntegerField(default=0, verbose_name="点击量")
     product_scan = models.IntegerField(default=0, verbose_name="浏览量")
-    product_sales = models.FloatField(default=0.00, verbose_name="订单数")
+    product_sales = models.IntegerField(default=0, verbose_name="订单数")
     product_revenue = models.FloatField(default=0.00, verbose_name="销售额")
     update_time = models.DateTimeField(auto_now=True, db_index=True, verbose_name="数据更新时间")
 
