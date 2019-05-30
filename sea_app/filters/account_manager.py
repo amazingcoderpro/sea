@@ -109,7 +109,6 @@ class ReportFilter(BaseFilterBackend):
                     filte_kwargs[self.filter_keys[filter_key]] = eval(val)
                     continue
                 filte_kwargs[self.filter_keys[filter_key]] = val
-        print(filte_kwargs)
         if not filte_kwargs:
             return []
         queryset = queryset.filter(**filte_kwargs)
