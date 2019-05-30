@@ -23,7 +23,7 @@ def get_request_params(request):
     board_id = request.GET.get("board_id")
     pin_id = request.GET.get("pin_id")
     search_word = request.GET.get("search", "").strip()
-    store_id = request.GET.get("store_id")  # 必传
+    store_id = request.GET.get("store_id")  # 必传(如果一个用户绑定一个商店的话，就可以通过当前用户获取当前店铺)
     # platform = request.GET.get("platform_id", 1)  # 必传
     return start_time, end_time, pinterest_account_id, board_id, pin_id, search_word, store_id
 
@@ -69,14 +69,14 @@ def daily_report(pin_set_list, product_set_list):
             group_dict[date] = {
                 "account_followings": item.account_followings,
                 "account_followers": item.account_followers,
+                "account_views": item.account_views,
                 "boards": [] if not item.board_id else [item.board_id],  # board数
                 "board_followers": item.board_followers,
                 "pins": [] if not item.pin_id else [item.pin_id],  # pin数
                 "pin_saves": item.pin_saves,
                 "pin_likes": item.pin_likes,
                 "pin_comments": item.pin_comments,
-                "pin_view": item.pin_views,
-                "pin_clicks": item.pin_clicks,
+                "product_clicks": 0,
                 "product_sales": 0,
                 "product_revenue": 0,
                 "products": [] if not item.product_id else [item.product_id],  # product
@@ -90,22 +90,22 @@ def daily_report(pin_set_list, product_set_list):
             group_dict[date]["pin_saves"] += item.pin_saves
             group_dict[date]["pin_likes"] += item.pin_likes
             group_dict[date]["pin_comments"] += item.pin_comments
-            group_dict[date]["pin_view"] += item.pin_views
-            group_dict[date]["pin_clicks"] += item.pin_clicks
+            group_dict[date]["account_views"] += item.account_views
+            # group_dict[date]["pin_clicks"] += item.pin_clicks
             group_dict[date]["products"].append(item.product_id)
     for day, info in group_dict.items():
         data = {
             "date": day.strftime("%Y-%m-%d"),
             "account_followings": info["account_followings"],
             "account_followers": info["account_followers"],
+            "account_views": info["account_views"],
             "boards": len(set(filter(lambda x: x, info["boards"]))),
             "board_followers": info["board_followers"],
             "pins": len(set(filter(lambda x: x, info["pins"]))),
             "pin_saves": info["pin_saves"],
             "pin_likes": info["pin_likes"],
             "pin_comments": info["pin_comments"],
-            "pin_view": info["pin_view"],
-            "pin_clicks": info["pin_clicks"],
+            "product_clicks": info["product_clicks"],
             "product_sales": info["product_sales"],
             "product_revenue": info["product_revenue"],
             # "product_list": info["products"],
@@ -113,17 +113,19 @@ def daily_report(pin_set_list, product_set_list):
 
         # 组装每日product对应pin的数据
         product_set_list_pre = product_set_list.filter(Q(update_time__range=(day + datetime.timedelta(days=-1), day)))
-        store_obj = product_set_list_pre.filter(Q(product_id=None)).first()
-        if store_obj:
-            data["store_visitors"] = store_obj.store_visitors
-            data["store_new_visitors"] = store_obj.store_new_visitors
-        else:
-            data["store_visitors"] = 0
-            data["store_new_visitors"] = 0
+        # store_obj = product_set_list_pre.filter(Q(product_id=None)).first()
+        # if store_obj:
+        #     data["product_visitors"] = store_obj.product_visitors
+        #     data["product_new_visitors"] = store_obj.product_new_visitors
+        # else:
+        #     data["store_visitors"] = 0
+        #     data["store_new_visitors"] = 0
         product_set_list = product_set_list_pre.filter(Q(product_id__in=info["products"]))
         for item in product_set_list:
             data["product_sales"] += item.product_sale
             data["product_revenue"] += item.product_revenue
+            data["product_visitors"] = item.product_visitors
+            data["product_new_visitors"] = item.product_new_visitors
 
         data_list.append(data)
     return data_list
@@ -184,12 +186,12 @@ def subaccount_report(pin_set_list, product_set_list):
                 "boards": [] if not item.board_id else [item.board_id],  # board数
                 "account_followings": item.account_followings,
                 "account_followers": item.account_followers,
+                "account_views": item.account_views,
                 "pins": [] if not item.pin_id else [item.pin_id],  # pin数
                 "pin_saves": item.pin_saves,
                 "pin_likes": item.pin_likes,
                 "pin_comments": item.pin_comments,
-                "pin_view": item.pin_views,
-                "pin_clicks": item.pin_clicks,
+                # "product_clicks": item.product_clicks,
                 "products": [] if not item.product_id else [item.product_id],  # product
             }
         else:
@@ -198,8 +200,8 @@ def subaccount_report(pin_set_list, product_set_list):
             group_dict[subaccount_id]["pin_saves"] += item.pin_saves
             group_dict[subaccount_id]["pin_likes"] += item.pin_likes
             group_dict[subaccount_id]["pin_comments"] += item.pin_comments
-            group_dict[subaccount_id]["pin_view"] += item.pin_views
-            group_dict[subaccount_id]["pin_clicks"] += item.pin_clicks
+            # group_dict[subaccount_id]["pin_view"] += item.pin_views
+            # group_dict[subaccount_id]["pin_clicks"] += item.pin_clicks
             group_dict[subaccount_id]["products"].append(item.product_id)  # product
     for subaccount_id, info in group_dict.items():
         data = {
@@ -207,23 +209,24 @@ def subaccount_report(pin_set_list, product_set_list):
             "account_name": info["account_name"],
             "account_followings": info["account_followings"],
             "account_followers": info["account_followers"],
+            "account_views": info["account_views"],
             "boards": len(set(filter(lambda x: x, info["boards"]))),
             "pins": len(set(filter(lambda x: x, info["pins"]))),
             "pin_saves": info["pin_saves"],
             "pin_likes": info["pin_likes"],
             "pin_comments": info["pin_comments"],
-            "pin_view": info["pin_view"],
-            "pin_clicks": info["pin_clicks"],
-            "store_visitors": 0,
-            "store_new_visitors": 0,
+            # "pin_clicks": info["pin_clicks"],
+            "product_visitors": 0,
+            "product_new_visitors": 0,
+            "product_clicks": 0,
             "product_sales": 0,
             "product_revenue": 0
         }
         # 组装product对应pin的数据
-        store_set_list = product_set_list.filter(Q(product_id__in=info["products"]) | Q(product_id=None))
-        for item in store_set_list:
-            data["store_visitors"] += item.store_visitors
-            data["store_new_visitors"] += item.store_new_visitors
+        product_set_list = product_set_list.filter(Q(product_id__in=info["products"]))
+        for item in product_set_list:
+            data["product_visitors"] += item.product_visitors
+            data["product_new_visitors"] += item.product_new_visitors
             data["product_sales"] += item.product_sale
             data["product_revenue"] += item.product_revenue
 
@@ -248,8 +251,8 @@ def board_report(pin_set_list, product_set_list):
                 "pin_saves": item.pin_saves,
                 "pin_likes": item.pin_likes,
                 "pin_comments": item.pin_comments,
-                "pin_view": item.pin_views,
-                "pin_clicks": item.pin_clicks,
+                # "pin_view": item.pin_views,
+                # "pin_clicks": item.pin_clicks,
                 "products": [] if not item.product_id else [item.product_id],  # product
             }
         else:
@@ -257,8 +260,8 @@ def board_report(pin_set_list, product_set_list):
             group_dict[board_id]["pin_saves"] += item.pin_saves
             group_dict[board_id]["pin_likes"] += item.pin_likes
             group_dict[board_id]["pin_comments"] += item.pin_comments
-            group_dict[board_id]["pin_view"] += item.pin_views
-            group_dict[board_id]["pin_clicks"] += item.pin_clicks
+            # group_dict[board_id]["pin_view"] += item.pin_views
+            # group_dict[board_id]["pin_clicks"] += item.pin_clicks
             group_dict[board_id]["products"].append(item.product_id)  # product
 
     for board_id, info in group_dict.items():
@@ -270,18 +273,19 @@ def board_report(pin_set_list, product_set_list):
             "pin_saves": info["pin_saves"],
             "pin_likes": info["pin_likes"],
             "pin_comments": info["pin_comments"],
-            "pin_view": info["pin_view"],
-            "pin_clicks": info["pin_clicks"],
-            "store_visitors": 0,
-            "store_new_visitors": 0,
+            # "pin_view": info["pin_view"],
+            "product_visitors": 0,
+            "product_new_visitors": 0,
+            "product_clicks": 0,
             "product_sales": 0,
             "product_revenue": 0
         }
         # 组装product对应pin的数据
-        store_set_list = product_set_list.filter(Q(product_id__in=info["products"]) | Q(product_id=None))
-        for item in store_set_list:
-            data["store_visitors"] += item.store_visitors
-            data["store_new_visitors"] += item.store_new_visitors
+        product_set_list = product_set_list.filter(Q(product_id__in=info["products"]))
+        for item in product_set_list:
+            data["product_visitors"] += item.product_visitors
+            data["product_new_visitors"] += item.product_new_visitors
+            data["product_clicks"] += item.product_clicks
             data["product_sales"] += item.product_sale
             data["product_revenue"] += item.product_revenue
 
@@ -304,8 +308,8 @@ def pins_report(pin_set_list, product_set_list):
                 "pin_saves": item.pin_saves,
                 "pin_likes": item.pin_likes,
                 "pin_comments": item.pin_comments,
-                "pin_view": item.pin_views,
-                "pin_clicks": item.pin_clicks,
+                # "pin_view": item.pin_views,
+                # "pin_clicks": item.pin_clicks,
                 "product_id": item.product_id
             }
         else:
@@ -316,8 +320,8 @@ def pins_report(pin_set_list, product_set_list):
                     "pin_saves": item.pin_saves,
                     "pin_likes": item.pin_likes,
                     "pin_comments": item.pin_comments,
-                    "pin_view": item.pin_views,
-                    "pin_clicks": item.pin_clicks,
+                    # "pin_view": item.pin_views,
+                    # "pin_clicks": item.pin_clicks,
                     "product_id": item.product_id
                 }
     for pin_uri, info in group_dict.items():
@@ -327,21 +331,23 @@ def pins_report(pin_set_list, product_set_list):
             "pin_saves": info["pin_saves"],
             "pin_likes": info["pin_likes"],
             "pin_comments": info["pin_comments"],
-            "pin_view": info["pin_view"],
-            "pin_clicks": info["pin_clicks"],
-            "store_visitors": 0,
-            "store_new_visitors": 0,
+            # "pin_view": info["pin_view"],
+            "product_visitors": 0,
+            "product_new_visitors": 0,
+            "product_clicks": 0,
             "product_sales": 0,
             "product_revenue": 0,
             # "product_id": info["product_id"]
         }
         # 组装product对应pin的数据
-        store_set_list = product_set_list.filter(Q(product_id=None))
-        for item in store_set_list:
-            data["store_visitors"] += item.store_visitors
-            data["store_new_visitors"] += item.store_new_visitors
+        # store_set_list = product_set_list.filter(Q(product_id=None))
+        # for item in store_set_list:
+        #     data["store_visitors"] += item.store_visitors
+        #     data["store_new_visitors"] += item.store_new_visitors
         product_obj_list = product_set_list.filter(Q(product_id=info["product_id"]))
         for product_obj in product_obj_list:
+            data["product_visitors"] += product_obj.product_visitors
+            data["product_new_visitors"] += product_obj.product_new_visitors
             data["product_sales"] += product_obj.product_sale
             data["product_revenue"] += product_obj.product_revenue
 
@@ -408,8 +414,6 @@ def site_count(pin_set_list, product_set_list, oneday=datetime.datetime.now()):
     # 获取pin总数
     pin_set = pin_queryset.filter(~Q(pin_id=None))
     pin_num = get_num(pin_set, "pin_id")
-    # 获取click总数
-    click_num = count_num(pin_set, "pin_clicks")
     pin_saves = count_num(pin_set, "pin_saves")
 
     # 获取product_id_list
@@ -420,16 +424,18 @@ def site_count(pin_set_list, product_set_list, oneday=datetime.datetime.now()):
 
     # 获取sales总数
     product_set = product_set_list.filter(Q(product_id__in=product_id_list))
-    sales_num = count_num(product_set, "product_sale")
+    sales_num = count_num(product_set, "product_sales")
+    # 获取click总数
+    click_num = count_num(product_set, "product_clicks")
     # 获取revenue总数
     revenue_num = count_num(product_set, "product_revenue")
     # 获取visitor总数,需要关联pin中的product_id,通过product_set获取store_set
-    store_id_list = []
-    for product in product_set:
-        store_id_list.append(product.store_id)
-    store_id_list = set(store_id_list)
-    store_set = product_set_list.filter(Q(store_id__in=store_id_list), Q(product_id=None))
-    visitor_num = count_num(store_set, "store_visitors")
+    # store_id_list = []
+    # for product in product_set:
+    #     store_id_list.append(product.store_id)
+    # store_id_list = set(store_id_list)
+    # store_set = product_set_list.filter(Q(store_id__in=store_id_list), Q(product_id=None))
+    visitor_num = count_num(product_set, "product_visitors")
 
     return {
         "site_num": site_num,
@@ -593,6 +599,7 @@ def pins_period(new_queryset, old_queryset):
             old_saves = old_queryset.filter(Q(pin_id=pin_obj.pin_id)).first()
             old_saves = old_saves.pin_saves if old_saves else 0
             pin_dict[pin_obj.pin_id] = {
+                "pin_uri": pin_obj.pin_uri,
                 "SKU": pin_obj.product.sku,
                 "image": pin_obj.pin_thumbnail,
                 "pin_date": pin_obj.pin.publish_time.strftime("%Y-%m-%d %H:%M:%S"),
