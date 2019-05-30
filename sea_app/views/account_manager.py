@@ -16,7 +16,7 @@ from sea_app.filters import report as report_filters
 from sea_app.serializers import account_manager, report
 from sea_app.filters import account_manager as account_manager_filters
 from sea_app.pageNumber.pageNumber import PNPagination
-# from sea_app.permission.permission import RolePermission
+from sea_app.permission.permission import RulePermission
 from sdk.pinterest import pinterest_api
 
 
@@ -56,7 +56,7 @@ class ProductView(generics.ListAPIView):
     search_fields = ("name",)
 
 
-class ProductCount(generics.ListAPIView):
+class SearchProductView(generics.ListAPIView):
     """获取符合条件的产品"""
     queryset = models.ProductHistoryData.objects.all()
     serializer_class = account_manager.ProductHistorySerializer
@@ -69,13 +69,22 @@ class ProductCount(generics.ListAPIView):
         scan = request.query_params.get("scan", '')
         sale_sign = request.query_params.get("sale_sign", '')
         sale = request.query_params.get("sale", '')
+        if not sale_sign or not sale:
+            if scan_sign not in [">", "<", ">=", "<=", "=="] or type(scan) != str or not scan.isdigit():
+                return Response({"deails": "请求参数错误"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            if scan_sign not in [">", "<",">=","<=","=="] or sale_sign not in [">","<",">=","<=","=="]\
+                    or type(scan) != str or type(sale) != str or not sale.isdigit() or not scan.isdigit():
+                return Response({"deails": "请求参数错误"}, status=status.HTTP_400_BAD_REQUEST)
         res = []
         queryset = self.filter_queryset(self.get_queryset())
-        result = queryset.values("product").annotate(scan=Sum("product_scan"), sale=Sum("product_sale"))
+        if not queryset:
+            return Response(res)
+        result = queryset.values("product").annotate(scan=Sum("product_scan"), sales=Sum("product_sales"))
         if scan and sale:
             for item in result:
                 scan_codition = "{} {} {}".format(item["scan"], scan_sign, scan)
-                sale_codition = "{} {} {}".format(item["sale"], sale_sign, sale)
+                sale_codition = "{} {} {}".format(item["sales"], sale_sign, sale)
                 if eval(scan_codition) and eval(sale_codition):
                     res.append(item["product"])
         else:
@@ -240,8 +249,19 @@ class PinManageView(generics.RetrieveUpdateDestroyAPIView):
             return Response({"detail": result["msg"]}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class AccountManageView(generics.DestroyAPIView):
+class AccountManageView(generics.UpdateAPIView):
     """Pin账号管理 删除"""
     queryset = models.PinterestAccount.objects.all()
+    serializer_class = report.PinterestAccountListSerializer
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
+
+
+class RuleStatusView(generics.UpdateAPIView):
+    """修改规则状态"""
+    queryset = models.Rule.objects.all()
+    serializer_class = account_manager.RuleStatusSerializer
+    permission_classes = (IsAuthenticated, RulePermission)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+

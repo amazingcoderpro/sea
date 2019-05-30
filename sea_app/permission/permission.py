@@ -20,3 +20,11 @@ from sea_app import models
 #         if obj.user_id == request.user.id:
 #             return True
 #         return False
+
+
+class RulePermission(BasePermission):
+
+    def has_object_permission(self, request, view, obj):
+            if obj.user_id == request.user.id:
+                return True
+            return False

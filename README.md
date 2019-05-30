@@ -1,43 +1,58 @@
-# sea
-自动化营销系统
+# sea自动化营销系统
 
-## DB初始化
+## 1. 初始化数据库
+	- user表增加管理员
+	- platform 增加三条数据
 ```
-INSERT INTO `menu` (`id`, `menu_name`, `menu_url`, `parent_id`, `create_time`, `update_time`, `menu_num`, `icon`)
+	INSERT INTO `user` (`id`, `last_login`, `is_superuser`, `first_name`, `last_name`, `is_staff`, `is_active`, `date_joined`, `username`, `email`, `password`, `code`, `create_time`, `update_time`)
 VALUES
-	(1, 'Dashboard', '/dashboard', NULL, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 1, 'el-icon-lx-home'),
-	(2, 'Report', '1', NULL, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 2, 'el-icon-lx-calendar'),
-	(3, 'DailyReport', '2', 2, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 3, NULL),
-	(4, 'SubAccountDailyReport', '/sub_account_daily_report', 3, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 4, NULL),
-	(5, 'BoardsDailyReport', '/boards_daily_report', 3, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 5, NULL),
-	(6, 'PinsDailyReport', '/pins_daily_report', 3, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 6, NULL),
-	(7, 'SubAccountReport', '2-1', 2, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 7, NULL),
-	(8, 'SubAccountReport', '/sub_account_report', 7, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 8, NULL),
-	(9, 'BoardReport', '/board_report', 7, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 9, NULL),
-	(10, 'PinsReport', '/pins_peport', 7, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 10, NULL),
-	(11, 'AccountManager', '3', NULL, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 11, 'el-icon-lx-warn'),
-	(12, 'AccountManager', '/account_manager', 11, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 12, NULL),
-	(13, 'BoardManager', '/board_manager', 11, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 13, NULL),
-	(14, 'PinManager', '/pin_manager', 11, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 14, NULL),
-	(15, 'RuleManager', '3-1', NULL, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 15, 'el-icon-lx-warn'),
-	(16, 'ListManager', '/list_manager', 15, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 16, NULL),
-	(17, 'RecordManager', '/record_manager', 15, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 17, NULL),
-	(18, 'PersonalCenter', '4', NULL, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 18, 'el-icon-lx-home'),
-	(19, 'PermissionManager', '4-1', 18, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 19, NULL),
-	(20, 'UserManager', '/user_manager', 19, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 20, NULL),
-	(21, 'RoleManager', '/role_manager', 19, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', 21, NULL),
-	(22, 'StoreManager', '/store_manager', 18, '2019-05-14 03:14:35.111111', '2019-05-14 03:14:35.111111', 22, NULL);
+	(1, NULL, 0, '', '', 0, 1, '2019-06-01 00:00:00.852191', 'admin', 'victor.fang@orderplus.com', 'pbkdf2_sha256$120000$M0cY6Z6wcYr9$iwqYBe/MJfOLkpx2/2mMWtt2f1X7GBSt7D0EKRdjdV8=', NULL, '2019-06-01 00:00:00.899300', '2019-06-01 00:00:00.744339'),
+	(2, NULL, 0, '', '', 0, 0, '2019-05-29 06:55:41.852191', 'admin001', 'victor.fang@orderplus.com', 'pbkdf2_sha256$120000$M0cY6Z6wcYr9$iwqYBe/MJfOLkpx2/2mMWtt2f1X7GBSt7D0EKRdjdV8=', NULL, '2019-05-29 06:55:41.899300', '2019-05-29 07:17:42.744339'),
 
 
-INSERT INTO `role` (`id`, `name`, `user_id`, `create_time`, `update_time`, `menu_list`)
+INSERT INTO `platform` (`id`, `name`, `url`, `create_time`, `update_time`)
 VALUES
-    (1, '站长', 1, '2019-05-14 03:14:35.762968', '2019-05-14 03:14:35.762968', '[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22]'),
-    (2, '运营专员', 1, '2019-05-16 07:11:06.600170', '2019-05-16 07:11:06.811441', '[1,2]');
+	(1, 'Shopify', NULL, '2019-06-01 00:00:00.852191', '2019-06-01 00:00:00.852191'),
+	(2, 'Cloud', NULL, '2019-06-01 00:00:00.852191', '2019-06-01 00:00:00.852191'),
+	(3, 'Individual', NULL, '2019-06-01 00:00:00.852191', '2019-06-01 00:00:00.852191');
 
-INSERT INTO `user` (`id`, `last_login`, `is_superuser`, `first_name`, `last_name`, `email`, `is_staff`, `is_active`, `date_joined`, `username`, `nickname`, `password`, `site_name`, `site_url`, `link`, `state`, `create_time`, `update_time`, `parent_id`, `role_id`)
-VALUES
-    (1, NULL, 0, '', '', 'admin@163.com', 0, 1, '2019-05-17 07:10:35.433454', 'admin', 'admin', 'pbkdf2_sha256$120000$kdMrvlFpMYri$7JLZQldPVEixS9BA+qslsJLSZdppvzKU+QFCknMfrug=', NULL, NULL, NULL, 0, '2019-05-17 07:10:35.472266', '2019-05-17 07:10:36.022218', NULL, 1);
 ```
+
+## 2. 注册用户(创建店铺和用户)
+    - shopfy用户授权
+    - 设置密码发送邮件
+    - 店铺邮箱账户登陆激活
+
+```
+
+INSERT INTO `store` (`id`, `name`, `url`, `email`, `visitors`, `scan`, `sale`, `token`, `create_time`, `update_time`, `platform_id`, `user_id`)
+VALUES
+	(1, 'ordersea', 'ordersea.myshopify.com', '', 0, 0, 0, '89fd432044e87807ff26d62f39698246', '2019-05-29 11:54:56.178368', '2019-05-29 12:44:13.583658', 1, 4);
+
+
+INSERT INTO `user` (`id`, `last_login`, `is_superuser`, `first_name`, `last_name`, `is_staff`, `is_active`, `date_joined`, `username`, `email`, `password`, `code`, `create_time`, `update_time`)
+VALUES
+	(4, NULL, 0, '', '', 0, 0, '2019-05-29 11:54:56.724673', 'ordersea.myshopify.com', 'twobercancan@gmail.com', 'pbkdf2_sha256$120000$n8xKHPHAqsw0$gaeCn0M9SR8oJ0xRSNcYfY7b4AT/gewzCGHiRvRvmrM=', '878Ey2', '2019-05-29 11:54:56.739924', '2019-05-29 13:12:01.419512');
+
+```
+## 3. 登陆创建pnterest账户(授权)
+
+```
+	INSERT INTO `pinterest_account` (`id`, `account_uri`, `nickname`, `email`, `type`, `state`, `description`, `create_time`, `token`, `boards`, `views`, `authorized`, `add_time`, `update_time`, `followings`, `followers`, `user_id`)
+	VALUES
+		(1, 'shaowei580@gmail.com', '123', 'shaowei580@gmail.com', 1, 0, '123123', '2019-05-30 16:00:00.000000', 'AnWLrM41pDqkKjVOtayNpIR0qww0FaNXVLehYvRF0n-lswCyYAj5ADAAAlZaRd8vtRSgzAAAAAAA', 0, 0, 1, '2019-05-30 02:49:53.300878', '2019-05-30 02:49:53.474150', 0, 0, 1),
+		(3, 'yongyuanzhiqizhi@gmail.com', '', 'yongyuanzhiqizhi@gmail.com', 1, 0, '123123', '2019-05-30 03:15:23.000000', NULL, 0, 0, 0, '2019-05-30 03:13:49.110437', '2019-05-30 03:13:49.333120', 0, 0, 1);
+
+```
+
+
+4. 后台操作
+	- 更新店铺信息
+		-
+		
+	
+
+
 
 ## 服务启动
 
