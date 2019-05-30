@@ -1,8 +1,9 @@
-# sea自动化营销系统
+# PinBooster自动化营销系统
 
 ## 1. 初始化数据库
-	- user表增加管理员
-	- platform 增加三条数据
+- user表增加管理员
+- platform 增加三条数据
+	
 ```
 	INSERT INTO `user` (`id`, `last_login`, `is_superuser`, `first_name`, `last_name`, `is_staff`, `is_active`, `date_joined`, `username`, `email`, `password`, `code`, `create_time`, `update_time`)
 VALUES
@@ -19,9 +20,9 @@ VALUES
 ```
 
 ## 2. 注册用户(创建店铺和用户)
-    - shopfy用户授权
-    - 设置密码发送邮件
-    - 店铺邮箱账户登陆激活
+- shopify用户授权
+- 设置密码发送邮件
+- 店铺邮箱账户登陆激活
 
 ```
 
@@ -35,7 +36,7 @@ VALUES
 	(4, NULL, 0, '', '', 0, 0, '2019-05-29 11:54:56.724673', 'ordersea.myshopify.com', 'twobercancan@gmail.com', 'pbkdf2_sha256$120000$n8xKHPHAqsw0$gaeCn0M9SR8oJ0xRSNcYfY7b4AT/gewzCGHiRvRvmrM=', '878Ey2', '2019-05-29 11:54:56.739924', '2019-05-29 13:12:01.419512');
 
 ```
-## 3. 登陆创建pnterest账户(授权)
+## 3. 登陆创建pinterest账户(授权)
 
 ```
 	INSERT INTO `pinterest_account` (`id`, `account_uri`, `nickname`, `email`, `type`, `state`, `description`, `create_time`, `token`, `boards`, `views`, `authorized`, `add_time`, `update_time`, `followings`, `followers`, `user_id`)
@@ -47,13 +48,9 @@ VALUES
 
 
 4. 后台操作
-	- 更新店铺信息
-		-
-		
-	
-
-
-
+- 更新店铺信息, 包括店铺的基本信息和从GA拉取的店铺浏览量，销售额等数据
+- 更新Pinsterest账户信息，包括所有boards, pins, 以及boards,pins的属性信息，如likes,comments,saves等
+- 开启定时任务，以天为单位循环更新以上两条
 ## 服务启动
 
 ```
