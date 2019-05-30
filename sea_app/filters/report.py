@@ -259,13 +259,13 @@ class PinListFilter(BaseFilterBackend):
         for p_id, p_info in today_group_dict.items():
             yesterday_p_info = yesterday_group_dict.get("p_id")
             if yesterday_p_info:
-                yesterday_view = yesterday_p_info.get("views", 0)
+                # yesterday_view = yesterday_p_info.get("views", 0)
                 yesterday_saves = yesterday_p_info.get("saves", 0)
                 yesterday_likes = yesterday_p_info.get("likes", 0)
                 yesterday_comment = yesterday_p_info.get("comments", 0)
             else:
-                yesterday_view = yesterday_saves = yesterday_likes = yesterday_comment = 0
-            p_info["view_increment"] = p_info["views"] - yesterday_view
+                yesterday_saves = yesterday_likes = yesterday_comment = 0
+            # p_info["view_increment"] = p_info["views"] - yesterday_view
             p_info["saves_increment"] = p_info["saves"] - yesterday_saves
             p_info["likes_increment"] = p_info["likes"] - yesterday_likes
             p_info["comments_increment"] = p_info["comments"] - yesterday_comment
@@ -290,13 +290,13 @@ class PinListFilter(BaseFilterBackend):
                     "pin_note": today.pin.note,
                     "pin_url": today.pin.url,
                     "product_sku": today.pin.product.sku,
-                    "views": today.pin_views,
+                    # "views": today.pin_views,
                     "saves": today.pin_saves,
                     "likes": today.pin_likes,
                     "comments": today.pin_comments,
                 }
             else:
-                group_dict[today.pin_id]["views"] += today.pin_views
+                # group_dict[today.pin_id]["views"] += today.pin_views
                 group_dict[today.pin_id]["saves"] += today.pin_saves
                 group_dict[today.pin_id]["likes"] += today.pin_likes
                 group_dict[today.pin_id]["comments"] += today.pin_comments
