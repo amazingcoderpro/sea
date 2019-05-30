@@ -142,7 +142,7 @@ class PinterestAccount(models.Model):
     email = models.CharField(blank=True, null=True, max_length=255, verbose_name="登陆邮箱")
     type_choices = ((0, 'business'), (1, 'individual'))
     type = models.SmallIntegerField(choices=type_choices, default=0, verbose_name="账号类型")
-    state_choices = ((0, 'normal'), (1, 'forbidden'))
+    state_choices = ((0, 'normal'), (1, 'forbidden'), (2, 'deleted'))
     state = models.SmallIntegerField(choices=state_choices, default=0, verbose_name="账号状态")
     description = models.TextField(blank=True, null=True, verbose_name="账户描述")
     create_time = models.DateTimeField(blank=True, null=True, verbose_name="账号创建时间")
