@@ -9,6 +9,7 @@ class PinterestApi():
     """
     pinterest api接口
     """
+
     def __init__(self, access_token="", host=None):
         """
         :param access_token:
@@ -66,6 +67,7 @@ class PinterestApi():
             result = requests.get(url)
             if result.status_code == 200:
                 logger.info("get user: {} info is success".format(json.loads(result.text)["data"]["username"]))
+                print(json.loads(result.text).get("data", {}))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
@@ -336,16 +338,16 @@ class PinterestApi():
             
 
 if __name__ == '__main__':
-    access_token = "ArVPxolYdQAXgzr0-FFoRGAF682xFaDsz-o3I1FF0n-lswCyYAp2ADAAAk1KRdOSuUEgxv0AAAAA"
-    api_key = "5031224083375764064"
-    api_password = "c3ed769d9c5802a98f7c4b949f234c482a19e5bf3a3ac491a0d20e44d7f7556e"
+    # access_token = "ArVPxolYdQAXgzr0-FFoRGAF682xFaDsz-o3I1FF0n-lswCyYAp2ADAAAk1KRdOSuUEgxv0AAAAA"
+    access_token = "AnZeCrrcbcK9_GZ9vYwVkxiCcbfRFaNaeK500JxF0n-lswCyYAj5ADAAAlZaRd8vtRSgzAAAAAAA"
     code = "ae7fde7811cf4f17"
     all_pinterest_api = PinterestApi(access_token=access_token)
     # all_pinterest_api.get_user_pins(access_token=access_token)
-    # all_pinterest_api.get_user_info()
-    # all_pinterest_api.get_pinterest_url(state="twobercancan@gmail.com")
+    all_pinterest_api.get_user_info()
+
+    # all_pinterest_api.get_pinterest_url(state="shaowei580@gmail.com")
     # all_pinterest_api.delete_pin(pin_id="55451266411112")
-    all_pinterest_api.get_user_pins()
+    # all_pinterest_api.get_user_pins()
     # all_pinterest_api.get_user_boards()
     # all_pinterest_api.get_pin_by_id(pin_id="753790056365099389")
     # all_pinterest_api.edit_board(board_id="753790125070479475", name="jjjjj", description="jjjjjjjjjjjjjjjjjjjjjjj")
