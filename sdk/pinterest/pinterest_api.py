@@ -192,9 +192,9 @@ class PinterestApi():
         """
         创建 new pin
         :param board_id:
-        :param note:
-        :param image_url:
-        :param link:
+        :param note: 标题
+        :param image_url: 商品的链接
+        :param link: 描述
         :return: 发送的状态
         """
         create_pin_fields = ["id", "Clink", "Cnote", "Curl", "Cattribution", "Ccolor", "Cboard", "Ccounts",
@@ -208,9 +208,10 @@ class PinterestApi():
             "link": link
         }
         try:
-            result = requests.post(api_request_url, json=payload)
+            result = requests.post(api_request_url, payload)
             if result.status_code == 200:
                 logger.info("create new pin is success; board_id={}".format(board_id))
+                print(json.loads(result.text).get("data", {}))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
                 logger.error("create new pin is failed; board_id={}".format(board_id))
@@ -233,6 +234,7 @@ class PinterestApi():
             result = requests.get(api_request_url)
             if result.status_code == 200:
                 logger.info("get user pins is success")
+                print(json.loads(result.text).get("data", {}))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
                 logger.error("get user pins is failed")
@@ -338,16 +340,17 @@ class PinterestApi():
             
 
 if __name__ == '__main__':
-    # access_token = "ArVPxolYdQAXgzr0-FFoRGAF682xFaDsz-o3I1FF0n-lswCyYAp2ADAAAk1KRdOSuUEgxv0AAAAA"
-    access_token = "AnZeCrrcbcK9_GZ9vYwVkxiCcbfRFaNaeK500JxF0n-lswCyYAj5ADAAAlZaRd8vtRSgzAAAAAAA"
-    code = "ae7fde7811cf4f17"
+    access_token = "ArVPxolYdQAXgzr0-FFoRGAF682xFaDsz-o3I1FF0n-lswCyYAp2ADAAAk1KRdOSuUEgxv0AAAAA"
+    # access_token = "AnZeCrrcbcK9_GZ9vYwVkxiCcbfRFaNaeK500JxF0n-lswCyYAj5ADAAAlZaRd8vtRSgzAAAAAAA"
+    code = "abba8132c84e93d2"
     all_pinterest_api = PinterestApi(access_token=access_token)
     # all_pinterest_api.get_user_pins(access_token=access_token)
-    all_pinterest_api.get_user_info()
-
+    # all_pinterest_api.get_token(code=code)
+    # all_pinterest_api.get_user_info()
+    # all_pinterest_api.create_pin(board_id="753790125070471758", note="xiaoning44777", image_url="http://www.vikilife.com/wp-content/uploads/2013/01/01214-1.jpg", link="我这事在哪里")
     # all_pinterest_api.get_pinterest_url(state="shaowei580@gmail.com")
     # all_pinterest_api.delete_pin(pin_id="55451266411112")
-    # all_pinterest_api.get_user_pins()
+    all_pinterest_api.get_user_pins()
     # all_pinterest_api.get_user_boards()
     # all_pinterest_api.get_pin_by_id(pin_id="753790056365099389")
     # all_pinterest_api.edit_board(board_id="753790125070479475", name="jjjjj", description="jjjjjjjjjjjjjjjjjjjjjjj")

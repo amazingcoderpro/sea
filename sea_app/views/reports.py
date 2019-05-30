@@ -168,7 +168,6 @@ def subaccount_report_view(request, type):
     else:
         # 请求有误
         data_list = "An error occurred in the request and data could not be retrieved"
-
     return data_list
 
 
@@ -229,7 +228,6 @@ def subaccount_report(pin_set_list, product_set_list):
             data["product_new_visitors"] += item.product_new_visitors
             data["product_sales"] += item.product_sale
             data["product_revenue"] += item.product_revenue
-
         data_list.append(data)
     return data_list
 

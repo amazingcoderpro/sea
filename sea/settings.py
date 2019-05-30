@@ -149,13 +149,6 @@ JWT_AUTH = {
     'JWT_SECRET_KEY': 'sea',
 }
 
-shopify = {
-
-}
-
-pinterest = {
-
-}
 
 #######################
 # DEFINE EMAIL CONFIG #
