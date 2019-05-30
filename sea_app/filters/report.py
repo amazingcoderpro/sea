@@ -74,12 +74,15 @@ class AccountListFilter(BaseFilterBackend):
                                          Q(pinterest_account_id__in=account_id_list))
         yesterday_data_set = queryset.filter(Q(update_time__range=(today_date + timedelta(days=-1), today_date)),
                                              Q(pinterest_account_id__in=account_id_list))
-        today_group_dict = self.get_data(today_data_set)
+        today_group_dict = self.get_data(today_data_set, account_id_list)
         yesterday_group_dict = self.get_data(yesterday_data_set)
         for a_id, info in today_group_dict.items():
             # 获取账号增量
             pin_id_under_account = set(filter(lambda x: x, info["pins"]))
-            info["account_publish_time"] = models.Pin.objects.filter(Q(id__in=pin_id_under_account)).order_by('-publish_time').first().publish_time.strftime("%Y-%m-%d %H:%M:%S")
+            try:
+                info["account_publish_time"] = models.Pin.objects.filter(Q(id__in=pin_id_under_account)).order_by('-publish_time').first().publish_time.strftime("%Y-%m-%d %H:%M:%S")
+            except AttributeError:
+                info["account_publish_time"] = "no publish information"
             info["pins"] = len(pin_id_under_account)
             yesterday_info = yesterday_group_dict.get(a_id)
             if yesterday_info:
@@ -109,10 +112,13 @@ class AccountListFilter(BaseFilterBackend):
             account_list.append(info)
         return account_list
 
-    def get_data(self, data_set):
+    def get_data(self, data_set, account_id_list=None):
         group_dict = {}
         for today in data_set:
             if today.pinterest_account_id not in group_dict:
+                # 除去有更新数据的账号
+                if account_id_list is not None:
+                    account_id_list.remove(today.pinterest_account_id)
                 # 获取账号数据
                 group_dict[today.pinterest_account_id] = {
                     "account_uri": today.pinterest_account.account_uri,
@@ -135,6 +141,27 @@ class AccountListFilter(BaseFilterBackend):
                 group_dict[today.pinterest_account_id]["saves"] += today.pin_saves
                 group_dict[today.pinterest_account_id]["likes"] += today.pin_likes
                 group_dict[today.pinterest_account_id]["comments"] += today.pin_comments
+        if account_id_list is None:
+            return group_dict
+        # 获取没有更新数据的基本信息
+        for account_id in account_id_list:
+            account_obj = models.PinterestAccount.objects.get(pk=account_id)
+            group_dict[account_id] = {
+                "account_uri": account_obj.account_uri,
+                "account_name": account_obj.nickname,
+                "account_email": account_obj.email,
+                "account_description": account_obj.description,
+                "account_create_time": account_obj.create_time.strftime("%Y-%m-%d %H:%M:%S"),
+                "account_type": account_obj.type,
+                "account_authorized": account_obj.authorized,
+                "update_person": account_obj.user.username,
+                "account_state": account_obj.state,
+                "account_crawl_time": account_obj.update_time.strftime("%Y-%m-%d %H:%M:%S"),
+                "pins": [],  # pin数
+                "saves": 0,
+                "likes": 0,
+                "comments": 0,
+            }
         return group_dict
 
 
