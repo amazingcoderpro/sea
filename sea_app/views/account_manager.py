@@ -266,3 +266,20 @@ class RuleStatusView(generics.UpdateAPIView):
     authentication_classes = (JSONWebTokenAuthentication,)
 
 
+class SendPinView(APIView):
+    """页面发布pin"""
+    permission_classes = (IsAuthenticated, RulePermission)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def post(self, request, *args, **kwargs):
+        publish_instance = models.PublishRecord.objects.filter(id=kwargs["pk"]).first()
+        token = publish_instance.board.pinterest_account.token
+        if token:
+            result = PinterestApi(access_token=token).create_pin(publish_instance.board.board_uri, publish_instance.product.name, publish_instance.product.image_url, publish_instance.product.url)
+            if result["code"] != 1:
+                return Response({"detail": result["msg"]},
+                                status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({"detail": result["msg"]})
+        else:
+            return Response({"detail": "This pinterest_account is not authorized"}, status=status.HTTP_400_BAD_REQUEST)
