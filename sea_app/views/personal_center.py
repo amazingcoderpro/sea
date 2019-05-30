@@ -140,6 +140,8 @@ class PinterestAccountAuthView(APIView):
 
     def post(self, request, *args, **kwargs):
         instance = models.PinterestAccount.objects.filter(id=kwargs["pk"]).first()
+        if not instance:
+            return Response({"detail": "The resource was not found"}, status=status.HTTP_400_BAD_REQUEST)
         if instance.authorized == 1:
             return Response({"detail": "This account is authorized"}, status=status.HTTP_400_BAD_REQUEST)
         url = pinterest_api.PinterestApi().get_pinterest_url(instance.account_uri)
