@@ -27,8 +27,6 @@ class PinterestAccountFilter(BaseFilterBackend):
         return queryset
 
 
-
-
 class BoardListFilter(BaseFilterBackend):
     """board列表过滤"""
 

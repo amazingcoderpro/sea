@@ -1,21 +1,9 @@
 from django.conf.urls import url, include
 from django.views.decorators.cache import cache_page
 
-from sea_app.views import reports, personal_center, account_manager, report, store
+from sea_app.views import personal_center, account_manager, report
 
 v1_urlpatterns = [
-    # 注册 登陆
-    url(r'^account/login/$', personal_center.LoginView.as_view()),
-    url(r'^account/register/$', personal_center.RegisterView.as_view()),
-    # shopfy设置密码
-    url(r'^account/set_password/(?P<pk>[0-9]+)/$', personal_center.SetPasswordView.as_view()),
-
-    # 用户 角色管理
-    # url(r'users/$', personal_center.UserView.as_view()),
-    # url(r'users/(?P<pk>[0-9]+)/$', personal_center.UserOperView.as_view()),
-    url(r'users/operation_record/$', cache_page(5)(personal_center.OperationRecord.as_view())),
-    # url(r'role/$', personal_center.RoleView.as_view()),
-    # url(r'role/(?P<pk>[0-9]+)/$', personal_center.RoleOperView.as_view()),
 
     # 报告
     url(r'dashboard/change_part/$', cache_page(5)(report.DashBoardChangePartView.as_view())),
@@ -77,7 +65,25 @@ rule_urlpatterns = [
 ]
 
 
+# 用户中心 `/v1/account/`
+account_urlpatterns = [
+
+    # 注册 登陆
+    url(r'^account/login/$', personal_center.LoginView.as_view()),
+    url(r'^account/register/$', personal_center.RegisterView.as_view()),
+    # shopfy设置密码
+    url(r'^account/set_password/(?P<pk>[0-9]+)/$', personal_center.SetPasswordView.as_view()),
+
+    # 用户 角色管理
+    # url(r'users/$', personal_center.UserView.as_view()),
+    # url(r'users/(?P<pk>[0-9]+)/$', personal_center.UserOperView.as_view()),
+    url(r'users/operation_record/$', cache_page(5)(personal_center.OperationRecord.as_view())),
+    # url(r'role/$', personal_center.RoleView.as_view()),
+    # url(r'role/(?P<pk>[0-9]+)/$', personal_center.RoleOperView.as_view()),
+]
+
 urlpatterns = [
     url(r'^v1/', include(v1_urlpatterns)),
     url(r'^v1/rule/', include(rule_urlpatterns)),
+    url(r'^v1/account/', include(account_urlpatterns)),
 ]
