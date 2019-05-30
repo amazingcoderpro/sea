@@ -135,6 +135,11 @@ class Product(models.Model):
         ordering = ["-id"]
 
 
+class PinterestAccountManager(models.Manager):
+    def get_queryset(self):
+        return super(PinterestAccountManager, self).get_queryset().filter(state__in=[0, 1])
+
+
 class PinterestAccount(models.Model):
     """Pin账户表"""
     account_uri = models.CharField(max_length=64, unique=True, verbose_name="PinterestAccount唯一标识码")
@@ -157,10 +162,17 @@ class PinterestAccount(models.Model):
     followings = models.IntegerField(default=0, verbose_name="账户关注量")
     followers = models.IntegerField(default=0, verbose_name="账户粉丝")
 
+    objects = PinterestAccountManager()
+
     class Meta:
         # managed = False
         db_table = 'pinterest_account'
         ordering = ["-id"]
+
+    def delete(self, using=None, keep_parents=False):
+        self.state = 2
+        self.save()
+        return 'success'
 
 
 class Board(models.Model):

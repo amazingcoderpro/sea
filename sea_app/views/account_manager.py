@@ -249,10 +249,9 @@ class PinManageView(generics.RetrieveUpdateDestroyAPIView):
             return Response({"detail": result["msg"]}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class AccountManageView(generics.UpdateAPIView):
+class AccountManageView(generics.DestroyAPIView):
     """Pin账号管理 删除"""
     queryset = models.PinterestAccount.objects.all()
-    serializer_class = report.PinterestAccountListSerializer
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 
