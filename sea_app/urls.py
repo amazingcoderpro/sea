@@ -67,6 +67,8 @@ rule_urlpatterns = [
 
     # 发布记录
     url(r'report/$', account_manager.ReportView.as_view()),
+    # 发布pin
+    url(r'report/send_pin/(?P<pk>[0-9]+)/$', account_manager.SendPinView.as_view()),
 
     # 修改规则
     # url(r'rule/(?P<pk>[0-9]+)/$', account_manager.RuleOperView.as_view()),
