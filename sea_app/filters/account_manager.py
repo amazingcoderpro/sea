@@ -51,7 +51,7 @@ class RuleFilter(BaseFilterBackend):
     }
 
     def filter_queryset(self, request, queryset, view):
-        filte_kwargs = {"state__in": [0, 2, 3, 4, 5]}
+        filte_kwargs = {"state__in": [0, 2, 3, 4, 5], "rule__user_id": request.user.id}
 
         account_id = request.query_params.get("account_id", '')
         if account_id:
@@ -92,3 +92,25 @@ class ProductCountFilter(BaseFilterBackend):
         queryset = queryset.filter(**filte_kwargs)
         return queryset
 
+
+class ReportFilter(BaseFilterBackend):
+    filter_keys = {
+        # "rule__state": "rule__state__in",
+        "state": "state__in",
+        "product__sku": "product__sku"
+    }
+
+    def filter_queryset(self, request, queryset, view):
+        filte_kwargs = {"rule__user_id":request.user.id}
+        for filter_key in self.filter_keys.keys():
+            val = request.query_params.get(filter_key, '')
+            if val != '':
+                if type(eval(val)) == list:
+                    filte_kwargs[self.filter_keys[filter_key]] = eval(val)
+                    continue
+                filte_kwargs[self.filter_keys[filter_key]] = val
+        print(filte_kwargs)
+        if not filte_kwargs:
+            return []
+        queryset = queryset.filter(**filte_kwargs)
+        return queryset
