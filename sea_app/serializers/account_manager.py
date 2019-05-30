@@ -125,3 +125,12 @@ class PinterestAccountCreateSerializer(serializers.ModelSerializer):
         instance.user = self.context["request"].user
         instance.save()
         return instance
+
+
+class RuleStatusSerializer(serializers.ModelSerializer):
+    """修改规则状态"""
+    class Meta:
+        model = models.Rule
+        # depth = 2
+        fields = ("id", "state",)
+
