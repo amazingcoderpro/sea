@@ -189,7 +189,9 @@ class PinterestCallback(APIView):
         result = pinterest_api.PinterestApi().get_token(code)
         if result["code"] == 1:
             models.PinterestAccount.objects.filter(account_uri=account_uri).update(token=result["data"]["access_token"], authorized=1)
-        return HttpResponseRedirect(redirect_to="http://www.baidu.com")
+            return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=1")
+        else:
+            return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
 
 
 class OperationRecord(generics.ListAPIView):
