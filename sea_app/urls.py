@@ -16,13 +16,6 @@ v1_urlpatterns = [
     url(r'select/board/$', cache_page(5)(account_manager.BoardListView.as_view())),
     url(r'select/pin/$', cache_page(5)(account_manager.PinListView.as_view())),
 
-
-    # 店铺和账户授权
-    url(r'store_auth/(?P<pk>[0-9]+)/$', personal_center.StoreAuthView.as_view()),
-    url(r'pinterest_account_auth/(?P<pk>[0-9]+)/$', personal_center.PinterestAccountAuthView.as_view()),
-    url(r'shopify/callback/$', personal_center.ShopifyCallback.as_view()),
-    url(r'pinterest/callback/$', personal_center.PinterestCallback.as_view()),
-
     # 账户管理
     url(r'account_list/$', account_manager.AccountListManageView.as_view()),
     url(r'account_list/(?P<aid>[0-9]+)/$', account_manager.BoardListManageView.as_view()),
@@ -36,9 +29,7 @@ v1_urlpatterns = [
     # 店铺管理
     # url(r'store/$', store.StoreView.as_view()),
     # url(r'store/(?P<pk>[0-9]+)/$', store.StoreOperView.as_view()),
-
 ]
-
 
 # 规则管理 `/v1/rule/`
 rule_urlpatterns = [
@@ -64,7 +55,6 @@ rule_urlpatterns = [
     # url(r'rule/product/$', account_manager.ProductView.as_view()),
 ]
 
-
 # 用户中心 `/v1/account/`
 account_urlpatterns = [
 
@@ -82,8 +72,19 @@ account_urlpatterns = [
     # url(r'role/(?P<pk>[0-9]+)/$', personal_center.RoleOperView.as_view()),
 ]
 
+# 授权 `/v1/auth/`
+auth_urlpatterns = [
+
+    # 店铺和账户授权
+    url(r'store/(?P<pk>[0-9]+)/$', personal_center.StoreAuthView.as_view()),
+    url(r'pinterest_account/(?P<pk>[0-9]+)/$', personal_center.PinterestAccountAuthView.as_view()),
+    url(r'shopify/callback/$', personal_center.ShopifyCallback.as_view()),
+    url(r'pinterest/callback/$', personal_center.PinterestCallback.as_view()),
+]
+
 urlpatterns = [
     url(r'^v1/', include(v1_urlpatterns)),
     url(r'^v1/rule/', include(rule_urlpatterns)),
     url(r'^v1/account/', include(account_urlpatterns)),
+    url(r'^v1/auth/', include(auth_urlpatterns)),
 ]
