@@ -228,7 +228,7 @@ class TaskProcessor:
                                 # , saves = % s, comments = % s
                                 pin_id = exist_pins_dict[uri]
                                 cursor.execute(
-                                    '''update `pin` set description=%s, update_time=%s, saves=%s, comments=%s, likes=%''',
+                                    '''update `pin` set note=%s, update_time=%s, saves=%s, comments=%s, likes=%s''',
                                     (note, update_time, pin_saves, pin_comments, pin_likes))
                             else:
                                 board_id = None
@@ -245,7 +245,7 @@ class TaskProcessor:
                                 if product:
                                     product_id = product[0]
 
-                                cursor.execute('''insert into `pin` (`pin_uri`, `url`, `note`, `orgin_link`, 
+                                cursor.execute('''insert into `pin` (`pin_uri`, `url`, `note`, `origin_link`, 
                                     `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`, `saves`, 
                                     `comments`, `likes`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
                                                (uri, url, note, original_link, pin_thumbnail, create_time, update_time,
@@ -317,10 +317,16 @@ class TaskProcessor:
                     created_at = shop.get("created_at", '')
                     updated_at = shop.get("updated_at", '')
                     shop_phone = shop.get("phone", "")
-                    shop_city = shop.get("city", 'xian')
-                    shop_myshopify_domain = shop.get("myshopify_domain", "")
+                    shop_city = shop.get("city", '')
+                    # shop_myshopify_domain = shop.get("myshopify_domain", "")
+                    cursor.execute('''update `store` set url=%s, uuid=%s, name=%s, timezone=%s, email=%s, owner_name=%s, 
+                    owner_phone=%s, country=%s, city=%s, store_create_time=%s, store_update_time=%s where id=%s''',
+                                   (shop_domain, shop_uuid, shop_name, shop_timezone, shop_email, shop_owner, shop_phone,
+                                    shop_country_name, shop_city, datetime.datetime.strptime(created_at[0:-6], "%Y-%m-%dT%H:%M:%S"),
+                                    datetime.datetime.strptime(updated_at[0:-6], "%Y-%m-%dT%H:%M:%S"), store_id))
+                    conn.commit()
 
-
+                # 获取店铺里的所有产品
                 ret = papi.get_all_products()
                 if ret["code"] == 1:
                     time_now = datetime.datetime.now()
@@ -344,8 +350,7 @@ class TaskProcessor:
                                            (pro_url, pro_title, pro_price, pro_tags, time_now))
                         else:
                             # pro_create_time = datetime.datetime.strptime(pro.get("created_at"), "%Y-%m-%dT%H:%M:%S")
-                            pro_publish_time = datetime.datetime.strptime(pro.get("published_at", "")[0:-6],
-                                                                          "%Y-%m-%dT%H:%M:%S")
+                            pro_publish_time = datetime.datetime.strptime(pro.get("published_at", "")[0:-6], "%Y-%m-%dT%H:%M:%S")
                             pro_image = pro.get("image", {}).get("src", "")
                             thumbnail = self.image_2_base64(pro_image)
                             cursor.execute(
