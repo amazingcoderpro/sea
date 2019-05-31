@@ -142,8 +142,7 @@ class PinterestApi():
                 logger.info("get by id board is success; board_id={}".format(board_id))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
-                logger.error("get by id board is failed, msg= {}".format(json.loads(result.text).get(
-                    "message", "")))
+                logger.error("get by id board is failed, msg= {}".format(json.loads(result.text).get("message", "")))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.error("get by id board failed:{}".format(str(e)))
@@ -242,7 +241,7 @@ class PinterestApi():
             result = requests.get(api_request_url)
             if result.status_code == 200:
                 logger.info("get user pins is success")
-                print(json.loads(result.text).get("data", {}))
+                print(result.text)
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
                 logger.error("get user pin is failed, msg= {}".format(json.loads(result.text).get("message", "")))
@@ -355,11 +354,13 @@ if __name__ == '__main__':
     # all_pinterest_api.get_user_pins(access_token=access_token)
     # all_pinterest_api.get_token(code=code)
     # all_pinterest_api.get_user_info()
-    all_pinterest_api.create_pin(board_id="753790125070474023", note="时间是最好的礼物", image_url="https://cdn.shopify.com/s/files/1/0225/2131/5408/products/Selection_019.png?v=1557998280", link="www.baidu.com")
+    # all_pinterest_api.create_pin(board_id="753790125070474023", note="时间是最好的礼物", image_url="https://cdn.shopify.com/s/files/1/0225/2131/5408/products/Selection_019.png?v=1557998280", link="www.baidu.com")
     # all_pinterest_api.get_pinterest_url(state="shaowei580@gmail.com")
     # all_pinterest_api.delete_pin(pin_id="55451266411112")
+    all_pinterest_api.edit_pin(pin_id="753790056365181486", board="753790125070473943", note="我想修改这个pin", link="https://www.zhibo8.cc/")
     # all_pinterest_api.get_user_pins()
     # all_pinterest_api.get_user_boards()
     # all_pinterest_api.get_pin_by_id(pin_id="753790056365099389")
     # all_pinterest_api.edit_board(board_id="753790125070479475", name="jjjjj", description="jjjjjjjjjjjjjjjjjjjjjjj")
     # all_pinterest_api.edit_pin(pin_id="753790056365099389", board="753790125070473943", note="tianchang", link="www.baidu.com")
+
