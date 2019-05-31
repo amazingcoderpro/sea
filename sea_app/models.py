@@ -217,7 +217,7 @@ class Pin(models.Model):
     thumbnail = models.TextField(verbose_name="缩略图")
     publish_time = models.DateTimeField(auto_now_add=True, verbose_name="发布时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    board = models.ForaeignKey(Board, on_delete=models.DO_NOTHING, blank=True, null=True)
+    board = models.ForeignKey(Board, on_delete=models.DO_NOTHING, blank=True, null=True)
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
     saves = models.IntegerField(default=0, verbose_name=u"转发量")
     comments = models.IntegerField(default=0, verbose_name=u"评论量")
