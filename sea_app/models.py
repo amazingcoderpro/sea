@@ -101,6 +101,9 @@ class Store(models.Model):
     owner_phone = models.CharField(blank=True, null=True, max_length=50, verbose_name="店主的电话")
     store_create_time = models.DateTimeField(verbose_name="店铺的创建时间")
     store_update_time = models.DateTimeField(verbose_name="店铺的更新时间")
+    store_view_id = models.CharField(blank=True, null=True, max_length=100, verbose_name=u"店铺的GA中的view id")
+    store_utm = models.CharField(blank=True, null=True, max_length=255, verbose_name=u"店铺的utm构建")
+
 
 
     class Meta:
