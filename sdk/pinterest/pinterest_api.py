@@ -217,7 +217,7 @@ class PinterestApi():
         }
         try:
             result = requests.post(api_request_url, json=payload)
-            if result.status_code == 200:
+            if result.status_code in [200, 201]:
                 logger.info("create new pin is success; board_id={}".format(board_id))
                 print(json.loads(result.text).get("data", {}))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
