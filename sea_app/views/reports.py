@@ -79,6 +79,8 @@ def daily_report(pin_set_list, product_set_list):
                 "product_clicks": 0,
                 "product_sales": 0,
                 "product_revenue": 0,
+                "product_visitors": 0,
+                "product_new_visitors": 0,
                 "products": [] if not item.product_id else [item.product_id],  # product
             }
         else:
@@ -106,13 +108,15 @@ def daily_report(pin_set_list, product_set_list):
             "pin_likes": info["pin_likes"],
             "pin_comments": info["pin_comments"],
             "product_clicks": info["product_clicks"],
+            "product_visitors": info["product_visitors"],
+            "product_new_visitors": info["product_new_visitors"],
             "product_sales": info["product_sales"],
             "product_revenue": info["product_revenue"],
             # "product_list": info["products"],
         }
 
         # 组装每日product对应pin的数据
-        product_set_list_pre = product_set_list.filter(Q(update_time__range=(day + datetime.timedelta(days=-1), day)))
+        product_set_list_pre = product_set_list.filter(Q(update_time__range=(day, day + datetime.timedelta(days=1))))
         # store_obj = product_set_list_pre.filter(Q(product_id=None)).first()
         # if store_obj:
         #     data["product_visitors"] = store_obj.product_visitors
@@ -120,9 +124,9 @@ def daily_report(pin_set_list, product_set_list):
         # else:
         #     data["store_visitors"] = 0
         #     data["store_new_visitors"] = 0
-        product_set_list = product_set_list_pre.filter(Q(product_id__in=info["products"]))
-        for item in product_set_list:
-            data["product_sales"] += item.product_sale
+        product_list = product_set_list_pre.filter(Q(product_id__in=info["products"]))
+        for item in product_list:
+            data["product_sales"] += item.product_sales
             data["product_revenue"] += item.product_revenue
             data["product_visitors"] = item.product_visitors
             data["product_new_visitors"] = item.product_new_visitors
@@ -226,7 +230,7 @@ def subaccount_report(pin_set_list, product_set_list):
         for item in product_set_list:
             data["product_visitors"] += item.product_visitors
             data["product_new_visitors"] += item.product_new_visitors
-            data["product_sales"] += item.product_sale
+            data["product_sales"] += item.product_sales
             data["product_revenue"] += item.product_revenue
         data_list.append(data)
     return data_list
@@ -284,7 +288,7 @@ def board_report(pin_set_list, product_set_list):
             data["product_visitors"] += item.product_visitors
             data["product_new_visitors"] += item.product_new_visitors
             data["product_clicks"] += item.product_clicks
-            data["product_sales"] += item.product_sale
+            data["product_sales"] += item.product_sales
             data["product_revenue"] += item.product_revenue
 
         data_list.append(data)
@@ -346,7 +350,7 @@ def pins_report(pin_set_list, product_set_list):
         for product_obj in product_obj_list:
             data["product_visitors"] += product_obj.product_visitors
             data["product_new_visitors"] += product_obj.product_new_visitors
-            data["product_sales"] += product_obj.product_sale
+            data["product_sales"] += product_obj.product_sales
             data["product_revenue"] += product_obj.product_revenue
 
         data_list.append(data)
