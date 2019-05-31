@@ -99,8 +99,8 @@ class Store(models.Model):
     city = models.CharField(blank=True, null=True, max_length=255, verbose_name="店铺所在的城市")
     owner_name = models.CharField(blank=True, null=True, max_length=255, verbose_name="店主的名称")
     owner_phone = models.CharField(blank=True, null=True, max_length=50, verbose_name="店主的电话")
-    store_create_time = models.DateTimeField(verbose_name="店铺的创建时间")
-    store_update_time = models.DateTimeField(verbose_name="店铺的更新时间")
+    store_create_time = models.DateTimeField(blank=True, null=True,verbose_name="店铺的创建时间")
+    store_update_time = models.DateTimeField(blank=True, null=True,verbose_name="店铺的更新时间")
 
 
     class Meta:
@@ -217,7 +217,7 @@ class Pin(models.Model):
     thumbnail = models.TextField(verbose_name="缩略图")
     publish_time = models.DateTimeField(auto_now_add=True, verbose_name="发布时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    board = models.ForaeignKey(Board, on_delete=models.DO_NOTHING, blank=True, null=True)
+    board = models.ForeignKey(Board, on_delete=models.DO_NOTHING, blank=True, null=True)
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
     saves = models.IntegerField(default=0, verbose_name=u"转发量")
     comments = models.IntegerField(default=0, verbose_name=u"评论量")
