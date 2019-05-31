@@ -81,6 +81,7 @@ class Store(models.Model):
         max_length=255,
         blank=True,
     )
+
     visitors = models.IntegerField(blank=True, null=True, default=0, verbose_name="访问量")
     scan = models.IntegerField(blank=True, null=True, default=0, verbose_name="浏览量")
     sale = models.FloatField(blank=True, null=True, default=0.00, verbose_name="营收额")
@@ -91,6 +92,16 @@ class Store(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+
+    uuid = models.CharField(blank=True, null=True, max_length=255, verbose_name="店铺的唯一标识")
+    timezone = models.CharField(blank=True, null=True, max_length=255, verbose_name="店铺的时区")
+    country = models.CharField(blank=True, null=True, max_length=255, verbose_name="店铺所在的国家")
+    city = models.CharField(blank=True, null=True, max_length=255, verbose_name="店铺所在的城市")
+    owner_name = models.CharField(blank=True, null=True, max_length=255, verbose_name="店主的名称")
+    owner_phone = models.CharField(blank=True, null=True, max_length=50, verbose_name="店主的电话")
+    store_create_time = models.DateTimeField(verbose_name="店铺的创建时间")
+    store_update_time = models.DateTimeField(verbose_name="店铺的更新时间")
+
 
     class Meta:
         # managed = False
@@ -202,11 +213,11 @@ class Pin(models.Model):
     pin_uri = models.CharField(max_length=32, verbose_name="Pin唯一标识码")
     url = models.URLField(max_length=255, blank=True, null=True, verbose_name="Pin URL")
     note = models.TextField(verbose_name="Pin 描述")
-    orgin_link = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
+    origin_link = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
     thumbnail = models.TextField(verbose_name="缩略图")
     publish_time = models.DateTimeField(auto_now_add=True, verbose_name="发布时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    board = models.ForeignKey(Board, on_delete=models.DO_NOTHING, blank=True, null=True)
+    board = models.ForaeignKey(Board, on_delete=models.DO_NOTHING, blank=True, null=True)
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
     saves = models.IntegerField(default=0, verbose_name=u"转发量")
     comments = models.IntegerField(default=0, verbose_name=u"评论量")
