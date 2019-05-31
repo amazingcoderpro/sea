@@ -9,7 +9,7 @@ v1_urlpatterns = [
     url(r'dashboard/change_part/$', cache_page(5)(report.DashBoardChangePartView.as_view())),
     url(r'dashboard/fixed_part/$', cache_page(5)(report.DashBoardFixedPartView.as_view())),
     url(r'daily_report/$', cache_page(5)(report.DailyReportView.as_view())),
-    url(r'subaccount_report/(?P<type>[a-zA-Z]+)/$', cache_page(60 * 15)(report.SubAccountReportView.as_view())),
+    url(r'subaccount_report/(?P<type>[a-zA-Z]+)/$', cache_page(5)(report.SubAccountReportView.as_view())),
 
     # 选择列表
     url(r'select/account/$', cache_page(5)(account_manager.PinterestAccountListView.as_view())),
