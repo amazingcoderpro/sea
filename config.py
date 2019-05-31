@@ -30,3 +30,7 @@ PINTEREST_CONFIG = {
     "scope": "read_public,write_public,read_relationships,write_relationships",
     "redirect_uri": "https://pinbooster.seamarketings.com/api/v1/pinterest/callback/"
 }
+
+GA_CONFIG = {
+    'google_developer': "test123@eternal-argon-241002.iam.gserviceaccount.com"
+}
