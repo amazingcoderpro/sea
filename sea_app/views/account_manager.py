@@ -99,10 +99,12 @@ class ReportView(generics.ListAPIView):
     queryset = models.PublishRecord.objects.all()
     serializer_class = account_manager.PublishRecordSerializer
     pagination_class = PNPagination
-    filter_backends = (DjangoFilterBackend,)
+    # filter_backends = (DjangoFilterBackend,)
+    # filter_backends = (DjangoFilterBackend, account_manager_filters.ReportFilter)
+    filter_backends = (account_manager_filters.ReportFilter,)
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
-    filterset_fields = ("product__sku", "state")
+    # filterset_fields = ("product__sku",)
 
 
 class AccountListManageView(generics.ListAPIView):
@@ -249,10 +251,9 @@ class PinManageView(generics.RetrieveUpdateDestroyAPIView):
             return Response({"detail": result["msg"]}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class AccountManageView(generics.UpdateAPIView):
+class AccountManageView(generics.DestroyAPIView):
     """Pin账号管理 删除"""
     queryset = models.PinterestAccount.objects.all()
-    serializer_class = report.PinterestAccountListSerializer
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 
@@ -265,3 +266,20 @@ class RuleStatusView(generics.UpdateAPIView):
     authentication_classes = (JSONWebTokenAuthentication,)
 
 
+class SendPinView(APIView):
+    """页面发布pin"""
+    permission_classes = (IsAuthenticated, RulePermission)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def post(self, request, *args, **kwargs):
+        publish_instance = models.PublishRecord.objects.filter(id=kwargs["pk"]).first()
+        token = publish_instance.board.pinterest_account.token
+        if token:
+            result = PinterestApi(access_token=token).create_pin(publish_instance.board.board_uri, publish_instance.product.name, publish_instance.product.image_url, publish_instance.product.url)
+            if result["code"] != 1:
+                return Response({"detail": result["msg"]},
+                                status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({"detail": result["msg"]})
+        else:
+            return Response({"detail": "This pinterest_account is not authorized"}, status=status.HTTP_400_BAD_REQUEST)

@@ -1,5 +1,4 @@
 # -*-coding:utf-8-*-
-
 from apiclient import discovery
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -86,8 +85,11 @@ class GoogleApi():
                         for i, values in enumerate(dateRangeValues):
                             print('Date range: ' + str(i))
                             for metricHeader, value in zip(metricHeaders, values.get('values')):
-                                shop_info = metricHeader.get('name') + ': ' + value
-                                statistics_info.append(shop_info)
+                                shop_info = metricHeader.get('name').replace("ga:", "") + ', ' + value
+                                f = shop_info.split(",")
+                                statistics_info.append(f)
+
+        print(dict(statistics_info))
         print(statistics_info)
         return {"code": 1, "date": statistics_info, "msg": ""}
 
@@ -98,7 +100,7 @@ class GoogleApi():
 
 
 if __name__ == '__main__':
-    google_data = GoogleApi(view_id="195406097", key_words="facebook")
+    google_data = GoogleApi(view_id="195406097", key_words="shopify")
     google_data.main()
 
 

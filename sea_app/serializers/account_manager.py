@@ -21,6 +21,7 @@ class PinterestAccountSerializer(serializers.ModelSerializer):
             "email",
             "type",
             "state",
+            "authorized",
             "add_time",
             "create_time",
             "update_time",

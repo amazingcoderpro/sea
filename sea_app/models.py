@@ -130,7 +130,7 @@ class Product(models.Model):
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
     uuid = models.CharField(max_length=255, verbose_name="产品唯一标识", unique=True)
     name = models.CharField(max_length=255, verbose_name="产品名称")
-    image_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="图片URL")
+    image_url = models.CharField(max_length=255, verbose_name="图片URL")
     thumbnail = models.TextField(verbose_name="缩略图", default="")
     price = models.CharField(max_length=255, verbose_name="产品价格")
     category = models.ForeignKey(ProductCategory, on_delete=models.DO_NOTHING, blank=True, null=True)
@@ -144,6 +144,11 @@ class Product(models.Model):
         # managed = False
         db_table = 'product'
         ordering = ["-id"]
+
+
+class PinterestAccountManager(models.Manager):
+    def get_queryset(self):
+        return super(PinterestAccountManager, self).get_queryset().filter(state__in=[0, 1])
 
 
 class PinterestAccount(models.Model):
@@ -168,10 +173,17 @@ class PinterestAccount(models.Model):
     followings = models.IntegerField(default=0, verbose_name="账户关注量")
     followers = models.IntegerField(default=0, verbose_name="账户粉丝")
 
+    objects = PinterestAccountManager()
+
     class Meta:
         # managed = False
         db_table = 'pinterest_account'
         ordering = ["-id"]
+
+    def delete(self, using=None, keep_parents=False):
+        self.state = 2
+        self.save()
+        return 'success'
 
 
 class Board(models.Model):
@@ -277,8 +289,8 @@ class Rule(models.Model):
     product_list = models.CharField(max_length=255, default="", verbose_name="产品列表")
     tag = models.CharField(max_length=64, blank=True, null=True, verbose_name="规则标签")
     board = models.ForeignKey(Board, on_delete=models.DO_NOTHING)
-    state_choices = ((0, '待执行'), (1, '删除'), (2, '过期'), (3, '运行'), (4, '暂停'), (5, "已完成"))
-    state = models.SmallIntegerField(choices=state_choices, default=0, verbose_name="规则状态")
+    state_choices = ((-1,"新建"), (0, '待执行'), (1, '删除'), (2, '过期'), (3, '运行'), (4, '暂停'), (5,"已完成"))
+    state = models.SmallIntegerField(choices=state_choices, default=-1, verbose_name="规则状态")
     start_time = models.DateTimeField(verbose_name="发布开始时间")
     end_time = models.DateTimeField(verbose_name="发布结束时间")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
@@ -314,7 +326,7 @@ class PublishRecord(models.Model):
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
     rule = models.ForeignKey(Rule, on_delete=models.DO_NOTHING)
     pin = models.ForeignKey(Pin, on_delete=models.DO_NOTHING, blank=True, null=True)
-    state_choices = ((0, 'pending'), (1, 'finished'), (2, 'failed'), )
+    state_choices = ((0, 'pending'), (1, 'finished'), (2, 'failed'), (3, "cancelled"))
     state = models.SmallIntegerField(choices=state_choices, default=0, verbose_name="发布状态")
     remark = models.TextField(blank=True, null=True, verbose_name="备注")
     execute_time = models.DateTimeField(verbose_name="执行时间")
