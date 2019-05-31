@@ -93,7 +93,7 @@ class PinterestApi():
         }
         try:
             result = requests.post(url, payload)
-            if result.status_code == 200:
+            if result.status_code in [200, 201]:
                 logger.info("create user boards is success name={}".format(name))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
