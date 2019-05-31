@@ -276,10 +276,11 @@ class PinterestApi():
     def edit_pin(self, pin_id, board, note, link):
         """
         编辑 pin
-        :param pin_id:
-        :param board:
-        :param note:
-        :param link:
+        :param pin_id: pin id
+        :param board:  board id
+        :param note:  pin 描述
+        :param link:  pin的跳转url
+        code 1 返回正常  2 返回错误  3 没有权限 -1 出现异常
         :return:
         """
         edit_pin_id_fields = ["id", "Clink", "Cnote", "Curl", "Cattribution", "Cboard", "Ccolor", "Ccounts",
@@ -296,6 +297,9 @@ class PinterestApi():
             if result.status_code == 200:
                 logger.info("edit pin by id is success; pin_id={}".format(pin_id))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
+            elif result.status_code == 401:
+                logger.error("You don't have permission to change this link. pin_id={}".format(pin_id))
+                return {"code": 3, "msg": json.loads(result.text).get("message", ""), "data": ""}
             else:
                 logger.error("edit pin by id is failed, msg= {}".format(json.loads(result.text).get("message", "")))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
@@ -357,7 +361,7 @@ if __name__ == '__main__':
     # all_pinterest_api.create_pin(board_id="753790125070474023", note="时间是最好的礼物", image_url="https://cdn.shopify.com/s/files/1/0225/2131/5408/products/Selection_019.png?v=1557998280", link="www.baidu.com")
     # all_pinterest_api.get_pinterest_url(state="shaowei580@gmail.com")
     # all_pinterest_api.delete_pin(pin_id="55451266411112")
-    all_pinterest_api.edit_pin(pin_id="753790056365181486", board="753790125070473943", note="我想修改这个pin", link="https://www.zhibo8.cc/")
+    all_pinterest_api.edit_pin(pin_id="753790056365268430", board="753790125070473943", note="我想修改这个pin", link="https://www.zhibo8.cc/")
     # all_pinterest_api.get_user_pins()
     # all_pinterest_api.get_user_boards()
     # all_pinterest_api.get_pin_by_id(pin_id="753790056365099389")
