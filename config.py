@@ -29,7 +29,6 @@ PINTEREST_CONFIG = {
     "client_secret": "c3ed769d9c5802a98f7c4b949f234c482a19e5bf3a3ac491a0d20e44d7f7556e",
     "scope": "read_public,write_public,read_relationships,write_relationships,read_write_all",
     "redirect_uri": "https://pinbooster.seamarketings.com/api/v1/auth/pinterest/callback/"
-
 }
 
 GA_CONFIG = {
