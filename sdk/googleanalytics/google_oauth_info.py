@@ -4,7 +4,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 
 class GoogleApi():
-    def __init__(self, view_id, key_words):
+    def __init__(self, view_id, key_words, start_time, end_time):
         """
         获取店铺的GA数据
         :param view_id: 视图的id
@@ -14,6 +14,8 @@ class GoogleApi():
         self.KEY_FILE_LOCATION = 'client_secrets.json'
         self.VIEW_ID = view_id
         self.key_words = key_words
+        self.start_time = start_time
+        self.end_time = end_time
 
     def get_report(self):
         """
@@ -33,7 +35,7 @@ class GoogleApi():
                         {
                             "viewId": self.VIEW_ID,
                             "dateRanges": [
-                                {'startDate': '15daysAgo', 'endDate': 'today'},
+                                {'startDate': self.start_time, 'endDate': self.end_time},
                             ],
                             "metrics": [
                                 {"expression": "ga:pageviews"},  # pv
@@ -77,7 +79,7 @@ class GoogleApi():
 
 
 if __name__ == '__main__':
-    google_data = GoogleApi(view_id="195406097", key_words="shopify")
+    google_data = GoogleApi(view_id="195406097", key_words="shopify", start_time="7daysAgo", end_time="1daysAgo")
     google_data.get_report()
 
 
