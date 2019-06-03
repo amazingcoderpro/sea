@@ -39,7 +39,7 @@ def get_common_data(request):
     if search_word:
         # 查询pin_uri or board_uri or pin_description or board_name
         pin_set_list = pin_set_list.filter(
-            Q(pin_uri=search_word) | Q(pin_note__icontains=search_word) | Q(board_uri=search_word) | Q(
+            Q(pin_uuid=search_word) | Q(pin_note__icontains=search_word) | Q(board_uuid=search_word) | Q(
                 board_name=search_word))
     else:
         # 按选择框输入查询
@@ -200,8 +200,8 @@ def subaccount_report(pin_set_list, product_set_list):
                 "products": [] if not item.product_id else [item.product_id],  # product
             }
         else:
-            group_dict[subaccount_id]["boards"].append(item.board_uri)  # board数
-            group_dict[subaccount_id]["pins"].append(item.pin_uri)  # pin数
+            group_dict[subaccount_id]["boards"].append(item.board_id)  # board数
+            group_dict[subaccount_id]["pins"].append(item.pin_id)  # pin数
             group_dict[subaccount_id]["pin_saves"] += item.pin_saves
             group_dict[subaccount_id]["pin_likes"] += item.pin_likes
             group_dict[subaccount_id]["pin_comments"] += item.pin_comments
@@ -301,12 +301,12 @@ def pins_report(pin_set_list, product_set_list):
     # pins report
     data_list = []
     group_dict = {}
-    set_list = pin_set_list.filter(~Q(pin_uri=None), ~Q(pin_uri=""))
+    set_list = pin_set_list.filter(~Q(pin_uuid=None), ~Q(pin_uuid=""))
     # 取时间范围内最新的pin数据
     for item in set_list:
-        pin_uri = item.pin_uri
-        if pin_uri not in group_dict:
-            group_dict[pin_uri] = {
+        pin_uuid = item.pin_uuid
+        if pin_uuid not in group_dict:
+            group_dict[pin_uuid] = {
                 "update_time": item.update_time,
                 "pin_thumbnail": item.pin_thumbnail,
                 "pin_saves": item.pin_saves,
@@ -317,8 +317,8 @@ def pins_report(pin_set_list, product_set_list):
                 "product_id": item.product_id
             }
         else:
-            if item.update_time > group_dict[pin_uri]["update_time"]:
-                group_dict[pin_uri] = {
+            if item.update_time > group_dict[pin_uuid]["update_time"]:
+                group_dict[pin_uuid] = {
                     "update_time": item.update_time,
                     "pin_thumbnail": item.pin_thumbnail,
                     "pin_saves": item.pin_saves,
@@ -328,9 +328,9 @@ def pins_report(pin_set_list, product_set_list):
                     # "pin_clicks": item.pin_clicks,
                     "product_id": item.product_id
                 }
-    for pin_uri, info in group_dict.items():
+    for pin_uuid, info in group_dict.items():
         data = {
-            "pin_uri": pin_uri,
+            "pin_uri": pin_uuid,
             "pin_thumbnail": info["pin_thumbnail"],
             "pin_saves": info["pin_saves"],
             "pin_likes": info["pin_likes"],
@@ -581,7 +581,7 @@ def pins_period(new_queryset, old_queryset):
             old_saves = old_queryset.filter(Q(pin_id=pin_obj.pin_id)).first()
             old_saves = old_saves.pin_saves if old_saves else 0
             pin_dict[pin_obj.pin_id] = {
-                "pin_uri": pin_obj.pin_uri,
+                "pin_uri": pin_obj.pin_uuid,
                 "SKU": pin_obj.product.sku,
                 "image": pin_obj.pin_thumbnail,
                 "pin_date": pin_obj.pin.publish_time.strftime("%Y-%m-%d %H:%M:%S"),

@@ -144,7 +144,7 @@ class PinterestAccountAuthView(APIView):
             return Response({"detail": "The resource was not found"}, status=status.HTTP_400_BAD_REQUEST)
         if instance.authorized == 1:
             return Response({"detail": "This account is authorized"}, status=status.HTTP_400_BAD_REQUEST)
-        url = pinterest_api.PinterestApi().get_pinterest_url(instance.account_uri)
+        url = pinterest_api.PinterestApi().get_pinterest_url(instance.account)
         return Response({"message": url})
 
 
@@ -198,10 +198,10 @@ class PinterestCallback(APIView):
         print("current user info: {}".format(user_info))
         if user_info["code"] == 1:
             if user_info["data"].get("url").lower() == account_uri.lower():
-                models.PinterestAccount.objects.filter(account_uri=account_uri).update(
+                models.PinterestAccount.objects.filter(account=account_uri).update(
                     token=token, authorized=1)
                 return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=1")
-        models.PinterestAccount.objects.filter(account_uri=account_uri).update(token=token, authorized=2)
+        models.PinterestAccount.objects.filter(account=account_uri).update(token=token, authorized=2)
         return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
 
 
