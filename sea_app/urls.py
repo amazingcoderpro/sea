@@ -1,13 +1,12 @@
 from django.conf.urls import url, include
 from django.views.decorators.cache import cache_page
 
-from sea_app.views import personal_center, account_manager, report
+from sea_app.views import personal_center, account_manager, report, dashboard
 
 v1_urlpatterns = [
 
     # 报告
-    url(r'dashboard/change_part/$', cache_page(5)(report.DashBoardChangePartView.as_view())),
-    url(r'dashboard/fixed_part/$', cache_page(5)(report.DashBoardFixedPartView.as_view())),
+    url(r'dashboard/(?P<part>[1-5]+)/$', cache_page(5)(dashboard.DashBoardView.as_view())),
     url(r'daily_report/$', cache_page(5)(report.DailyReportView.as_view())),
     url(r'subaccount_report/(?P<type>[a-zA-Z]+)/$', cache_page(5)(report.SubAccountReportView.as_view())),
 
