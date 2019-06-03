@@ -172,6 +172,12 @@ class TaskProcessor:
                     boards = ret["data"]
                     if boards:
                         time_now = datetime.datetime.now()
+
+                        # 因为在测试过程发现user info中的boards数量与实际不符，所以在此再次更新一下boards数量
+                        cursor.execute(
+                            '''update `pinterest_account` set boards=%s update_time=%s where id=%s''', (len(boards), account_id))
+                        conn.commit()
+
                         for board in boards:
                             uri = board.get("id", "")
                             name = board.get("name", "")
@@ -204,7 +210,7 @@ class TaskProcessor:
                                 '''insert into `pinterest_history_data` (`board_uri`, `board_name`, `board_followers`, 
                                 `board_id`, `pinterest_account_id`, `update_time`, `account_followings`, 
                                 `account_followers`, `account_views`, `pin_likes`, `pin_comments`, `pin_saves`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                                (uri, name, board_followers, board_id, account_id, time_now, 60, 70, 80, 90, 110, 99))
+                                (uri, name, board_followers, board_id, account_id, time_now, 0, 0, 0, 0, 0, 0))
 
                         conn.commit()
                 else:
@@ -279,9 +285,10 @@ class TaskProcessor:
 
                             # 　更新历史数据表
                             cursor.execute(
-                                '''insert into `pinterest_history_data` (`pin_uri`, `pin_note`, `pin_thumbnail`, `pin_likes`, `pin_comments`, `pin_saves`, `pin_clicks`, `update_time`, `board_id`, `pin_id`, `pinterest_account_id`, `product_id`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                                '''insert into `pinterest_history_data` (`pin_uri`, `pin_note`, `pin_thumbnail`, `pin_likes`, `pin_comments`, `pin_saves`, `pin_clicks`, `update_time`, `board_id`, `pin_id`, `pinterest_account_id`, `product_id`, `account_followings`, 
+                                `account_followers`, `account_views`, `board_followers`, `board_uri`, `board_name`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
                                 (uri, note, pin_thumbnail, pin_likes, pin_comments, pin_saves, pin_clicks,
-                                 update_time, board_id, pin_id, account_id, product_id))
+                                 update_time, board_id, pin_id, account_id, product_id, ))
 
                             conn.commit()
                 else:

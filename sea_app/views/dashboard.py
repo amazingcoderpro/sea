@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 
 from sea_app.views import reports
-
+from config import logger
 
 class DashBoardView(APIView):
     """dashboard 视图"""
@@ -18,8 +18,10 @@ class DashBoardView(APIView):
 
     def get(self, request, *args, **kwargs):
         # 过滤筛选条件
+        logger.info("dashboard trigger! ")
         pin_set_list, product_set_list = reports.get_common_data(request)
         part = kwargs["pk"]
+        logger.info("dashboard trigger! pd={}".format(part))
         pins_period = request.query_params.dict().get("pins_period", 7)
         boards_period = request.query_params.dict().get("boards_period", 7)
         if part == '1':
@@ -27,6 +29,7 @@ class DashBoardView(APIView):
             overview_list = reports.account_overview_chart(pin_set_list, product_set_list, request)
             # 账户总览 表数据
             total_data = reports.account_overview_table(overview_list)
+            logger.info("dashboard trigger! total_data={}".format(total_data))
             return Response({"overview_list": overview_list, "total_data": total_data})
         elif part == '2':
             # 最新新增数据
