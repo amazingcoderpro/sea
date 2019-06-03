@@ -38,21 +38,3 @@ class SubAccountReportView(generics.ListAPIView):
         return Response(data_list)
 
 
-class DashBoardChangePartView(APIView):
-    """dashboard 变动部分视图"""
-    permission_classes = (IsAuthenticated,)
-    authentication_classes = (JSONWebTokenAuthentication,)
-
-    def get(self, request, *args, **kwargs):
-        data = reports.dash_board_change_part(request)
-        return Response(data)
-
-
-class DashBoardFixedPartView(APIView):
-    """dashboard 固定部分视图"""
-    permission_classes = (IsAuthenticated,)
-    authentication_classes = (JSONWebTokenAuthentication,)
-
-    def get(self, request, *args, **kwargs):
-        data = reports.dash_board_fixed_part(request)
-        return Response(data)

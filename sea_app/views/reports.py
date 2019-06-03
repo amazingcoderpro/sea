@@ -2,6 +2,7 @@
 # Created by: Leemon7
 # Created on: 2019/5/17
 import json
+import time
 
 from django.db.models import Q
 from rest_framework.response import Response
@@ -355,30 +356,6 @@ def pins_report(pin_set_list, product_set_list):
 
         data_list.append(data)
     return data_list
-
-
-def dash_board_change_part(request):
-    """DashBoard视图 随筛选变动部分"""
-    pin_set_list, product_set_list = get_common_data(request)
-    # 账户总览 图数据
-    overview_list = account_overview_chart(pin_set_list, product_set_list, request)
-    # 账户总览 表数据
-    total_data = account_overview_table(overview_list)
-    # 最新新增数据
-    latest_update = latest_updates(pin_set_list, product_set_list, request)
-
-    return {"overview_list": overview_list, "total_data": total_data, "latest_update": latest_update}
-
-
-def dash_board_fixed_part(request):
-    """DashBoard视图 固定部分"""
-    # top pins
-    top_5_pins = top_pins(request, period=7)
-    # top board
-    top_5_board = top_board(request, period=7)
-    # activity log
-    record_list = operation_record(request)
-    return {"top_5_pins": top_5_pins, "top_5_board": top_5_board, "record_list": record_list}
 
 
 def get_num(queryset, fieldname):
