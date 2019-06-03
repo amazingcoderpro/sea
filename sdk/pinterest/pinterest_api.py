@@ -356,8 +356,8 @@ class PinterestApi():
 
 if __name__ == '__main__':
     # access_token = "ArVPxolYdQAXgzr0-FFoRGAF682xFaDsz-o3I1FF0n-lswCyYAp2ADAAAk1KRdOSuUEgxv0AAAAA"
-    access_token = "An-soS480FzyGqZL1oSRppg1Uc2dFaSUd9eImnBF0n-lswCyYAqqwDAAAkqYRdKCdRcAy0kAAAAA"
-    code = "50cffb94b8abd92b"
+    access_token = "AgT0UM7dvyVjeAVPRykFkzWY-OLcFaSf3-9Z4WhF0n-lswCyYAp2ADAAAk1KRdOSuUEgxv0AAAAA"
+    code = "ae306cbb710e1613"
     all_pinterest_api = PinterestApi(access_token=access_token)
     # all_pinterest_api.get_user_pins(access_token=access_token)
     # all_pinterest_api.get_pinterest_url(state="123")

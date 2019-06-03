@@ -15,18 +15,7 @@ class GoogleApi():
         self.VIEW_ID = view_id
         self.key_words = key_words
 
-    def initialize_analyticsreporting(self):
-        """
-          Initializes an Analytics Reporting API V4 service object.
-        Returns:
-          An authorized Analytics Reporting API V4 service object.
-        """
-        credentials = ServiceAccountCredentials.from_json_keyfile_name(self.KEY_FILE_LOCATION, self.SCOPES)
-        # Build the service object.
-        analytics = discovery.build('analyticsreporting', 'v4', credentials=credentials)
-        return analytics
-
-    def get_report(self, analytics):
+    def get_report(self):
         """
          Queries the Analytics Reporting API V4.
         Args:
@@ -34,7 +23,10 @@ class GoogleApi():
         Returns:
           The Analytics Reporting API V4 response.
         """
-        return analytics.reports().batchGet(
+        credentials = ServiceAccountCredentials.from_json_keyfile_name(self.KEY_FILE_LOCATION, self.SCOPES)
+        # Build the service object.
+        analytics = discovery.build('analyticsreporting', 'v4', credentials=credentials)
+        analytics_info = analytics.reports().batchGet(
             body={
                 "reportRequests":
                     [
@@ -61,17 +53,10 @@ class GoogleApi():
                             #                 "expressions": ["baidu"]
                             #             }]
                             #         }]
-                                }]
+                             }]
                             }).execute()
-
-    def print_response(self, response):
-        """
-          Parses and prints the Analytics Reporting API V4 response.
-        Args:
-          response: An Analytics Reporting API V4 response.
-        """
         statistics_info = []
-        for report in response.get('reports', []):
+        for report in analytics_info.get('reports', []):
             columnHeader = report.get('columnHeader', {})
             dimensionHeaders = columnHeader.get('dimensions', [])
             metricHeaders = columnHeader.get('metricHeader', {}).get('metricHeaderEntries', [])
@@ -90,14 +75,9 @@ class GoogleApi():
         print({"code": 1, "date": dict(statistics_info), "msg": ""})
         return {"code": 1, "date": dict(statistics_info), "msg": ""}
 
-    def main(self):
-        analytics = self.initialize_analyticsreporting()
-        response = self.get_report(analytics)
-        response_data = self.print_response(response)
-
 
 if __name__ == '__main__':
     google_data = GoogleApi(view_id="195406097", key_words="shopify")
-    google_data.main()
+    google_data.get_report()
 
 
