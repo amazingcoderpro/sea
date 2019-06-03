@@ -93,7 +93,7 @@ class Store(models.Model):
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
-    uuid = models.CharField(blank=True, null=True, max_length=255, verbose_name="店铺的唯一标识")
+    uuid = models.CharField(blank=True, null=True, max_length=64, verbose_name="店铺的唯一标识")
     timezone = models.CharField(blank=True, null=True, max_length=255, verbose_name="店铺的时区")
     country = models.CharField(blank=True, null=True, max_length=255, verbose_name="店铺所在的国家")
     city = models.CharField(blank=True, null=True, max_length=255, verbose_name="店铺所在的城市")
@@ -102,7 +102,6 @@ class Store(models.Model):
     store_create_time = models.DateTimeField(blank=True, null=True,verbose_name="店铺的创建时间")
     store_update_time = models.DateTimeField(blank=True, null=True,verbose_name="店铺的更新时间")
     store_view_id = models.CharField(blank=True, null=True, max_length=100, verbose_name=u"店铺的GA中的view id")
-    store_utm = models.CharField(blank=True, null=True, max_length=255, verbose_name=u"店铺的utm构建")
 
     class Meta:
         # managed = False
@@ -129,7 +128,7 @@ class Product(models.Model):
     """产品表"""
     sku = models.CharField(max_length=64, verbose_name="产品标识符")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
-    uuid = models.CharField(max_length=255, verbose_name="产品唯一标识", unique=True)
+    uuid = models.CharField(max_length=64, verbose_name="产品唯一标识", unique=True)
     name = models.CharField(max_length=255, verbose_name="产品名称")
     image_url = models.CharField(max_length=255, verbose_name="图片URL")
     thumbnail = models.TextField(verbose_name="缩略图", default="")
@@ -140,6 +139,7 @@ class Product(models.Model):
     publish_time = models.DateTimeField(blank=True, null=True, verbose_name="发布时间")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+    url_with_utm = models.CharField(blank=True, null=True, max_length=255, verbose_name=u"产品的带utm构建的url")
 
     class Meta:
         # managed = False
@@ -154,7 +154,7 @@ class PinterestAccountManager(models.Manager):
 
 class PinterestAccount(models.Model):
     """Pin账户表"""
-    account_uri = models.CharField(max_length=64, unique=True, verbose_name="PinterestAccount唯一标识码")
+    account = models.CharField(max_length=64, unique=True, verbose_name="PinterestAccount唯一标识码")
     nickname = models.CharField( blank=True, null=True, max_length=64, verbose_name="账户名称")
     email = models.CharField(blank=True, null=True, max_length=255, verbose_name="登陆邮箱")
     type_choices = ((0, 'individual'), (1, 'business'))
@@ -174,7 +174,7 @@ class PinterestAccount(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     followings = models.IntegerField(default=0, verbose_name="账户关注量")
     followers = models.IntegerField(default=0, verbose_name="账户粉丝")
-    uuid = models.CharField(blank=True, null=True, max_length=100, verbose_name="账户的uuid")
+    uuid = models.CharField(blank=True, null=True, max_length=64, verbose_name="账户的uuid")
 
     objects = PinterestAccountManager()
 
@@ -191,7 +191,7 @@ class PinterestAccount(models.Model):
 
 class Board(models.Model):
     """Pin Board表"""
-    board_uri = models.CharField(max_length=32, verbose_name="Board唯一标识码")
+    uuid = models.CharField(max_length=64, verbose_name="Board唯一标识码")
     name = models.CharField(max_length=64, verbose_name="Board名称")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="Board URL")
     create_time = models.DateTimeField(verbose_name="Board创建时间")
@@ -213,7 +213,7 @@ class Board(models.Model):
 
 class Pin(models.Model):
     """Pin 表"""
-    pin_uri = models.CharField(max_length=32, verbose_name="Pin唯一标识码")
+    uuid = models.CharField(max_length=64, verbose_name="Pin唯一标识码")
     url = models.URLField(max_length=255, blank=True, null=True, verbose_name="Pin URL")
     note = models.TextField(verbose_name="Pin 描述")
     origin_link = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
@@ -240,11 +240,11 @@ class PinterestHistoryData(models.Model):
     account_followers = models.IntegerField(default=0, verbose_name="账户粉丝")
     account_views = models.IntegerField(default=0, verbose_name="账户访问量")
     board = models.ForeignKey(Board, on_delete=models.DO_NOTHING, blank=True, null=True)
-    board_uri = models.CharField(max_length=32, blank=True, null=True, verbose_name="Board唯一标识码")
+    board_uuid = models.CharField(max_length=64, blank=True, null=True, verbose_name="Board唯一标识码")
     board_name = models.CharField(max_length=64, blank=True, null=True, verbose_name="Board名称")
     board_followers = models.IntegerField(default=0, verbose_name="board粉丝")
     pin = models.ForeignKey(Pin, on_delete=models.DO_NOTHING, blank=True, null=True)
-    pin_uri = models.CharField(max_length=32, blank=True, null=True, verbose_name="Pin唯一标识码")
+    pin_uuid = models.CharField(max_length=64, blank=True, null=True, verbose_name="Pin唯一标识码")
     pin_note = models.TextField(blank=True, null=True, verbose_name="Pin 描述")
     pin_thumbnail = models.TextField(blank=True, null=True, verbose_name="缩略图")
     pin_likes = models.IntegerField(default=0, verbose_name="喜欢量, pinteres平台已经没有了, 暂时保留")
@@ -263,8 +263,6 @@ class PinterestHistoryData(models.Model):
 
 class ProductHistoryData(models.Model):
     """Product历史数据表"""
-    Platform = models.ForeignKey(Platform, on_delete=models.DO_NOTHING)
-
     store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, blank=True, null=True)
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING)
     product_visitors = models.IntegerField(default=0, verbose_name="访客总数")

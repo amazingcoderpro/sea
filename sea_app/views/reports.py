@@ -24,7 +24,8 @@ def get_request_params(request):
     board_id = request.GET.get("board_id")
     pin_id = request.GET.get("pin_id")
     search_word = request.GET.get("search", "").strip()
-    store_id = request.GET.get("store_id")  # 必传(如果一个用户绑定一个商店的话，就可以通过当前用户获取当前店铺)
+    # store_id = request.GET.get("store_id")  # 必传(如果一个用户绑定一个商店的话，就可以通过当前用户获取当前店铺)
+    store_id = models.Store.objects.filter(user_id=request.user).first().id
     # platform = request.GET.get("platform_id", 1)  # 必传
     return start_time, end_time, pinterest_account_id, board_id, pin_id, search_word, store_id
 
@@ -504,10 +505,12 @@ def latest_updates(pin_set_list, product_set_list, request):
 
 def top_pins(request, period=7):
     """pins排行榜视图"""
+    period = int(period)
     start_time = datetime.datetime.now() + datetime.timedelta(days=-period)
     end_time = datetime.datetime.now()
     prev_start_time = datetime.datetime.now() + datetime.timedelta(days=-period * 2)
-    store_id = request.GET.get("store_id")
+    # store_id = request.GET.get("store_id")
+    store_id = models.Store.objects.filter(user_id=request.user).first().id
     # 开始过滤ProductHistoryData数据
     if store_id:
         product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)),
@@ -590,10 +593,11 @@ def pins_period(new_queryset, old_queryset):
 
 def top_board(request, period=7):
     """board排行版视图"""
+    period = int(period)
     start_time = datetime.datetime.now() + datetime.timedelta(days=-period)
     end_time = datetime.datetime.now()
     prev_start_time = datetime.datetime.now() + datetime.timedelta(days=-period * 2)
-    store_id = request.GET.get("store_id")
+    store_id = models.Store.objects.filter(user_id=request.user).first().id
     # 开始过滤ProductHistoryData数据
     if store_id:
         product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)),
