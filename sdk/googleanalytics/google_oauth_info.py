@@ -4,7 +4,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 
 class GoogleApi():
-    def __init__(self, view_id, key_words):
+    def __init__(self, view_id):
         """
         获取店铺的GA数据
         :param view_id: 视图的id
@@ -13,20 +13,8 @@ class GoogleApi():
         self.SCOPES = ['https://www.googleapis.com/auth/analytics.readonly']
         self.KEY_FILE_LOCATION = 'client_secrets.json'
         self.VIEW_ID = view_id
-        self.key_words = key_words
 
-    def initialize_analyticsreporting(self):
-        """
-          Initializes an Analytics Reporting API V4 service object.
-        Returns:
-          An authorized Analytics Reporting API V4 service object.
-        """
-        credentials = ServiceAccountCredentials.from_json_keyfile_name(self.KEY_FILE_LOCATION, self.SCOPES)
-        # Build the service object.
-        analytics = discovery.build('analyticsreporting', 'v4', credentials=credentials)
-        return analytics
-
-    def get_report(self, analytics):
+    def get_report(self, key_words, start_time, end_time):
         """
          Queries the Analytics Reporting API V4.
         Args:
@@ -34,14 +22,17 @@ class GoogleApi():
         Returns:
           The Analytics Reporting API V4 response.
         """
-        return analytics.reports().batchGet(
+        credentials = ServiceAccountCredentials.from_json_keyfile_name(self.KEY_FILE_LOCATION, self.SCOPES)
+        # Build the service object.
+        analytics = discovery.build('analyticsreporting', 'v4', credentials=credentials)
+        analytics_info = analytics.reports().batchGet(
             body={
                 "reportRequests":
                     [
                         {
                             "viewId": self.VIEW_ID,
                             "dateRanges": [
-                                {'startDate': '15daysAgo', 'endDate': 'today'},
+                                {'startDate': self.start_time, 'endDate': self.end_time},
                             ],
                             "metrics": [
                                 {"expression": "ga:pageviews"},  # pv
@@ -61,17 +52,10 @@ class GoogleApi():
                             #                 "expressions": ["baidu"]
                             #             }]
                             #         }]
-                                }]
+                             }]
                             }).execute()
-
-    def print_response(self, response):
-        """
-          Parses and prints the Analytics Reporting API V4 response.
-        Args:
-          response: An Analytics Reporting API V4 response.
-        """
         statistics_info = []
-        for report in response.get('reports', []):
+        for report in analytics_info.get('reports', []):
             columnHeader = report.get('columnHeader', {})
             dimensionHeaders = columnHeader.get('dimensions', [])
             metricHeaders = columnHeader.get('metricHeader', {}).get('metricHeaderEntries', [])
@@ -90,14 +74,9 @@ class GoogleApi():
         print({"code": 1, "date": dict(statistics_info), "msg": ""})
         return {"code": 1, "date": dict(statistics_info), "msg": ""}
 
-    def main(self):
-        analytics = self.initialize_analyticsreporting()
-        response = self.get_report(analytics)
-        response_data = self.print_response(response)
-
 
 if __name__ == '__main__':
-    google_data = GoogleApi(view_id="195406097", key_words="shopify")
-    google_data.main()
+    google_data = GoogleApi(view_id="195406097")
+    google_data.get_report(key_words="", start_time="1daysAgo", end_time="1daysAgo")
 
 
