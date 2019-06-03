@@ -3,6 +3,7 @@
 # Created by charles on 2019-05-11
 # Function:
 import os, sys
+import time
 import datetime
 from io import BytesIO
 import base64
@@ -47,17 +48,17 @@ class DBUtil:
 
 
 class TaskProcessor:
-    def __init__(self, rule_period=120, publish_pin_period=240, pinterest_period=600, shopify_period=600):
+    def __init__(self, rule_period=120, publish_pin_period=240, pinterest_period=7200, shopify_period=7200):
         self.bk_scheduler = BackgroundScheduler()
         self.bk_scheduler.start()
         self.pinterest_job = None
         self.shopify_job = None
         self.rule_job = None
         self.publish_pin_job = None
-        self.pinterest_period = pinterest_period
-        self.shopify_period = shopify_period
-        self.rule_period = rule_period
-        self.publish_pin_period = publish_pin_period
+        self.pinterest_period = pinterest_period    # 更新pinterests数据的频率
+        self.shopify_period = shopify_period        # 更新shopify数据的频率
+        self.rule_period = rule_period              # 解析rule的频率
+        self.publish_pin_period = publish_pin_period    # 发布pin的频率
 
     def start(self):
         logger.info("TaskProcessor start work.")
@@ -66,8 +67,8 @@ class TaskProcessor:
         self.rule_job = self.bk_scheduler.add_job(self.analyze_rule, 'interval', seconds=self.rule_period, max_instances=50)
 
         # 定时发布pin
-        # self.publish_pins(self.publish_pin_period)
-        # self.publish_pin_job = self.bk_scheduler.add_job(self.publish_pins, 'interval', seconds=self.publish_pin_period, args=(self.publish_pin_period,))
+        self.publish_pins(self.publish_pin_period)
+        self.publish_pin_job = self.bk_scheduler.add_job(self.publish_pins, 'interval', seconds=self.publish_pin_period, args=(self.publish_pin_period,))
 
         # 定时更新pinterest数据
         self.update_pinterest_data()
@@ -207,7 +208,7 @@ class TaskProcessor:
                                 board_id = cursor.lastrowid
 
                             cursor.execute(
-                                '''insert into `pinterest_history_data` (`uuid`, `board_name`, `board_followers`, 
+                                '''insert into `pinterest_history_data` (`board_uuid`, `board_name`, `board_followers`, 
                                 `board_id`, `pinterest_account_id`, `update_time`, `account_followings`, 
                                 `account_followers`, `account_views`, `pin_likes`, `pin_comments`, `pin_saves`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
                                 (uuid, name, board_followers, board_id, account_id, time_now, 0, 0, 0, 0, 0, 0))
@@ -279,13 +280,13 @@ class TaskProcessor:
                                     product_id = product[0]
 
                                 if product_id >= 0:
-                                    cursor.execute('''insert into `pin` (`pin_uuid`, `url`, `note`, `origin_link`, 
+                                    cursor.execute('''insert into `pin` (`uuid`, `url`, `note`, `origin_link`, 
                                         `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`, `saves`, 
                                         `comments`, `likes`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
                                                    (uuid, url, note, original_link, pin_thumbnail, create_time, update_time,
                                                     board_id, product_id, pin_saves, pin_comments, pin_likes))
                                 else:
-                                    cursor.execute('''insert into `pin` (`pin_uuid`, `url`, `note`, `origin_link`, 
+                                    cursor.execute('''insert into `pin` (`uuid`, `url`, `note`, `origin_link`, 
                                         `thumbnail`, `publish_time`, `update_time`, `board_id`, `saves`, 
                                         `comments`, `likes`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
                                                    (uuid, url, note, original_link, pin_thumbnail, create_time, update_time,
@@ -373,12 +374,13 @@ class TaskProcessor:
                     updated_at = shop.get("updated_at", '')
                     shop_phone = shop.get("phone", "")
                     shop_city = shop.get("city", '')
+                    shop_currency = shop.get("currency", "USD")
                     # shop_myshopify_domain = shop.get("myshopify_domain", "")
                     cursor.execute('''update `store` set url=%s, uuid=%s, name=%s, timezone=%s, email=%s, owner_name=%s, 
-                    owner_phone=%s, country=%s, city=%s, store_create_time=%s, store_update_time=%s where id=%s''',
+                    owner_phone=%s, country=%s, city=%s, store_create_time=%s, store_update_time=%s, currency=%s where id=%s''',
                                    (shop_domain, shop_uuid, shop_name, shop_timezone, shop_email, shop_owner, shop_phone,
                                     shop_country_name, shop_city, datetime.datetime.strptime(created_at[0:-6], "%Y-%m-%dT%H:%M:%S"),
-                                    datetime.datetime.strptime(updated_at[0:-6], "%Y-%m-%dT%H:%M:%S"), store_id))
+                                    datetime.datetime.strptime(updated_at[0:-6], "%Y-%m-%dT%H:%M:%S"), shop_currency, store_id))
                     conn.commit()
 
                 # 获取店铺里的所有产品
@@ -426,10 +428,11 @@ class TaskProcessor:
                         ga_data = gapi.get_report(key_words=pro_uuid, start_time="7daysAgo", end_time="today")
                         time_now = datetime.datetime.now()
                         if ga_data.get("code", 0) == 1:
-                            pv = ga_data.get("pageviews", 0)
-                            uv = ga_data.get("uniquePageviews", 0)
-                            hits = ga_data.get("hits", 0)
-                            transactions = ga_data.get("transactions", 0)
+                            data = ga_data.get("data", {})
+                            pv = data.get("pageviews", 0)
+                            uv = data.get("uniquePageviews", 0)
+                            hits = data.get("hits", 0)
+                            transactions = data.get("transactions", 0)
                             revenue = 0
                             cursor.execute('''insert into `product_history_data` (`product_visitors`, `product_new_visitors`, `product_clicks`, `product_scan`, `product_sales`, `product_revenue`, `update_time`, `product_id`, `store_id`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                             ''', (uv, uv, hits, pv, transactions, revenue, time_now, pro_id, store_id))
@@ -706,26 +709,21 @@ class TaskProcessor:
         return True
 
 
-def test_task_pro():
-    tsp = TaskProcessor(pinterest_period=20, shopify_period=20, rule_period=10, publish_pin_period=50)
+def test():
+    tsp = TaskProcessor(pinterest_period=600, shopify_period=600, rule_period=60, publish_pin_period=240)
     # ret = tsp.analyze_rule()
     tsp.start()
-    import time
-    time.sleep(100)
-    # tsp.pause()
-    # time.sleep(20)
-    tsp.resume()
-    # time.sleep(20)
+
+    time.sleep(1000)
     tsp.stop()
-    time.sleep(2)
-    tsp.start()
     time.sleep(20)
 
-    # pt.get_products()
-    # st.update_products()
-    # base64_str = pt.image_2_base64("https://www.theadultman.com/wp-content/uploads/2016/08/Things-Every-Man-Should-Own-1-1.jpg", is_thumb=False)
-    # pt.base64_2_image(base64_str, "123.jpg")
-    # pt.update_pinterest_data()
+
+def main():
+    tsp = TaskProcessor()
+    tsp.start()
+    while 1:
+        time.sleep(1)
 
 if __name__ == '__main__':
-    test_task_pro()
+    main()

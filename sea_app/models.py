@@ -104,6 +104,7 @@ class Store(models.Model):
     store_update_time = models.DateTimeField(blank=True, null=True,verbose_name="店铺的更新时间")
     store_view_id = models.CharField(blank=True, null=True, max_length=100, verbose_name=u"店铺的GA中的view id")
 
+
     class Meta:
         # managed = False
         # unique_together = ("name", "platform")
