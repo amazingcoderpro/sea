@@ -18,6 +18,7 @@ gevent = "*"
 gunicorn = "*"
 supervisor = "*"
 pillow = "*"
+google-api-python-client = "*"
 
 [requires]
 python_version = "3.6"

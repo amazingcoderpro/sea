@@ -79,7 +79,7 @@ class GoogleApi():
 
 
 if __name__ == '__main__':
-    google_data = GoogleApi(view_id="195406097", key_words="shopify", start_time="7daysAgo", end_time="1daysAgo")
+    google_data = GoogleApi(view_id="195406097", key_words="", start_time="1daysAgo", end_time="1daysAgo")
     google_data.get_report()
 
 
