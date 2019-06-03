@@ -40,6 +40,8 @@ class PinterestApi():
         :param code:
         :return:
         """
+        session_id = requests.session()
+
         url = f"https://api.pinterest.com/v1/oauth/token?" \
             f"grant_type=authorization_code" \
             f"&client_id={self.client_id}&client_secret={self.client_secret}&code={code}"
@@ -49,9 +51,10 @@ class PinterestApi():
                 logger.info("pinterest token success = {}".format(json.loads(result.text).get("access_token")))
                 return {"code": 1, "msg": "", "data": json.loads(result.text)}
             else:
+                logger.error("pinterest token failed = {}".format(json.loads(result.text).get("message", "")))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
-            logger.error("pinterest token failed = {}".format(str(e)))
+            logger.exception("pinterest token failed = {}".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
     def get_user_info(self):
@@ -73,7 +76,7 @@ class PinterestApi():
                 logger.error("get user info is failed msg={}".format(json.loads(result.text).get("message", "")))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
-            logger.error("get user info failed".format(str(e)))
+            logger.exception("get user info failed".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
     def create_board(self, name, description):
@@ -100,7 +103,7 @@ class PinterestApi():
                 logger.error("create user boards is failed,  name={}, msg= {}".format(name, json.loads(result.text).get("message", "")))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
-            logger.error("post user boards is failed:{}".format(str(e)))
+            logger.exception("post user boards is failed:{}".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
     def get_user_boards(self):
@@ -357,11 +360,11 @@ if __name__ == '__main__':
     all_pinterest_api = PinterestApi(access_token=access_token)
     # all_pinterest_api.get_user_pins(access_token=access_token)
     # all_pinterest_api.get_token(code=code)
-    # all_pinterest_api.get_user_info()
+    all_pinterest_api.get_user_info()
     # all_pinterest_api.create_pin(board_id="753790125070474023", note="时间是最好的礼物", image_url="https://cdn.shopify.com/s/files/1/0225/2131/5408/products/Selection_019.png?v=1557998280", link="www.baidu.com")
     # all_pinterest_api.get_pinterest_url(state="shaowei580@gmail.com")
     # all_pinterest_api.delete_pin(pin_id="55451266411112")
-    all_pinterest_api.edit_pin(pin_id="753790056365268430", board="753790125070473943", note="我想修改这个pin", link="https://www.zhibo8.cc/")
+    # all_pinterest_api.edit_pin(pin_id="753790056365268430", board="753790125070473943", note="我想修改这个pin", link="https://www.zhibo8.cc/")
     # all_pinterest_api.get_user_pins()
     # all_pinterest_api.get_user_boards()
     # all_pinterest_api.get_pin_by_id(pin_id="753790056365099389")
