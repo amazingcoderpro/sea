@@ -81,7 +81,7 @@ class GoogleApi():
 
             data = dict(statistics_info)
             for key in data.keys():
-                data[key] = float(data[key].strip()) if key == "transactions" else int(data[key].strip())
+                data[key] = float(data[key].strip()) if key in ["transactions", "transactionRevenue"] else int(data[key].strip())
             logger.info("get google analytics info is successed, data={}".format(data))
             return {"code": 1, "date": data, "msg": ""}
         except Exception as e:
