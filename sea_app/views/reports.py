@@ -38,7 +38,7 @@ def get_common_data(request):
     if search_word:
         # 查询pin_uri or board_uri or pin_description or board_name
         pin_set_list = pin_set_list.filter(
-            Q(pin_uri=search_word) | Q(pin_description__icontains=search_word) | Q(board_uri=search_word) | Q(
+            Q(pin_uri=search_word) | Q(pin_note__icontains=search_word) | Q(board_uri=search_word) | Q(
                 board_name=search_word))
     else:
         # 按选择框输入查询
