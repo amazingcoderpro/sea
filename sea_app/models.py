@@ -97,11 +97,13 @@ class Store(models.Model):
     timezone = models.CharField(blank=True, null=True, max_length=255, verbose_name="店铺的时区")
     country = models.CharField(blank=True, null=True, max_length=255, verbose_name="店铺所在的国家")
     city = models.CharField(blank=True, null=True, max_length=255, verbose_name="店铺所在的城市")
+    currency = models.CharField(blank=True, null=True, max_length=20, verbose_name="店铺所使用的计价货币符号")
     owner_name = models.CharField(blank=True, null=True, max_length=255, verbose_name="店主的名称")
     owner_phone = models.CharField(blank=True, null=True, max_length=50, verbose_name="店主的电话")
     store_create_time = models.DateTimeField(blank=True, null=True,verbose_name="店铺的创建时间")
     store_update_time = models.DateTimeField(blank=True, null=True,verbose_name="店铺的更新时间")
     store_view_id = models.CharField(blank=True, null=True, max_length=100, verbose_name=u"店铺的GA中的view id")
+
 
     class Meta:
         # managed = False
