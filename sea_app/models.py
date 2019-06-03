@@ -166,7 +166,7 @@ class PinterestAccount(models.Model):
     token = models.CharField(blank=True, null=True, max_length=255, verbose_name="账号使用标识")
     boards = models.IntegerField(default=0, verbose_name=u"account下的board个数")
     views = models.IntegerField(default=0, verbose_name="访问量")
-    authorized_choices = ((0, 'no_authorized'), (1, 'authorized'))
+    authorized_choices = ((0, 'no_authorized'), (1, 'authorized'), (2, 'authorized_faield'))
     authorized = models.SmallIntegerField(choices=authorized_choices, default=0, verbose_name="是否认证")
     add_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="修改时间")
