@@ -81,17 +81,14 @@ class GoogleApi():
                 dateRangeValues = row.get('metrics', [])
                 for header, dimension in zip(dimensionHeaders, dimensions):
                     if self.key_words in dimension:
-                        print(header + ': ' + dimension)
                         for i, values in enumerate(dateRangeValues):
-                            print('Date range: ' + str(i))
                             for metricHeader, value in zip(metricHeaders, values.get('values')):
                                 shop_info = metricHeader.get('name').replace("ga:", "") + ', ' + value
                                 f = shop_info.split(",")
                                 statistics_info.append(f)
 
-        print(dict(statistics_info))
-        print(statistics_info)
-        return {"code": 1, "date": statistics_info, "msg": ""}
+        print({"code": 1, "date": dict(statistics_info), "msg": ""})
+        return {"code": 1, "date": dict(statistics_info), "msg": ""}
 
     def main(self):
         analytics = self.initialize_analyticsreporting()

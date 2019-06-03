@@ -115,6 +115,7 @@ class PinterestAccountCreateSerializer(serializers.ModelSerializer):
             "nickname",
             "email",
             "type",
+            "views",
             # "state",
             "description",
             "create_time",
