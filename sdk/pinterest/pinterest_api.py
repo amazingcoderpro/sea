@@ -40,7 +40,7 @@ class PinterestApi():
         :param code:
         :return:
         """
-        session_id = requests.session()
+        # session_id = requests.session()
 
         url = f"https://api.pinterest.com/v1/oauth/token?" \
             f"grant_type=authorization_code" \
@@ -49,6 +49,7 @@ class PinterestApi():
             result = requests.post(url)
             if result.status_code == 200:
                 logger.info("pinterest token success = {}".format(json.loads(result.text).get("access_token")))
+                print({"code": 1, "msg": "", "data": json.loads(result.text)})
                 return {"code": 1, "msg": "", "data": json.loads(result.text)}
             else:
                 logger.error("pinterest token failed = {}".format(json.loads(result.text).get("message", "")))
@@ -354,11 +355,12 @@ class PinterestApi():
             
 
 if __name__ == '__main__':
-    access_token = "ArVPxolYdQAXgzr0-FFoRGAF682xFaDsz-o3I1FF0n-lswCyYAp2ADAAAk1KRdOSuUEgxv0AAAAA"
-    # access_token = "AnZeCrrcbcK9_GZ9vYwVkxiCcbfRFaNaeK500JxF0n-lswCyYAj5ADAAAlZaRd8vtRSgzAAAAAAA"
-    code = "abba8132c84e93d2"
+    # access_token = "ArVPxolYdQAXgzr0-FFoRGAF682xFaDsz-o3I1FF0n-lswCyYAp2ADAAAk1KRdOSuUEgxv0AAAAA"
+    access_token = "An-soS480FzyGqZL1oSRppg1Uc2dFaSUd9eImnBF0n-lswCyYAqqwDAAAkqYRdKCdRcAy0kAAAAA"
+    code = "50cffb94b8abd92b"
     all_pinterest_api = PinterestApi(access_token=access_token)
     # all_pinterest_api.get_user_pins(access_token=access_token)
+    # all_pinterest_api.get_pinterest_url(state="123")
     # all_pinterest_api.get_token(code=code)
     all_pinterest_api.get_user_info()
     # all_pinterest_api.create_pin(board_id="753790125070474023", note="时间是最好的礼物", image_url="https://cdn.shopify.com/s/files/1/0225/2131/5408/products/Selection_019.png?v=1557998280", link="www.baidu.com")

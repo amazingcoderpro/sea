@@ -2,6 +2,7 @@
 # Created by: Leemon7
 # Created on: 2019/6/3
 # Function:
+from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -18,7 +19,7 @@ class DashBoardView(APIView):
     def get(self, request, *args, **kwargs):
         # 过滤筛选条件
         pin_set_list, product_set_list = reports.get_common_data(request)
-        part = str(kwargs["part"])
+        part = kwargs["pk"]
         pins_period = request.query_params.dict().get("pins_period", 7)
         boards_period = request.query_params.dict().get("boards_period", 7)
         if part == '1':
