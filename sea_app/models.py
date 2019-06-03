@@ -157,7 +157,7 @@ class PinterestAccount(models.Model):
     account_uri = models.CharField(max_length=64, unique=True, verbose_name="PinterestAccount唯一标识码")
     nickname = models.CharField( blank=True, null=True, max_length=64, verbose_name="账户名称")
     email = models.CharField(blank=True, null=True, max_length=255, verbose_name="登陆邮箱")
-    type_choices = ((0, 'business'), (1, 'individual'))
+    type_choices = ((0, 'individual'), (1, 'business'))
     type = models.SmallIntegerField(choices=type_choices, default=0, verbose_name="账号类型")
     state_choices = ((0, 'normal'), (1, 'forbidden'), (2, 'deleted'))
     state = models.SmallIntegerField(choices=state_choices, default=0, verbose_name="账号状态")
@@ -165,6 +165,7 @@ class PinterestAccount(models.Model):
     create_time = models.DateTimeField(blank=True, null=True, verbose_name="账号创建时间")
     token = models.CharField(blank=True, null=True, max_length=255, verbose_name="账号使用标识")
     boards = models.IntegerField(default=0, verbose_name=u"account下的board个数")
+    pins = models.IntegerField(default=0, verbose_name=u"account下的pin个数")
     views = models.IntegerField(default=0, verbose_name="访问量")
     authorized_choices = ((0, 'no_authorized'), (1, 'authorized'), (2, 'authorized_faield'))
     authorized = models.SmallIntegerField(choices=authorized_choices, default=0, verbose_name="是否认证")
@@ -173,6 +174,7 @@ class PinterestAccount(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     followings = models.IntegerField(default=0, verbose_name="账户关注量")
     followers = models.IntegerField(default=0, verbose_name="账户粉丝")
+    uuid = models.CharField(blank=True, null=True, max_length=100, verbose_name="账户的uuid")
 
     objects = PinterestAccountManager()
 

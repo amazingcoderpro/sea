@@ -66,8 +66,8 @@ class TaskProcessor:
         self.rule_job = self.bk_scheduler.add_job(self.analyze_rule, 'interval', seconds=self.rule_period, max_instances=50)
 
         # 定时发布pin
-        self.publish_pins(self.publish_pin_period)
-        self.publish_pin_job = self.bk_scheduler.add_job(self.publish_pins, 'interval', seconds=self.publish_pin_period, args=(self.publish_pin_period,))
+        # self.publish_pins(self.publish_pin_period)
+        # self.publish_pin_job = self.bk_scheduler.add_job(self.publish_pins, 'interval', seconds=self.publish_pin_period, args=(self.publish_pin_period,))
 
         # 定时更新pinterest数据
         self.update_pinterest_data()
@@ -130,6 +130,7 @@ class TaskProcessor:
                 for exp in exist_pins:
                     exist_pins_dict[exp[1]] = exp[0]
 
+
             for account in accounts:
                 account_id, token, account_uri = account
                 if not token:
@@ -139,12 +140,32 @@ class TaskProcessor:
                 p_api = PinterestApi(access_token=token)
                 ret = p_api.get_user_info()
                 if ret['code'] == 1:
-                    account_info = ret["data"]
-
-                    print(account_info)
-
+                    account_info = ret.get("data", {})
+                    if account_info:
+                        time_now = datetime.datetime.now()
+                        print(account_info)
+                        user_name = account_info.get("username", "")
+                        bio = account_info.get("bio", "")
+                        account_type = account_info.get("account_type", "")
+                        account_type = 0 if account_type == "individual" else 1
+                        account_url = account_info.get("url", "")
+                        created_at = account_info.get("created_at", "")
+                        if created_at:
+                            create_at = datetime.datetime.strptime(created_at, "%Y-%m-%dT%H:%M:%S")
+                        counts = account_info.get("counts", {})
+                        pins = counts.get("pins", 0)
+                        boards = counts.get("boards", 0)
+                        account_followings = counts.get("following")
+                        account_followers = counts.get("followers")
+                        account_uuid = account_info.get("id", '')
+                        cursor.execute('''update `pinterest_account` set nickname=%s, description=%s, type=%s, create_time=%s, boards=%s, pins=%s, followings=%s, followers=%s, uuid=%s, update_time=%s where id=%s''',
+                                       (user_name, bio, account_type, create_at, boards, pins, account_followings, account_followers, account_uuid, time_now, account_id))
+                        conn.commit()
+                    else:
+                        logger.warning("get pinterest account info empty! account={}, token={}".format(account_uri, token))
                 else:
                     logger.error("get user info failed, account={}, token={}, ret={}".format(account_uri, token, ret))
+
                 # 获取该账号下的所有board,并刷新数据库
                 ret = p_api.get_user_boards()
                 if ret["code"] == 1:
