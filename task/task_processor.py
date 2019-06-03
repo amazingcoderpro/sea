@@ -140,6 +140,7 @@ class TaskProcessor:
                 ret = p_api.get_user_info()
                 if ret['code'] == 1:
                     account_info = ret["data"]
+
                     print(account_info)
 
                 else:
