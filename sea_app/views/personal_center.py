@@ -189,11 +189,20 @@ class PinterestCallback(APIView):
         if not code or not account_uri:
             return Response({"message": "auth faild"})
         result = pinterest_api.PinterestApi().get_token(code)
-        if result["code"] == 1:
-            models.PinterestAccount.objects.filter(account_uri=account_uri).update(token=result["data"]["access_token"], authorized=1)
-            return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=1")
-        else:
+        if result["code"] != 1:
             return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
+        # 判断token是否为当前用户的token
+        token = result["data"]["access_token"]
+        print("current token：{}".format(token))
+        user_info = pinterest_api.PinterestApi(access_token=token).get_user_info()
+        print("current user info: {}".format(user_info))
+        if user_info["code"] == 1:
+            if user_info["data"].get("url").lower() == account_uri.lower():
+                models.PinterestAccount.objects.filter(account_uri=account_uri).update(
+                    token=token, authorized=1)
+                return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=1")
+        models.PinterestAccount.objects.filter(account_uri=account_uri).update(authorized=2)
+        return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
 
 
 class OperationRecord(generics.ListAPIView):
