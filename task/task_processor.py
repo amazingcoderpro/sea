@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Created by charles on 2019-05-11
 # Function:
-import os
+import os, sys
 import datetime
 from io import BytesIO
 import base64
@@ -278,7 +278,7 @@ class TaskProcessor:
                                 if product:
                                     product_id = product[0]
 
-                                if product_id>=0:
+                                if product_id >= 0:
                                     cursor.execute('''insert into `pin` (`pin_uri`, `url`, `note`, `origin_link`, 
                                         `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`, `saves`, 
                                         `comments`, `likes`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
@@ -292,30 +292,30 @@ class TaskProcessor:
                                                     board_id, pin_saves, pin_comments, pin_likes))
                                 pin_id = cursor.lastrowid
 
-                            # 先合入，因为下面的历史表中有外键关联
-                            conn.commit()
+                                # 先合入，因为下面的历史表中有外键关联
+                                conn.commit()
 
-                            # 　更新历史数据表
-                            if product_id >= 0:
-                                cursor.execute(
-                                    '''insert into `pinterest_history_data` (`pin_uri`, `pin_note`, `pin_thumbnail`, 
-                                    `pin_likes`, `pin_comments`, `pin_saves`, `pin_clicks`, `update_time`, `board_id`, 
-                                    `pin_id`, `pinterest_account_id`, `product_id`, `account_followings`, 
-                                    `account_followers`, `account_views`, `board_followers`, `board_uri`, `board_name`) 
-                                    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                                    (uri, note, pin_thumbnail, pin_likes, pin_comments, pin_saves, pin_clicks,
-                                     update_time, board_id, pin_id, account_id, product_id, 0, 0, 0, 0, "", ""))
-                            else:
-                                cursor.execute(
-                                    '''insert into `pinterest_history_data` (`pin_uri`, `pin_note`, `pin_thumbnail`, 
-                                    `pin_likes`, `pin_comments`, `pin_saves`, `pin_clicks`, `update_time`, `board_id`, 
-                                    `pin_id`, `pinterest_account_id`, `account_followings`, 
-                                    `account_followers`, `account_views`, `board_followers`, `board_uri`, `board_name`) 
-                                    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                                    (uri, note, pin_thumbnail, pin_likes, pin_comments, pin_saves, pin_clicks,
-                                     update_time, board_id, pin_id, account_id, 0, 0, 0, 0, "", ""))
+                                # 　更新历史数据表
+                                if product_id >= 0:
+                                    cursor.execute(
+                                        '''insert into `pinterest_history_data` (`pin_uri`, `pin_note`, `pin_thumbnail`, 
+                                        `pin_likes`, `pin_comments`, `pin_saves`, `pin_clicks`, `update_time`, `board_id`, 
+                                        `pin_id`, `pinterest_account_id`, `product_id`, `account_followings`, 
+                                        `account_followers`, `account_views`, `board_followers`, `board_uri`, `board_name`) 
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                                        (uri, note, pin_thumbnail, pin_likes, pin_comments, pin_saves, pin_clicks,
+                                         update_time, board_id, pin_id, account_id, product_id, 0, 0, 0, 0, "", ""))
+                                else:
+                                    cursor.execute(
+                                        '''insert into `pinterest_history_data` (`pin_uri`, `pin_note`, `pin_thumbnail`, 
+                                        `pin_likes`, `pin_comments`, `pin_saves`, `pin_clicks`, `update_time`, `board_id`, 
+                                        `pin_id`, `pinterest_account_id`, `account_followings`, 
+                                        `account_followers`, `account_views`, `board_followers`, `board_uri`, `board_name`) 
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                                        (uri, note, pin_thumbnail, pin_likes, pin_comments, pin_saves, pin_clicks,
+                                         update_time, board_id, pin_id, account_id, 0, 0, 0, 0, "", ""))
 
-                            conn.commit()
+                                conn.commit()
                 else:
                     logger.error(
                         "update pins get_user_pins error, account={} token={}, ret={}".format(account_uri, token, ret))
@@ -339,7 +339,7 @@ class TaskProcessor:
             if not cursor:
                 return False
 
-            cursor.execute('''select id, name, url, token, user_id, store_view_id, store_utm from `store` where id>=0''')
+            cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where id>=0''')
             stores = cursor.fetchall()
 
             # 取中已经存在的所有products, 只需更新即可
@@ -351,7 +351,7 @@ class TaskProcessor:
 
             # 遍历数据库中的所有store
             for store in stores:
-                store_id, store_name, store_url, store_token, user_id, store_view_id, store_utm = store
+                store_id, store_name, store_url, store_token, user_id, store_view_id = store
                 if not all([store_url, store_token]):
                     logger.warning("store url or token is invalid, store id={}".format(store_id))
                     continue
@@ -382,6 +382,8 @@ class TaskProcessor:
                     conn.commit()
 
                 # 获取店铺里的所有产品
+                gapi = GoogleApi(view_id=store_view_id, json_path=os.path.join(os.path.dirname(sys.path[0]),
+                                                                               "sdk//googleanalytics//client_secrets.json"))
                 ret = papi.get_all_products()
                 if ret["code"] == 1:
                     time_now = datetime.datetime.now()
@@ -416,18 +418,25 @@ class TaskProcessor:
 
                         conn.commit()
 
-                        # cursor.execute('''select url from `pin` where product_id=%s
-                        # ''', pro_id)
-                        # pro_pin = cursor.fetchone()
-                        # if pro_pin:
-                        #     url = pro_pin[0]
-                        gapi = GoogleApi(view_id=store_view_id, key_words=pro_uri)
-                        ga_data = gapi.get_report()
-                        print(ga_data)
-                        ga_data.get("view", 0)
-                        ga_data.get("")
+                        if not store_view_id:
+                            logger.warning("this product have no store view id, product id={}, store id={}".format(pro_id, store_id))
+                            continue
 
-                    conn.commit()
+                        pro_uri = "google" # 测试
+                        ga_data = gapi.get_report(key_words=pro_uri, start_time="7daysAgo", end_time="today")
+                        time_now = datetime.datetime.now()
+                        if ga_data.get("code", 0) == 1:
+                            pv = ga_data.get("pageviews", 0)
+                            uv = ga_data.get("uniquePageviews", 0)
+                            hits = ga_data.get("hits", 0)
+                            transactions = ga_data.get("transactions", 0)
+                            revenue = 0
+                            cursor.execute('''insert into `product_history_data` (`product_visitors`, `product_new_visitors`, `product_clicks`, `product_scan`, `product_sales`, `product_revenue`, `update_time`, `product_id`, `store_id`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            ''', (uv, uv, hits, pv, transactions, revenue, time_now, pro_id, store_id))
+                        else:
+                            logger.warning("get GA data failed, store view id={}, key_words={}".format(store_view_id, pro_uri))
+
+                        conn.commit()
                     return True
 
         except Exception as e:
@@ -570,20 +579,22 @@ class TaskProcessor:
 
                 # 取到待发布的pin所关联的产品信息
                 cursor.execute('''
-                        select sku, url, name, image_url, price, tag from `product` where id=%s
+                        select sku, url, name, image_url, price, tag, uuid from `product` where id=%s
                         ''', product_id)
                 product = cursor.fetchone()
-                sku, product_url, name, image_url, price, tag = product
+                sku, product_url, name, image_url, price, tag, product_uuid = product
                 pending_record = {"id": record_id,
                                   "execute_time": execute_time,
                                   "board_id": board_id,
                                   "board_uri": board_uri,
+                                  "board_name": board_name,
                                   "board_state": board_state,
                                   "account_id": pinterest_account_id,
                                   "account_uri": account_uri,
                                   "account_state": account_state,
                                   "token": token,
                                   "product_id": product_id,
+                                  "product_uuid": product_uuid,
                                   "img_url": image_url,
                                   "note": name,
                                   "link": product_url}
@@ -609,14 +620,16 @@ class TaskProcessor:
             cursor = conn.cursor() if conn else None
             if not cursor:
                 return False
-            utm_params = ""
+
             for record in records:
                 pin_api = PinterestApi(access_token=record["token"])
                 note = record["note"]
-                link = record["link"] + utm_params
+                utm_params = "/?utm_source=pinterest&utm_medium={}&utm_content={}&product_id={}".format(
+                    record["account_uri"], record["board_name"], record["product_uuid"])
+                link_with_utm = record["link"] + utm_params
                 board_id = record["board_id"]
                 product_id = record["product_id"]
-                ret = pin_api.create_pin(board_id=record["board_uri"], note=record["note"], image_url=record["img_url"], link=link)
+                ret = pin_api.create_pin(board_id=record["board_uri"], note=record["note"], image_url=record["img_url"], link=link_with_utm)
                 time_now = datetime.datetime.now()
                 if ret["code"] == 1:
                     data = json.loads(ret[1])["data"]
@@ -625,7 +638,7 @@ class TaskProcessor:
                     # site_url = data["original_link"]
                     thumbnail = self.image_2_base64(record["img_url"])
                     cursor.execute('''insert into `pin` (`pin_uri`, `url`, `description`, `origin_link`, `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    ''', (pin_uri, url, note, link, thumbnail, time_now, time_now, board_id, product_id))
+                    ''', (pin_uri, url, note, link_with_utm, thumbnail, time_now, time_now, board_id, product_id))
                     pin_id = cursor.lastrowid
 
                     state = 1

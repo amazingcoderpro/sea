@@ -20,7 +20,8 @@ SHOPIFY_CONFIG = {
                "read_script_tags", "write_script_tags", "read_fulfillments", "write_shipping", "read_analytics",
                "read_checkouts", "write_resource_feedbacks", "write_checkouts", "read_reports", "write_reports",
                "read_price_rules", "write_price_rules", "read_marketing_events", "write_marketing_events",
-               "read_resource_feedbacks", "read_shopify_payments_disputes", "write_fulfillments"]
+               "read_resource_feedbacks", "read_shopify_payments_disputes", "write_fulfillments"],
+    "utm_format":"/?utm_source=pinterest&utm_medium=pinterest_account&utm_content=pinterest_board_name&product_id=product_id"
 }
 
 
