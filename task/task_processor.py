@@ -437,7 +437,7 @@ class TaskProcessor:
                         ga_data = gapi.get_report(key_words=pro_uuid, start_time="7daysAgo", end_time="today")
                         time_now = datetime.datetime.now()
                         if ga_data.get("code", 0) == 1:
-                            data = ga_data.get("date", {})
+                            data = ga_data.get("data", {})
                             pv = int(data.get("pageviews", 0))
                             uv = int(data.get("uniquePageviews", 0))
                             hits = int(data.get("hits", 0))
@@ -743,7 +743,7 @@ class TaskProcessor:
 
 def test():
     tsp = TaskProcessor()
-    tsp.start_all()
+    tsp.start_all(rule_interval=60, publish_pin_interval=120, pinterest_update_interval=3800, shopify_update_interval=3800)
 
     time.sleep(72300)
     tsp.stop_all()
@@ -752,11 +752,11 @@ def test():
 
 def main():
     tsp = TaskProcessor()
-    tsp.start()
+    tsp.start_all(rule_interval=120, publish_pin_interval=240, pinterest_update_interval=86400, shopify_update_interval=86400)
     while 1:
         time.sleep(1)
 
 
 if __name__ == '__main__':
-    test()
-    # main()
+    # test()
+    main()
