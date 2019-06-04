@@ -83,9 +83,9 @@ class TaskProcessor:
 
     def start_all(self, rule_interval=120, publish_pin_interval=240, pinterest_update_interval=3800, shopify_update_interval=3800):
         logger.info("TaskProcessor start all work.")
-        self.start_job_analyze_rule_job(rule_interval)
-        self.start_job_update_pinterest_data(pinterest_update_interval)
-        self.start_job_publish_pin_job(publish_pin_interval)
+        # self.start_job_analyze_rule_job(rule_interval)
+        # self.start_job_update_pinterest_data(pinterest_update_interval)
+        # self.start_job_publish_pin_job(publish_pin_interval)
         self.start_job_update_shopify_data(shopify_update_interval)
 
     def stop_all(self):
@@ -396,10 +396,11 @@ class TaskProcessor:
                                     shop_country_name, shop_city, datetime.datetime.strptime(created_at[0:-6], "%Y-%m-%dT%H:%M:%S"),
                                     datetime.datetime.strptime(updated_at[0:-6], "%Y-%m-%dT%H:%M:%S"), shop_currency, store_id))
                     conn.commit()
+                else:
+                    logger.warning("get shop info failed. ret={}".format(ret))
 
                 # 获取店铺里的所有产品
-                gapi = GoogleApi(view_id=store_view_id, json_path=os.path.join(os.path.dirname(sys.path[0]),
-                                                                               "sdk//googleanalytics//client_secrets.json"))
+                gapi = GoogleApi(view_id=store_view_id, json_path=os.path.join(os.path.dirname(sys.path[0]), "sdk//googleanalytics//client_secrets.json"))
                 ret = papi.get_all_products()
                 if ret["code"] == 1:
                     time_now = datetime.datetime.now()
@@ -455,6 +456,8 @@ class TaskProcessor:
 
                         conn.commit()
                     return True
+                else:
+                    logger.warning("get shop products failed. ret={}".format(ret))
 
         except Exception as e:
             logger.exception("get_products e={}".format(e))
@@ -755,7 +758,7 @@ def test():
     tsp = TaskProcessor()
     tsp.start_all(rule_interval=60, publish_pin_interval=120, pinterest_update_interval=3800, shopify_update_interval=3800)
 
-    time.sleep(72300)
+    time.sleep(723000)
     tsp.stop_all()
     time.sleep(20)
 
@@ -768,5 +771,5 @@ def main():
 
 
 if __name__ == '__main__':
-    # test()
-    main()
+    test()
+    # main()
