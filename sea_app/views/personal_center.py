@@ -11,7 +11,7 @@ from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 
 
 from sea_app import models
-from sea_app.serializers import personal_center,store
+from sea_app.serializers import personal_center, store
 from sea_app.utils.menu_tree import MenuTree
 from sea_app.pageNumber.pageNumber import PNPagination
 from sea_app.filters import personal_center as personal_center_filters
