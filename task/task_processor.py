@@ -18,6 +18,7 @@ import requests
 from sdk.pinterest.pinterest_api import PinterestApi
 from sdk.shopify.get_shopify_products import ProductsApi
 from sdk.googleanalytics.google_oauth_info import GoogleApi
+from config import SHOPIFY_CONFIG
 
 class DBUtil:
     def __init__(self, host="47.112.113.252", port=3306, db="sea", user="sea", password="sea@orderplus.com"):
@@ -529,7 +530,7 @@ class TaskProcessor:
         获取执行时间在某一段时间内的发布记录, 数据来源PublishRecord表
         :param execute_beg: 执行时间范围起点, datetime类型
         :param execute_end: 执行时间范围终点, datetime类型
-        :param status: 发布状态　0－－未发布，１－－已发布
+        :param status: 发布状态　(0, 'pending'), (1, 'finished'), (2, 'failed'), (3, "cancelled")
         :return: list
         """
         try:
@@ -538,7 +539,7 @@ class TaskProcessor:
             if not cursor:
                 return False
 
-            # 先拿到所有状态为status,执行时间在指定范围内的record
+            # 先拿到所有状态为status, 执行时间在指定范围内的record
             if execute_beg and execute_end:
                 cursor.execute('''
                         select id, execute_time, board_id, product_id, rule_id from `publish_record` where state=%s and execute_time between %s and %s''',
@@ -574,11 +575,11 @@ class TaskProcessor:
 
                 # 取到待发布的pin所隶属的账号信息，　主要是token
                 cursor.execute('''
-                        select account_uuid, state, token from `pinterest_account` where id=%s
+                        select account, state, token from `pinterest_account` where id=%s
                         ''', pinterest_account_id)
                 account = cursor.fetchone()
 
-                account_uuid, account_state, token = account
+                account, account_state, token = account
 
                 # 取到待发布的pin所关联的产品信息
                 cursor.execute('''
@@ -593,14 +594,16 @@ class TaskProcessor:
                                   "board_name": board_name,
                                   "board_state": board_state,
                                   "account_id": pinterest_account_id,
-                                  "account_uuid": account_uuid,
+                                  "account": account,
                                   "account_state": account_state,
                                   "token": token,
                                   "product_id": product_id,
                                   "product_uuid": product_uuid,
-                                  "img_url": image_url,
-                                  "note": name,
-                                  "link": product_url}
+                                  "product_link": product_url,
+                                  "product_img_url": image_url,
+                                  "product_name": name,
+                                  "product_sku": sku,
+                                  "rule_id": rule_id}
 
                 target_records.append(pending_record)
         except Exception as e:
@@ -625,14 +628,16 @@ class TaskProcessor:
                 return False
 
             for record in records:
+                # rule (-1, '新建'), (0, '待执行'), (1, '运行中'), (2, '暂停中'), (3, '已完成'), (4, '已过期'), (5, '已删除')
+
                 pin_api = PinterestApi(access_token=record["token"])
-                note = record["note"]
-                utm_params = "/?utm_source=pinterest&utm_medium={}&utm_content={}&product_id={}".format(
-                    record["account_uuid"], record["board_name"], record["product_uuid"])
-                link_with_utm = record["link"] + utm_params
+                product_name = record["product_name"]
+                utm_format = SHOPIFY_CONFIG.get("utm_format", "")
+                url_suffix = utm_format.format(pinterest_account=record["account"], board_name=record["board_name"], product_id=record["product_uuid"])
+                link_with_utm = record["product_link"] + url_suffix
                 board_id = record["board_id"]
                 product_id = record["product_id"]
-                ret = pin_api.create_pin(board_id=record["board_uuid"], note=record["note"], image_url=record["img_url"], link=link_with_utm)
+                ret = pin_api.create_pin(board_id=record["board_uuid"], note=product_name, image_url=record["product_img_url"], link=link_with_utm)
                 time_now = datetime.datetime.now()
                 if ret["code"] == 1:
                     data = json.loads(ret[1])["data"]
@@ -641,7 +646,7 @@ class TaskProcessor:
                     # site_url = data["original_link"]
                     thumbnail = self.image_2_base64(record["img_url"])
                     cursor.execute('''insert into `pin` (`pin_uuid`, `url`, `description`, `origin_link`, `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    ''', (pin_uuid, url, note, link_with_utm, thumbnail, time_now, time_now, board_id, product_id))
+                    ''', (pin_uuid, url, product_name, link_with_utm, thumbnail, time_now, time_now, board_id, product_id))
                     pin_id = cursor.lastrowid
 
                     state = 1
