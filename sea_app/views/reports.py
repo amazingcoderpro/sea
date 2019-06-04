@@ -25,7 +25,8 @@ def get_request_params(request):
     pin_id = request.GET.get("pin_id")
     search_word = request.GET.get("search", "").strip()
     # store_id = request.GET.get("store_id")  # 必传(如果一个用户绑定一个商店的话，就可以通过当前用户获取当前店铺)
-    store_id = models.Store.objects.filter(user_id=request.user).first().id
+    store = models.Store.objects.filter(user_id=request.user).first()
+    store_id = store.id if store else None
     # platform = request.GET.get("platform_id", 1)  # 必传
     return start_time, end_time, pinterest_account_id, board_id, pin_id, search_word, store_id
 
@@ -510,7 +511,8 @@ def top_pins(request, period=7):
     end_time = datetime.datetime.now()
     prev_start_time = datetime.datetime.now() + datetime.timedelta(days=-period * 2)
     # store_id = request.GET.get("store_id")
-    store_id = models.Store.objects.filter(user_id=request.user).first().id
+    store = models.Store.objects.filter(user_id=request.user).first()
+    store_id = store.id if store else None
     # 开始过滤ProductHistoryData数据
     if store_id:
         product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)),
@@ -597,7 +599,8 @@ def top_board(request, period=7):
     start_time = datetime.datetime.now() + datetime.timedelta(days=-period)
     end_time = datetime.datetime.now()
     prev_start_time = datetime.datetime.now() + datetime.timedelta(days=-period * 2)
-    store_id = models.Store.objects.filter(user_id=request.user).first().id
+    store = models.Store.objects.filter(user_id=request.user).first()
+    store_id = store.id if store else None
     # 开始过滤ProductHistoryData数据
     if store_id:
         product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)),
