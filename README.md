@@ -7,8 +7,8 @@
 ```
 	INSERT INTO `user` (`id`, `last_login`, `is_superuser`, `first_name`, `last_name`, `is_staff`, `is_active`, `date_joined`, `username`, `email`, `password`, `code`, `create_time`, `update_time`)
 VALUES
-	(1, NULL, 0, '', '', 0, 1, '2019-06-01 00:00:00.852191', 'admin', 'victor.fang@orderplus.com', 'pbkdf2_sha256$120000$M0cY6Z6wcYr9$iwqYBe/MJfOLkpx2/2mMWtt2f1X7GBSt7D0EKRdjdV8=', NULL, '2019-06-01 00:00:00.899300', '2019-06-01 00:00:00.744339'),
-	(2, NULL, 0, '', '', 0, 0, '2019-05-29 06:55:41.852191', 'admin001', 'victor.fang@orderplus.com', 'pbkdf2_sha256$120000$M0cY6Z6wcYr9$iwqYBe/MJfOLkpx2/2mMWtt2f1X7GBSt7D0EKRdjdV8=', NULL, '2019-05-29 06:55:41.899300', '2019-05-29 07:17:42.744339');
+	(1, NULL, 0, 'admin', 'admin', 0, 1, '2019-06-01 00:00:00.852191', 'admin', 'admin@orderplus.com', 'pbkdf2_sha256$120000$M0cY6Z6wcYr9$iwqYBe/MJfOLkpx2/2mMWtt2f1X7GBSt7D0EKRdjdV8=', NULL, '2019-06-01 00:00:00.899300', '2019-06-04 12:37:35.010371'),
+	(2, NULL, 0, '', '', 0, 1, '2019-05-29 06:55:41.852191', 'test001', 'victor.fang@orderplus.com', 'pbkdf2_sha256$120000$Fp9sbcrgfWrJ$OlH4Z49b15v5MMwTMd/m3w/I0BZWynyALmTD2ydlTa8=', NULL, '2019-05-29 06:55:41.899300', '2019-06-04 09:13:42.270073');
 
 
 INSERT INTO `platform` (`id`, `name`, `url`, `create_time`, `update_time`)
@@ -28,21 +28,17 @@ VALUES
 
 INSERT INTO `store` (`id`, `name`, `url`, `email`, `visitors`, `scan`, `sale`, `token`, `create_time`, `update_time`, `uuid`, `timezone`, `country`, `city`, `currency`, `owner_name`, `owner_phone`, `store_create_time`, `store_update_time`, `store_view_id`, `platform_id`, `user_id`)
 VALUES
-	(1, 'xx', 'xx', '', 0, 0, 0, '', '2019-05-29 11:54:56.178368', '2019-05-29 12:44:13.583658', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1);
-
-
-INSERT INTO `user` (`id`, `last_login`, `is_superuser`, `first_name`, `last_name`, `is_staff`, `is_active`, `date_joined`, `username`, `email`, `password`, `code`, `create_time`, `update_time`)
-VALUES
-	(4, NULL, 0, '', '', 0, 0, '2019-05-29 11:54:56.724673', 'ordersea.myshopify.com', 'twobercancan@gmail.com', 'pbkdf2_sha256$120000$n8xKHPHAqsw0$gaeCn0M9SR8oJ0xRSNcYfY7b4AT/gewzCGHiRvRvmrM=', '878Ey2', '2019-05-29 11:54:56.739924', '2019-05-29 13:12:01.419512');
+	(1, '大卖场', 'https://pinbooster.seamarketings.com/', 'victor.fang@orderplus.com', 0, 0, 0, '12456789', '2019-05-29 11:54:56.178368', '2019-06-04 10:21:49.487091', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1);
 
 ```
 ## 3. 登陆创建pinterest账户(授权)
 
 ```
-	INSERT INTO `pinterest_account` (`id`, `account_uri`, `nickname`, `email`, `type`, `state`, `description`, `create_time`, `token`, `boards`, `views`, `authorized`, `add_time`, `update_time`, `followings`, `followers`, `user_id`)
-	VALUES
-		(1, 'shaowei580@gmail.com', '123', 'shaowei580@gmail.com', 1, 0, '123123', '2019-05-30 16:00:00.000000', 'AnWLrM41pDqkKjVOtayNpIR0qww0FaNXVLehYvRF0n-lswCyYAj5ADAAAlZaRd8vtRSgzAAAAAAA', 0, 0, 1, '2019-05-30 02:49:53.300878', '2019-05-30 02:49:53.474150', 0, 0, 1),
-		(3, 'yongyuanzhiqizhi@gmail.com', '', 'yongyuanzhiqizhi@gmail.com', 1, 0, '123123', '2019-05-30 03:15:23.000000', NULL, 0, 0, 0, '2019-05-30 03:13:49.110437', '2019-05-30 03:13:49.333120', 0, 0, 1);
+	INSERT INTO `pinterest_account` (`id`, `account`, `nickname`, `email`, `type`, `state`, `description`, `create_time`, `token`, `boards`, `pins`, `views`, `authorized`, `add_time`, `update_time`, `followings`, `followers`, `uuid`, `user_id`)
+VALUES
+	(2, 'shaowei580@gmail.com', '', 'shaowei580@gmail.com', 1, 0, 'shaowei', '2019-06-04 16:00:00.000000', 'AiP-ymRCgT7SSGBguKHjT-SPcSNOFaTxExO9J4JF2gxXLuC2Ugj5ADAAAlZaReXFJ1qgudIAAAAA', 0, 0, 0, 1, '2019-06-04 08:18:18.955160', '2019-06-04 08:18:19.015593', 0, 0, NULL, 1),
+	(3, 'twobercancan@gmail.com', '', 'twobercancan@gmail.com', 0, 0, '我的测试账号', '2019-06-03 16:00:00.000000', 'AgQB_G73xNSSzpVeGQ_tSUSEmrN2FaTxDryiQudF2gxXLuC2Ugp2ADAAAk1KReXFV78AwisAAAAA', 0, 0, 0, 1, '2019-06-04 08:20:02.559245', '2019-06-04 08:20:02.619872', 0, 0, NULL, 1),
+	(4, 'wcadaydayup@gmail.com', '', 'wcadaydayup@gmail.com', 0, 0, '121313', '2019-05-31 16:00:00.000000', 'AjgtAa8EoSLMjLVynCwNQDyS8NflFaTxE1fD18NF2gxXLuC2UgqqwDAAAkqYRd3mmh2gvB0AAAAA', 0, 0, 0, 1, '2019-06-04 08:20:18.669652', '2019-06-04 08:20:18.723059', 0, 0, NULL, 1);
 
 ```
 
