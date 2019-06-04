@@ -57,20 +57,20 @@ class ShopifyBase():
             result = requests.post(url, json.dumps(display), headers=self.headers)
             if result.status_code == 200:
                 logger.info("get shopify token is successed, shopname={}".format(self.shop_uri))
+                print(result.text)
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("access_token")}
             else:
-                logger.error("get shopify token is failed, shopname={}".format(self.shop_uri))
-                return {"code": 2, "msg": json.loads(result.text).get("errors", ""), "data": ""}
+                logger.error("get shopify token is failed")
+                return {"code": 2, "msg": "oauth failed", "data": ""}
         except Exception as e:
-            logger.error("get shopify token is exception".format(str(e)))
+            logger.error("get shopify token is exception {}".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
 
 if __name__ == '__main__':
     # ShopifyBase = ShopifyBase(shop_uri="ordersea.myshopify.com")
-
-    ShopifyBase = ShopifyBase(shop_uri="arealook.myshopify.com")
+    ShopifyBase = ShopifyBase(shop_uri="ordersea.myshopify.com")
     # ShopifyBase.reRequest(shop="ordersea", method="get", url="", headers=None, data=None)
-    url = ShopifyBase.ask_permission(nonce="arealook")
-    back_url = requests.get(url)
-    ShopifyBase.get_token(code="9d905c868fd21585bb8ef3955e814e51")
+    # url = ShopifyBase.ask_permission(nonce="ordersea")
+    # back_url = requests.get(url)
+    ShopifyBase.get_token(code="c2ff1aa97a1f285dc1cee1696954517c ")
