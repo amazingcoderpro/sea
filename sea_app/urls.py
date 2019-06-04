@@ -1,7 +1,7 @@
 from django.conf.urls import url, include
 from django.views.decorators.cache import cache_page
 
-from sea_app.views import personal_center, account_manager, report, dashboard
+from sea_app.views import personal_center, account_manager, report, dashboard, store
 
 v1_urlpatterns = [
 
@@ -27,7 +27,7 @@ v1_urlpatterns = [
 
     # 店铺管理
     # url(r'store/$', store.StoreView.as_view()),
-    # url(r'store/(?P<pk>[0-9]+)/$', store.StoreOperView.as_view()),
+    url(r'store/(?P<pk>[0-9]+)/$', store.StoreOperView.as_view()),
 ]
 
 # 规则管理 `/v1/rule/`

@@ -17,7 +17,7 @@ class PinterestAccountSerializer(serializers.ModelSerializer):
         model = models.PinterestAccount
         fields = (
             "id",
-            "account_uri",
+            "account",
             "email",
             "type",
             "state",
@@ -40,8 +40,8 @@ class RuleSerializer(serializers.ModelSerializer):
     schedule_rule = RuleScheduleSerializer(many=True, read_only=True)
     scan_sign_name = serializers.CharField(source="get_scan_sign_display", read_only=True)
     sale_sign_name = serializers.CharField(source="get_sale_sign_display", read_only=True)
-    baord_name = serializers.CharField(source="board.board_uri", read_only=True)
-    account_name = serializers.CharField(source="board.pinterest_account.account_uri", read_only=True)
+    baord_name = serializers.CharField(source="board.uuid", read_only=True)
+    account_name = serializers.CharField(source="board.pinterest_account.account", read_only=True)
 
     class Meta:
         model = models.Rule
@@ -111,7 +111,7 @@ class PinterestAccountCreateSerializer(serializers.ModelSerializer):
         model = models.PinterestAccount
         fields = (
             "id",
-            "account_uri",
+            "account",
             "nickname",
             "email",
             "type",

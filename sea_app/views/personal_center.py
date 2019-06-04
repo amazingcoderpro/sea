@@ -11,7 +11,7 @@ from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 
 
 from sea_app import models
-from sea_app.serializers import personal_center
+from sea_app.serializers import personal_center,store
 from sea_app.utils.menu_tree import MenuTree
 from sea_app.pageNumber.pageNumber import PNPagination
 from sea_app.filters import personal_center as personal_center_filters
@@ -48,6 +48,7 @@ class LoginView(generics.CreateAPIView):
             if user:
                 res = {}
                 res["user"] = personal_center.LoginSerializer(instance=user, many=False).data
+                res["store"] = store.StoreSerializer(instance=user, many=False).data
                 payload = jwt_payload_handler(user)
                 res["token"] = "jwt {}".format(jwt_encode_handler(payload))
                 return Response(res, status=status.HTTP_200_OK)
@@ -144,7 +145,7 @@ class PinterestAccountAuthView(APIView):
             return Response({"detail": "The resource was not found"}, status=status.HTTP_400_BAD_REQUEST)
         if instance.authorized == 1:
             return Response({"detail": "This account is authorized"}, status=status.HTTP_400_BAD_REQUEST)
-        url = pinterest_api.PinterestApi().get_pinterest_url(instance.account_uri)
+        url = pinterest_api.PinterestApi().get_pinterest_url(instance.account)
         return Response({"message": url})
 
 
@@ -198,10 +199,10 @@ class PinterestCallback(APIView):
         print("current user info: {}".format(user_info))
         if user_info["code"] == 1:
             if user_info["data"].get("url").lower() == account_uri.lower():
-                models.PinterestAccount.objects.filter(account_uri=account_uri).update(
+                models.PinterestAccount.objects.filter(account=account_uri).update(
                     token=token, authorized=1)
                 return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=1")
-        models.PinterestAccount.objects.filter(account_uri=account_uri).update(token=token, authorized=2)
+        models.PinterestAccount.objects.filter(account=account_uri).update(token=token, authorized=2)
         return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
 
 
