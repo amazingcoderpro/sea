@@ -11,11 +11,11 @@ from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 
 
 from sea_app import models
-from sea_app.serializers import personal_center
+from sea_app.serializers import personal_center,store
 from sea_app.utils.menu_tree import MenuTree
 from sea_app.pageNumber.pageNumber import PNPagination
 from sea_app.filters import personal_center as personal_center_filters
-# from sea_app.permission.permission import UserPermission, RolePermission
+from sea_app.permission.permission import UserPermission
 from sdk.shopify.shopify_oauth_info import ShopifyBase
 from sdk.shopify.get_shopify_products import ProductsApi
 from sdk.pinterest import pinterest_api
@@ -48,6 +48,8 @@ class LoginView(generics.CreateAPIView):
             if user:
                 res = {}
                 res["user"] = personal_center.LoginSerializer(instance=user, many=False).data
+                store_instance = models.Store.objects.filter(user_id=user.id).first()
+                res["store"] = store.StoreSerializer(instance=store_instance, many=False).data
                 payload = jwt_payload_handler(user)
                 res["token"] = "jwt {}".format(jwt_encode_handler(payload))
                 return Response(res, status=status.HTTP_200_OK)
@@ -62,9 +64,17 @@ class RegisterView(generics.CreateAPIView):
 
 
 class SetPasswordView(generics.UpdateAPIView):
-    """设置密码"""
+    """注册状态设置密码"""
     queryset = models.User.objects.all()
     serializer_class = personal_center.SetPasswordSerializer
+
+
+class SetPasswordsView(generics.UpdateAPIView):
+    """登陆状态设置密码"""
+    queryset = models.User.objects.all()
+    serializer_class = personal_center.SetPasswordsSerializer
+    permission_classes = (IsAuthenticated, UserPermission)
+    authentication_classes = (JSONWebTokenAuthentication,)
 
 
 # class UserView(generics.ListCreateAPIView):
@@ -78,12 +88,12 @@ class SetPasswordView(generics.UpdateAPIView):
 #     filterset_fields = ("nickname",)
 
 
-# class UserOperView(generics.RetrieveUpdateDestroyAPIView):
-#     """用户 删 该 查"""
-#     queryset = models.User.objects.all()
-#     serializer_class = personal_center.UserOperSerializer
-#     permission_classes = (IsAuthenticated, UserPermission)
-#     authentication_classes = (JSONWebTokenAuthentication,)
+class UserOperView(generics.RetrieveUpdateAPIView):
+    """用户 删 该 查"""
+    queryset = models.User.objects.all()
+    serializer_class = personal_center.UserOperSerializer
+    permission_classes = (IsAuthenticated, UserPermission)
+    authentication_classes = (JSONWebTokenAuthentication,)
 
 
 # class RoleView(generics.ListCreateAPIView):
@@ -165,6 +175,7 @@ class ShopifyCallback(APIView):
             instance.save()
             user_instance = models.User.objects.filter(id=instance.user_id).first()
             user_instance.is_active = 0
+            user_instance.password = ""
             user_instance.code = random_code.create_random_code(6, True)
             user_instance.save()
             email = user_instance.email
