@@ -7,8 +7,8 @@
 ```
 	INSERT INTO `user` (`id`, `last_login`, `is_superuser`, `first_name`, `last_name`, `is_staff`, `is_active`, `date_joined`, `username`, `email`, `password`, `code`, `create_time`, `update_time`)
 VALUES
-	(1, NULL, 0, '', '', 0, 1, '2019-06-01 00:00:00.852191', 'admin', 'victor.fang@orderplus.com', 'pbkdf2_sha256$120000$M0cY6Z6wcYr9$iwqYBe/MJfOLkpx2/2mMWtt2f1X7GBSt7D0EKRdjdV8=', NULL, '2019-06-01 00:00:00.899300', '2019-06-01 00:00:00.744339'),
-	(2, NULL, 0, '', '', 0, 0, '2019-05-29 06:55:41.852191', 'admin001', 'victor.fang@orderplus.com', 'pbkdf2_sha256$120000$M0cY6Z6wcYr9$iwqYBe/MJfOLkpx2/2mMWtt2f1X7GBSt7D0EKRdjdV8=', NULL, '2019-05-29 06:55:41.899300', '2019-05-29 07:17:42.744339');
+	(1, NULL, 0, 'admin', 'admin', 0, 1, '2019-06-01 00:00:00.852191', 'admin', 'admin@orderplus.com', 'pbkdf2_sha256$120000$M0cY6Z6wcYr9$iwqYBe/MJfOLkpx2/2mMWtt2f1X7GBSt7D0EKRdjdV8=', NULL, '2019-06-01 00:00:00.899300', '2019-06-04 12:37:35.010371'),
+	(2, NULL, 0, '', '', 0, 1, '2019-05-29 06:55:41.852191', 'test001', 'victor.fang@orderplus.com', 'pbkdf2_sha256$120000$Fp9sbcrgfWrJ$OlH4Z49b15v5MMwTMd/m3w/I0BZWynyALmTD2ydlTa8=', NULL, '2019-05-29 06:55:41.899300', '2019-06-04 09:13:42.270073');
 
 
 INSERT INTO `platform` (`id`, `name`, `url`, `create_time`, `update_time`)
@@ -28,12 +28,7 @@ VALUES
 
 INSERT INTO `store` (`id`, `name`, `url`, `email`, `visitors`, `scan`, `sale`, `token`, `create_time`, `update_time`, `uuid`, `timezone`, `country`, `city`, `currency`, `owner_name`, `owner_phone`, `store_create_time`, `store_update_time`, `store_view_id`, `platform_id`, `user_id`)
 VALUES
-	(1, 'xx', 'xx', '', 0, 0, 0, '', '2019-05-29 11:54:56.178368', '2019-05-29 12:44:13.583658', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1);
-
-
-INSERT INTO `user` (`id`, `last_login`, `is_superuser`, `first_name`, `last_name`, `is_staff`, `is_active`, `date_joined`, `username`, `email`, `password`, `code`, `create_time`, `update_time`)
-VALUES
-	(4, NULL, 0, '', '', 0, 0, '2019-05-29 11:54:56.724673', 'ordersea.myshopify.com', 'twobercancan@gmail.com', 'pbkdf2_sha256$120000$n8xKHPHAqsw0$gaeCn0M9SR8oJ0xRSNcYfY7b4AT/gewzCGHiRvRvmrM=', '878Ey2', '2019-05-29 11:54:56.739924', '2019-05-29 13:12:01.419512');
+	(1, '大卖场', 'https://pinbooster.seamarketings.com/', 'victor.fang@orderplus.com', 0, 0, 0, '12456789', '2019-05-29 11:54:56.178368', '2019-06-04 10:21:49.487091', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1);
 
 ```
 ## 3. 登陆创建pinterest账户(授权)
