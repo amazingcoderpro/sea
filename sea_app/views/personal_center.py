@@ -11,7 +11,7 @@ from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 
 
 from sea_app import models
-from sea_app.serializers import personal_center,store
+from sea_app.serializers import personal_center, store
 from sea_app.utils.menu_tree import MenuTree
 from sea_app.pageNumber.pageNumber import PNPagination
 from sea_app.filters import personal_center as personal_center_filters
@@ -41,10 +41,10 @@ class LoginView(generics.CreateAPIView):
                         obj.is_active = 1
                         obj.save()
                 else:
-                    return Response({"detail": "该账户未激活"}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"detail": "The account is not activated"}, status=status.HTTP_400_BAD_REQUEST)
             user = auth.authenticate(username=username, password=password)
             if not user:
-                return Response({"detail": "用户名密码错误"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"detail": "User name password error"}, status=status.HTTP_400_BAD_REQUEST)
             if user:
                 res = {}
                 res["user"] = personal_center.LoginSerializer(instance=user, many=False).data
@@ -205,15 +205,15 @@ class PinterestCallback(APIView):
         # 判断token是否为当前用户的token
         token = result["data"]["access_token"]
         print("current token：{}".format(token))
-        user_info = pinterest_api.PinterestApi(access_token=token).get_user_info()
-        print("current user info: {}".format(user_info))
-        if user_info["code"] == 1:
-            if user_info["data"].get("url").lower() == account_uri.lower():
-                models.PinterestAccount.objects.filter(account=account_uri).update(
-                    token=token, authorized=1)
-                return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=1")
-        models.PinterestAccount.objects.filter(account=account_uri).update(token=token, authorized=2)
-        return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
+        # user_info = pinterest_api.PinterestApi(access_token=token).get_user_info()
+        # print("current user info: {}".format(user_info))
+        # if user_info["code"] == 1:
+        #     if user_info["data"].get("url").lower() == account_uri.lower():
+        #         models.PinterestAccount.objects.filter(account=account_uri).update(
+        #             token=token, authorized=1)
+        #         return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=1")
+        models.PinterestAccount.objects.filter(account=account_uri).update(token=token, authorized=1)
+        return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=1")
 
 
 class OperationRecord(generics.ListAPIView):
