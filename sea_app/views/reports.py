@@ -35,8 +35,14 @@ def get_common_data(request):
     # 获取请求参数
     start_time, end_time, pinterest_account_id, board_id, pin_id, search_word, store_id = get_request_params(request)
 
+    # 当前用户下所有的账号id_list
+    account_id_list = []
+    for account in models.PinterestAccount.objects.filter(user=request.user):
+        if account.id not in account_id_list:
+            account_id_list.append(account.id)
     # 开始过滤PinterestHistoryData数据
-    pin_set_list = models.PinterestHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)))
+    pin_set_list = models.PinterestHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)),
+                                                              Q(pinterest_account_id__in=account_id_list))
     if search_word:
         # 查询pin_uri or board_uri or pin_description or board_name
         pin_set_list = pin_set_list.filter(
@@ -54,11 +60,8 @@ def get_common_data(request):
             pin_set_list = pin_set_list.filter(Q(pin_id=pin_id))
 
     # 开始过滤ProductHistoryData数据
-    if store_id:
-        product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)),
-                                                                    Q(store_id=store_id))
-    else:
-        product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)))
+    product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)),
+                                                                Q(store_id=store_id))
     return pin_set_list, product_set_list
 
 
@@ -514,11 +517,8 @@ def top_pins(request, period=7):
     store = models.Store.objects.filter(user_id=request.user).first()
     store_id = store.id if store else None
     # 开始过滤ProductHistoryData数据
-    if store_id:
-        product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)),
-                                                                    Q(store_id=store_id))
-    else:
-        product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)))
+    product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)),
+                                                                Q(store_id=store_id))
     product_id_list = []
     for product in product_set_list:
         product_id_list.append(product.product_id)
@@ -602,11 +602,8 @@ def top_board(request, period=7):
     store = models.Store.objects.filter(user_id=request.user).first()
     store_id = store.id if store else None
     # 开始过滤ProductHistoryData数据
-    if store_id:
-        product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)),
-                                                                    Q(store_id=store_id))
-    else:
-        product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)))
+    product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)),
+                                                                Q(store_id=store_id))
     # 获取board_id_list
     board_id_list = []
     for product_obj in product_set_list:
