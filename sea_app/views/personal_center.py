@@ -41,10 +41,10 @@ class LoginView(generics.CreateAPIView):
                         obj.is_active = 1
                         obj.save()
                 else:
-                    return Response({"detail": "该账户未激活"}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"detail": "The account is not activated"}, status=status.HTTP_400_BAD_REQUEST)
             user = auth.authenticate(username=username, password=password)
             if not user:
-                return Response({"detail": "用户名密码错误"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"detail": "User name password error"}, status=status.HTTP_400_BAD_REQUEST)
             if user:
                 res = {}
                 res["user"] = personal_center.LoginSerializer(instance=user, many=False).data
