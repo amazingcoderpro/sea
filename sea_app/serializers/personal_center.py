@@ -24,7 +24,7 @@ class LoginSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.User
         depth = 1
-        fields = ("id", "username", "password",)
+        fields = ("id", "username", "password", "first_name", "last_name", "email")
         extra_kwargs = {
             'password': {'write_only': True},
             'email': {'read_only': True}
@@ -138,24 +138,41 @@ class SetPasswordSerializer(serializers.ModelSerializer):
 #         return user
 
 
-# class UserOperSerializer(serializers.ModelSerializer):
-#     """用户删 改 查"""
-#     password2 = serializers.CharField(write_only=True)
-#
-#     class Meta:
-#         model = models.User
-#         fields = ("id", "username", "password", "password2", "email", "role", "create_time", "nickname")
-#         extra_kwargs = {
-#             'username': {'write_only': False, 'read_only': True},
-#             'password': {'write_only': True, 'read_only': False},
-#             'email': {'write_only': False, 'read_only': True},
-#         }
-#
-#     def validate(self, attrs):
-#         if not attrs["password"] == attrs["password2"]:
-#             raise serializers.ValidationError("两次密码不一致，请重新输入")
-#         del attrs["password2"]
-#         return attrs
+class UserOperSerializer(serializers.ModelSerializer):
+    """用户改 查"""
+    class Meta:
+        model = models.User
+        fields = ("id", "username", "first_name", "last_name", "email")
+        extra_kwargs = {
+            'username': {'write_only': False, 'read_only': True},
+            # 'email': {'write_only': , 'read_only': True},
+        }
+
+    # def validate(self, attrs):
+    #     if not attrs["password"] == attrs["password2"]:
+    #         raise serializers.ValidationError("两次密码不一致，请重新输入")
+    #     del attrs["password2"]
+    #     return attrs
+
+
+class SetPasswordSerializer(serializers.ModelSerializer):
+    """用户删 改 查"""
+    password2 = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = models.User
+        fields = ("id", "username", "password", "password2", "email", "role", "create_time", "nickname")
+        extra_kwargs = {
+            'username': {'write_only': False, 'read_only': True},
+            'password': {'write_only': True, 'read_only': False},
+            'email': {'write_only': False, 'read_only': True},
+        }
+
+    def validate(self, attrs):
+        if not attrs["password"] == attrs["password2"]:
+            raise serializers.ValidationError("两次密码不一致，请重新输入")
+        del attrs["password2"]
+        return attrs
 
 
 # class RoleSerializer(serializers.ModelSerializer):

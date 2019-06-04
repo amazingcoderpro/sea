@@ -15,7 +15,7 @@ from sea_app.serializers import personal_center,store
 from sea_app.utils.menu_tree import MenuTree
 from sea_app.pageNumber.pageNumber import PNPagination
 from sea_app.filters import personal_center as personal_center_filters
-# from sea_app.permission.permission import UserPermission, RolePermission
+from sea_app.permission.permission import UserPermission
 from sdk.shopify.shopify_oauth_info import ShopifyBase
 from sdk.shopify.get_shopify_products import ProductsApi
 from sdk.pinterest import pinterest_api
@@ -48,7 +48,8 @@ class LoginView(generics.CreateAPIView):
             if user:
                 res = {}
                 res["user"] = personal_center.LoginSerializer(instance=user, many=False).data
-                res["store"] = store.StoreSerializer(instance=user, many=False).data
+                store_instance = models.Store.objects.filter(user_id=user.id).first()
+                res["store"] = store.StoreSerializer(instance=store_instance, many=False).data
                 payload = jwt_payload_handler(user)
                 res["token"] = "jwt {}".format(jwt_encode_handler(payload))
                 return Response(res, status=status.HTTP_200_OK)
@@ -79,12 +80,12 @@ class SetPasswordView(generics.UpdateAPIView):
 #     filterset_fields = ("nickname",)
 
 
-# class UserOperView(generics.RetrieveUpdateDestroyAPIView):
-#     """用户 删 该 查"""
-#     queryset = models.User.objects.all()
-#     serializer_class = personal_center.UserOperSerializer
-#     permission_classes = (IsAuthenticated, UserPermission)
-#     authentication_classes = (JSONWebTokenAuthentication,)
+class UserOperView(generics.RetrieveUpdateAPIView):
+    """用户 删 该 查"""
+    queryset = models.User.objects.all()
+    serializer_class = personal_center.UserOperSerializer
+    permission_classes = (IsAuthenticated, UserPermission)
+    authentication_classes = (JSONWebTokenAuthentication,)
 
 
 # class RoleView(generics.ListCreateAPIView):

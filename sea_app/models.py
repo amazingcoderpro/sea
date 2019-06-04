@@ -89,7 +89,7 @@ class Store(models.Model):
     # authorized = models.SmallIntegerField(choices=authorized_choices, default=0, verbose_name="是否认证")
     token = models.CharField(blank=True, null=True, max_length=255, verbose_name="账号使用标识")
     platform = models.ForeignKey(Platform, on_delete=models.DO_NOTHING)
-    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
+    user = models.OneToOneField(User, on_delete=models.DO_NOTHING, blank=True, null=True, unique=True)
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 

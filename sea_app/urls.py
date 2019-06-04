@@ -65,7 +65,7 @@ account_urlpatterns = [
 
     # 用户 角色管理
     # url(r'users/$', personal_center.UserView.as_view()),
-    # url(r'users/(?P<pk>[0-9]+)/$', personal_center.UserOperView.as_view()),
+    url(r'users/(?P<pk>[0-9]+)/$', personal_center.UserOperView.as_view()),
     url(r'users/operation_record/$', cache_page(5)(personal_center.OperationRecord.as_view())),
     # url(r'role/$', personal_center.RoleView.as_view()),
     # url(r'role/(?P<pk>[0-9]+)/$', personal_center.RoleOperView.as_view()),
