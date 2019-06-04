@@ -631,13 +631,13 @@ class TaskProcessor:
                 # rule (-1, '新建'), (0, '待执行'), (1, '运行中'), (2, '暂停中'), (3, '已完成'), (4, '已过期'), (5, '已删除')
 
                 pin_api = PinterestApi(access_token=record["token"])
-                note = record["note"]
+                product_name = record["product_name"]
                 utm_format = SHOPIFY_CONFIG.get("utm_format", "")
                 url_suffix = utm_format.format(pinterest_account=record["account"], board_name=record["board_name"], product_id=record["product_uuid"])
-                link_with_utm = record["link"] + url_suffix
+                link_with_utm = record["product_link"] + url_suffix
                 board_id = record["board_id"]
                 product_id = record["product_id"]
-                ret = pin_api.create_pin(board_id=record["board_uuid"], note=record["note"], image_url=record["img_url"], link=link_with_utm)
+                ret = pin_api.create_pin(board_id=record["board_uuid"], note=product_name, image_url=record["product_img_url"], link=link_with_utm)
                 time_now = datetime.datetime.now()
                 if ret["code"] == 1:
                     data = json.loads(ret[1])["data"]
@@ -646,7 +646,7 @@ class TaskProcessor:
                     # site_url = data["original_link"]
                     thumbnail = self.image_2_base64(record["img_url"])
                     cursor.execute('''insert into `pin` (`pin_uuid`, `url`, `description`, `origin_link`, `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    ''', (pin_uuid, url, note, link_with_utm, thumbnail, time_now, time_now, board_id, product_id))
+                    ''', (pin_uuid, url, product_name, link_with_utm, thumbnail, time_now, time_now, board_id, product_id))
                     pin_id = cursor.lastrowid
 
                     state = 1
