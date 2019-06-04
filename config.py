@@ -10,8 +10,8 @@ log_config.init_log_config("logs", "sea")
 logger = logging.getLogger()
 
 SHOPIFY_CONFIG = {
-    "client_id": "f9cd4d9b7362ae81038635518edfd98f",
-    "client_secret": "a7159ff763aadb8f6c047563dbbe73e1",
+    "client_id": "7fced15ff9d1a461f10979c3eae2eca8",
+    "client_secret": "461a69b7c8c13a37416d79769175ce23",
     "redirect_uri": "https://pinbooster.seamarketings.com/api/v1/auth/shopify/callback/",
     "scopes": ["read_content", "write_content", "read_themes", "write_themes", "read_products",
                "write_products", "read_product_listings", "read_customers", "write_customers",
