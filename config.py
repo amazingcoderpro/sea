@@ -26,9 +26,9 @@ SHOPIFY_CONFIG = {
 
 
 PINTEREST_CONFIG = {
-    "client_id": "5031224083375764064",
-    "client_secret": "c3ed769d9c5802a98f7c4b949f234c482a19e5bf3a3ac491a0d20e44d7f7556e",
-    "scope": "read_public,write_public,read_relationships,write_relationships,read_write_all",
+    "client_id": "5033349102128117330",
+    "client_secret": "7578af0b0a9102815d71c822813e717b23362b0725e44e245e4296669124fe98",
+    "scope": "read_public,write_public,read_relationships,write_relationships",
     "redirect_uri": "https://pinbooster.seamarketings.com/api/v1/auth/pinterest/callback/"
 }
 
