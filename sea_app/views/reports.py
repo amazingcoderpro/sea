@@ -460,7 +460,7 @@ def account_overview_chart(pin_set_list, product_set_list, request, reslut_num=N
         overview_list.append(day_count)
         if reslut_num and len(overview_list) >= reslut_num:
             break
-    return overview_list
+    return tuple(overview_list)
 
 
 def account_overview_table(overview_list):
