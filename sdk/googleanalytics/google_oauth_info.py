@@ -47,6 +47,7 @@ class GoogleApi():
                                     # {"expression": "ga:localItemRevenue"},
                                     {"expression": "ga:transactionRevenue"},  # 销售总金额
                                     {"expression": "ga:hits"},  # 点击量
+                                    {"expression": "ga:itemRevenue"}
                                 ],
                                 "dimensions": [
                                     {"name": "ga:source"},
@@ -57,11 +58,12 @@ class GoogleApi():
                                 #             {
                                 #                 "dimensionName": "ga:source",
                                 #                 "operator": "EXACT",
-                                #                 "expressions": ["baidu"]
+                                #                 "expressions": ["pinbooster"]
                                 #             }]
                                 #         }]
                                  }]
                                 }).execute()
+
             statistics_info = []
             for report in analytics_info.get('reports', []):
                 columnHeader = report.get('columnHeader', {})
@@ -81,17 +83,17 @@ class GoogleApi():
 
             data = dict(statistics_info)
             for key in data.keys():
-                data[key] = float(data[key].strip()) if key in ["transactions", "transactionRevenue"] else int(data[key].strip())
+                data[key] = float(data[key].strip()) if key in ["transactions", "itemRevenue","transactionRevenue"] else int(data[key].strip())
             logger.info("get google analytics info is successed, data={}".format(data))
-            return {"code": 1, "date": data, "msg": ""}
+            return {"code": 1, "data": data, "msg": ""}
         except Exception as e:
             logger.error("get google analytics info is failed, msg={}".format(str(e)))
-            return {"code": 2, "date": "", "msg": str(e)}
+            return {"code": 2, "data": "", "msg": str(e)}
 
 
 if __name__ == '__main__':
     google_data = GoogleApi(view_id="195406097")
-    google_data.get_report(key_words="google", start_time="50daysAgo", end_time="1daysAgo")
+    google_data.get_report(key_words="pinbooster", start_time="1daysAgo", end_time="today")
 
 
 

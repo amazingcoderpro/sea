@@ -10,8 +10,8 @@ log_config.init_log_config("logs", "sea")
 logger = logging.getLogger()
 
 SHOPIFY_CONFIG = {
-    "client_id": "f9cd4d9b7362ae81038635518edfd98f",
-    "client_secret": "a7159ff763aadb8f6c047563dbbe73e1",
+    "client_id": "7fced15ff9d1a461f10979c3eae2eca8",
+    "client_secret": "461a69b7c8c13a37416d79769175ce23",
     "redirect_uri": "https://pinbooster.seamarketings.com/api/v1/auth/shopify/callback/",
     "scopes": ["read_content", "write_content", "read_themes", "write_themes", "read_products",
                "write_products", "read_product_listings", "read_customers", "write_customers",
@@ -26,9 +26,9 @@ SHOPIFY_CONFIG = {
 
 
 PINTEREST_CONFIG = {
-    "client_id": "5031224083375764064",
-    "client_secret": "c3ed769d9c5802a98f7c4b949f234c482a19e5bf3a3ac491a0d20e44d7f7556e",
-    "scope": "read_public,write_public,read_relationships,write_relationships,read_write_all",
+    "client_id": "5033349102128117330",
+    "client_secret": "7578af0b0a9102815d71c822813e717b23362b0725e44e245e4296669124fe98",
+    "scope": "read_public,write_public,read_relationships,write_relationships",
     "redirect_uri": "https://pinbooster.seamarketings.com/api/v1/auth/pinterest/callback/"
 }
 
