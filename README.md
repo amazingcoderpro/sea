@@ -39,10 +39,11 @@ VALUES
 ## 3. 登陆创建pinterest账户(授权)
 
 ```
-	INSERT INTO `pinterest_account` (`id`, `account_uri`, `nickname`, `email`, `type`, `state`, `description`, `create_time`, `token`, `boards`, `views`, `authorized`, `add_time`, `update_time`, `followings`, `followers`, `user_id`)
-	VALUES
-		(1, 'shaowei580@gmail.com', '123', 'shaowei580@gmail.com', 1, 0, '123123', '2019-05-30 16:00:00.000000', 'AnWLrM41pDqkKjVOtayNpIR0qww0FaNXVLehYvRF0n-lswCyYAj5ADAAAlZaRd8vtRSgzAAAAAAA', 0, 0, 1, '2019-05-30 02:49:53.300878', '2019-05-30 02:49:53.474150', 0, 0, 1),
-		(3, 'yongyuanzhiqizhi@gmail.com', '', 'yongyuanzhiqizhi@gmail.com', 1, 0, '123123', '2019-05-30 03:15:23.000000', NULL, 0, 0, 0, '2019-05-30 03:13:49.110437', '2019-05-30 03:13:49.333120', 0, 0, 1);
+	INSERT INTO `pinterest_account` (`id`, `account`, `nickname`, `email`, `type`, `state`, `description`, `create_time`, `token`, `boards`, `pins`, `views`, `authorized`, `add_time`, `update_time`, `followings`, `followers`, `uuid`, `user_id`)
+VALUES
+	(2, 'shaowei580@gmail.com', '', 'shaowei580@gmail.com', 1, 0, 'shaowei', '2019-06-04 16:00:00.000000', 'AiP-ymRCgT7SSGBguKHjT-SPcSNOFaTxExO9J4JF2gxXLuC2Ugj5ADAAAlZaReXFJ1qgudIAAAAA', 0, 0, 0, 1, '2019-06-04 08:18:18.955160', '2019-06-04 08:18:19.015593', 0, 0, NULL, 1),
+	(3, 'twobercancan@gmail.com', '', 'twobercancan@gmail.com', 0, 0, '我的测试账号', '2019-06-03 16:00:00.000000', 'AgQB_G73xNSSzpVeGQ_tSUSEmrN2FaTxDryiQudF2gxXLuC2Ugp2ADAAAk1KReXFV78AwisAAAAA', 0, 0, 0, 1, '2019-06-04 08:20:02.559245', '2019-06-04 08:20:02.619872', 0, 0, NULL, 1),
+	(4, 'wcadaydayup@gmail.com', '', 'wcadaydayup@gmail.com', 0, 0, '121313', '2019-05-31 16:00:00.000000', 'AjgtAa8EoSLMjLVynCwNQDyS8NflFaTxE1fD18NF2gxXLuC2UgqqwDAAAkqYRd3mmh2gvB0AAAAA', 0, 0, 0, 1, '2019-06-04 08:20:18.669652', '2019-06-04 08:20:18.723059', 0, 0, NULL, 1);
 
 ```
 
