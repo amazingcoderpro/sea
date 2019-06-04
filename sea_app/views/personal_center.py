@@ -64,9 +64,17 @@ class RegisterView(generics.CreateAPIView):
 
 
 class SetPasswordView(generics.UpdateAPIView):
-    """设置密码"""
+    """注册状态设置密码"""
     queryset = models.User.objects.all()
     serializer_class = personal_center.SetPasswordSerializer
+
+
+class SetPasswordsView(generics.UpdateAPIView):
+    """登陆状态设置密码"""
+    queryset = models.User.objects.all()
+    serializer_class = personal_center.SetPasswordsSerializer
+    permission_classes = (IsAuthenticated, UserPermission)
+    authentication_classes = (JSONWebTokenAuthentication,)
 
 
 # class UserView(generics.ListCreateAPIView):
@@ -167,6 +175,7 @@ class ShopifyCallback(APIView):
             instance.save()
             user_instance = models.User.objects.filter(id=instance.user_id).first()
             user_instance.is_active = 0
+            user_instance.password = ""
             user_instance.code = random_code.create_random_code(6, True)
             user_instance.save()
             email = user_instance.email

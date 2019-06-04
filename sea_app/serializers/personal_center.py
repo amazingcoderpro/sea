@@ -161,9 +161,9 @@ class SetPasswordSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.User
-        fields = ("id", "username", "password", "password2", "email", "role", "create_time", "nickname")
+        fields = ("id", "username", "password", "password2", "email")
         extra_kwargs = {
-            'username': {'write_only': False, 'read_only': True},
+            # 'username': { 'read_only': True},
             'password': {'write_only': True, 'read_only': False},
             'email': {'write_only': False, 'read_only': True},
         }
@@ -173,6 +173,41 @@ class SetPasswordSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("两次密码不一致，请重新输入")
         del attrs["password2"]
         return attrs
+
+    def update(self, instance, validated_data):
+        if instance.password:
+            raise serializers.ValidationError("用户已经设置密码")
+        if instance.username != validated_data["username"]:
+            raise serializers.ValidationError("username is incorrect")
+        user = super(SetPasswordSerializer, self).update(instance, validated_data=validated_data)
+        user.set_password(validated_data["password"])
+        user.save()
+        return instance
+
+
+class SetPasswordsSerializer(serializers.ModelSerializer):
+    """用户删 改 查"""
+    password2 = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = models.User
+        fields = ("id", "password", "password2",)
+        extra_kwargs = {
+            'username': { 'read_only': True},
+            'password': {'write_only': True, 'read_only': False},
+        }
+
+    def validate(self, attrs):
+        if not attrs["password"] == attrs["password2"]:
+            raise serializers.ValidationError("两次密码不一致，请重新输入")
+        del attrs["password2"]
+        return attrs
+
+    def update(self, instance, validated_data):
+        user = super(SetPasswordsSerializer, self).update(instance, validated_data=validated_data)
+        user.set_password(validated_data["password"])
+        user.save()
+        return instance
 
 
 # class RoleSerializer(serializers.ModelSerializer):
