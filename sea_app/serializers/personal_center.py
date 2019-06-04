@@ -9,17 +9,9 @@ import json
 
 
 class LoginSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(required=True,error_messages={
-        "blank": "请输入用户名",
-        "required": "请携带该参数",
-        # "max_length": "用户名格式不对",
-        # "min_length": "用户名长度最少为5位",
-    })
+    username = serializers.CharField(required=True)
 
-    password = serializers.CharField(required=True, min_length=5, error_messages={
-        "blank": "请输入用户名",
-        "required": "请携带该参数",
-    }, write_only=True)
+    password = serializers.CharField(required=True, min_length=5, write_only=True)
 
     class Meta:
         model = models.User
@@ -32,12 +24,7 @@ class LoginSerializer(serializers.ModelSerializer):
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(required=True, min_length=5, error_messages={
-        "blank": "请输入用户名",
-        "required": "请携带该参数",
-        "max_length": "用户名格式不对",
-        "min_length": "用户名长度最少为5位",
-    }, validators=[UniqueValidator(queryset=models.User.objects.all(), message="用户名已经存在")])
+    username = serializers.CharField(required=True, min_length=5, validators=[UniqueValidator(queryset=models.User.objects.all(), message="User name already exists")])
     password2 = serializers.CharField(write_only=True)
     # email = serializers.EmailField(error_messages={"invalid": "请输入有效地址"}, validators=[UniqueValidator(queryset=models.User.objects.all(), message="邮箱已经存在")])
 
@@ -50,7 +37,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if not attrs["password"] == attrs["password2"]:
-            raise serializers.ValidationError("两次密码不一致，请重新输入")
+            raise serializers.ValidationError("Two passwords are inconsistent, please re-enter")
         del attrs["password2"]
         return attrs
 
@@ -74,13 +61,13 @@ class SetPasswordSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if not attrs["password"] == attrs["password2"]:
-            raise serializers.ValidationError("两次密码不一致，请重新输入")
+            raise serializers.ValidationError("Two passwords are inconsistent, please re-enter")
         del attrs["password2"]
         return attrs
 
     def update(self, instance, validated_data):
         if instance.username == validated_data["username"] and instance.is_active == 1:
-            raise serializers.ValidationError("请检查输入或账户已经激活")
+            raise serializers.ValidationError("Please check that the input or account is activated.")
         instance.set_password(validated_data["password"])
         instance.save()
         comment = {"username": instance.username, "password": validated_data["password"], "code": instance.code}
@@ -170,13 +157,13 @@ class SetPasswordSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if not attrs["password"] == attrs["password2"]:
-            raise serializers.ValidationError("两次密码不一致，请重新输入")
+            raise serializers.ValidationError("Two passwords are inconsistent, please re-enter")
         del attrs["password2"]
         return attrs
 
     def update(self, instance, validated_data):
         if instance.password:
-            raise serializers.ValidationError("用户已经设置密码")
+            raise serializers.ValidationError("User has set password")
         if instance.username != validated_data["username"]:
             raise serializers.ValidationError("username is incorrect")
         user = super(SetPasswordSerializer, self).update(instance, validated_data=validated_data)
@@ -199,7 +186,7 @@ class SetPasswordsSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if not attrs["password"] == attrs["password2"]:
-            raise serializers.ValidationError("两次密码不一致，请重新输入")
+            raise serializers.ValidationError("Two passwords are inconsistent, please re-enter")
         del attrs["password2"]
         return attrs
 

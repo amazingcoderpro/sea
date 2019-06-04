@@ -71,11 +71,11 @@ class SearchProductView(generics.ListAPIView):
         sale = request.query_params.get("sale", '')
         if not sale_sign or not sale:
             if scan_sign not in [">", "<", ">=", "<=", "=="] or type(scan) != str or not scan.isdigit():
-                return Response({"deails": "请求参数错误"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"deails": "Request parameter error"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             if scan_sign not in [">", "<",">=","<=","=="] or sale_sign not in [">","<",">=","<=","=="]\
                     or type(scan) != str or type(sale) != str or not sale.isdigit() or not scan.isdigit():
-                return Response({"deails": "请求参数错误"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"deails": "Request parameter error"}, status=status.HTTP_400_BAD_REQUEST)
         res = []
         queryset = self.filter_queryset(self.get_queryset())
         if not queryset:
