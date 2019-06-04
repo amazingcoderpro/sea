@@ -9,10 +9,21 @@ class StoreSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Store
-        fields = ("id", "name", "url", "email", "visitors", "scan", "sale", "user", "authorized", "create_time")
-        # extra_kwargs = {
-        #     'platform': {'write_only': False, 'read_only': True},
-        # }
+        fields = ("id",
+                  "name",
+                  "url",
+                  "email",
+                  "visitors",
+                  "scan",
+                  "sale",
+                  "timezone",
+                  "country",
+                  "city",
+                  "store_view_id")
+        extra_kwargs = {
+            'scan': {'write_only': False, 'read_only': False},
+            # 'user': {'write_only': False, 'read_only': False},
+        }
 
     def create(self, validated_data):
         validated_data["user"] = self.context["request"].user

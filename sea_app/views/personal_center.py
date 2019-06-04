@@ -11,7 +11,7 @@ from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 
 
 from sea_app import models
-from sea_app.serializers import personal_center
+from sea_app.serializers import personal_center,store
 from sea_app.utils.menu_tree import MenuTree
 from sea_app.pageNumber.pageNumber import PNPagination
 from sea_app.filters import personal_center as personal_center_filters
@@ -48,6 +48,7 @@ class LoginView(generics.CreateAPIView):
             if user:
                 res = {}
                 res["user"] = personal_center.LoginSerializer(instance=user, many=False).data
+                res["store"] = store.StoreSerializer(instance=user, many=False).data
                 payload = jwt_payload_handler(user)
                 res["token"] = "jwt {}".format(jwt_encode_handler(payload))
                 return Response(res, status=status.HTTP_200_OK)

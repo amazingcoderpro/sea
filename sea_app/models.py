@@ -292,7 +292,7 @@ class Rule(models.Model):
     product_list = models.CharField(max_length=255, default="", verbose_name="产品列表")
     tag = models.CharField(max_length=64, blank=True, null=True, verbose_name="规则标签")
     board = models.ForeignKey(Board, on_delete=models.DO_NOTHING)
-    state_choices = ((-1,"新建"), (0, '待执行'), (1, '删除'), (2, '过期'), (3, '运行'), (4, '暂停'), (5,"已完成"))
+    state_choices = ((-1, "新建"), (0, '待执行'), (1, '删除'), (2, '过期'), (3, '运行'), (4, '暂停'), (5,"已完成"))
     state = models.SmallIntegerField(choices=state_choices, default=-1, verbose_name="规则状态")
     start_time = models.DateTimeField(verbose_name="发布开始时间")
     end_time = models.DateTimeField(verbose_name="发布结束时间")
