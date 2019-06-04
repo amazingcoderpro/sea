@@ -52,7 +52,7 @@ class ShopifyBase():
             "code": code
         }
         url = f"https://{self.shop_uri}/admin/oauth/access_token"
-        logger.info(url, display, self.shop_uri)
+        logger.info("url={}, display={}, shop_uri={}".format(url, display, self.shop_uri))
         try:
             result = requests.post(url, json.dumps(display), headers=self.headers)
             if result.status_code == 200:
@@ -73,4 +73,4 @@ if __name__ == '__main__':
     # ShopifyBase.reRequest(shop="ordersea", method="get", url="", headers=None, data=None)
     # url = ShopifyBase.ask_permission(nonce="ordersea")
     # back_url = requests.get(url)
-    ShopifyBase.get_token(code="c2ff1aa97a1f285dc1cee1696954517c ")
+    ShopifyBase.get_token(code="a95f7442cfbb1a93badf9681601d8fe1")
