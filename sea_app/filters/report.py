@@ -179,12 +179,12 @@ class BoardListFilter(BaseFilterBackend):
                                          Q(board_id__in=board_id_list))
         yesterday_data_set = queryset.filter(Q(update_time__range=(today_date + timedelta(days=-1), today_date)),
                                              Q(board_id__in=board_id_list))
-        today_group_dict = self.get_data(today_data_set)
+        today_group_dict = self.get_data(today_data_set, board_id_list)
         yesterday_group_dict = self.get_data(yesterday_data_set)
         # 获取board增量
         for b_id, b_info in today_group_dict.items():
-            b_info["pins"] = len(set(filter(lambda x: x, b_info["pins"])))
-
+            if not isinstance(b_info["pins"], int):
+                b_info["pins"] = len(set(filter(lambda x: x, b_info["pins"])))
             yesterday_b_info = yesterday_group_dict.get("b_id")
             if yesterday_b_info:
                 yesterday_pins = len(set(filter(lambda x: x, yesterday_b_info.get("pins", 0))))
@@ -212,10 +212,13 @@ class BoardListFilter(BaseFilterBackend):
             boards_list.append(b_info)
         return boards_list
 
-    def get_data(self, data_set):
+    def get_data(self, data_set, board_id_list=None):
         group_dict = {}
         for today in data_set:
             if today.board_id not in group_dict:
+                # 除去有更新数据的board
+                if board_id_list is not None:
+                    board_id_list.remove(today.board_id)
                 group_dict[today.board_id] = {
                     "board_uri": today.board.uuid,
                     "board_description": today.board.description,
@@ -230,6 +233,19 @@ class BoardListFilter(BaseFilterBackend):
                 group_dict[today.board_id]["saves"] += today.pin_saves
                 group_dict[today.board_id]["likes"] += today.pin_likes
                 group_dict[today.board_id]["comments"] += today.pin_comments
+        if not board_id_list:
+            return group_dict
+        # 获取没有数据的board基本信息
+        for board_obj in models.Board.objects.filter(Q(id__in=board_id_list)):
+            group_dict[board_obj.id] = {
+                    "board_uri": board_obj.uuid,
+                    "board_description": board_obj.description,
+                    "board_state": board_obj.state,
+                    "pins": board_obj.pins,  # pin数
+                    "saves": 0,
+                    "likes": 0,
+                    "comments": 0,
+                }
         return group_dict
 
 
@@ -253,7 +269,7 @@ class PinListFilter(BaseFilterBackend):
                                          Q(pin_id__in=pin_id_list))
         yesterday_data_set = queryset.filter(Q(update_time__range=(today_date + timedelta(days=-1), today_date)),
                                              Q(pin_id__in=pin_id_list))
-        today_group_dict = self.get_data(today_data_set)
+        today_group_dict = self.get_data(today_data_set, pin_id_list)
         yesterday_group_dict = self.get_data(yesterday_data_set)
         # 获取pin增量
         for p_id, p_info in today_group_dict.items():
@@ -280,16 +296,19 @@ class PinListFilter(BaseFilterBackend):
             pins_list.append(p_info)
         return pins_list
 
-    def get_data(self, data_set):
+    def get_data(self, data_set, pin_id_list=None):
         group_dict = {}
         for today in data_set:
-            if today.board_id not in group_dict:
+            if today.pin_id not in group_dict:
+                # 除去有更新数据的pin
+                if pin_id_list is not None:
+                    pin_id_list.remove(today.pin_id)
                 group_dict[today.pin_id] = {
                     "pin_uri": today.pin.uuid,
                     "pin_thumbnail": today.pin.thumbnail,
                     "pin_note": today.pin.note,
                     "pin_url": today.pin.url,
-                    "product_sku": today.pin.product.sku,
+                    "product_sku": today.pin.product.sku if today.pin.product else "",
                     # "views": today.pin_views,
                     "saves": today.pin_saves,
                     "likes": today.pin_likes,
@@ -300,6 +319,21 @@ class PinListFilter(BaseFilterBackend):
                 group_dict[today.pin_id]["saves"] += today.pin_saves
                 group_dict[today.pin_id]["likes"] += today.pin_likes
                 group_dict[today.pin_id]["comments"] += today.pin_comments
+        if not pin_id_list:
+            return group_dict
+        # 获取没有更新数据pin的基本信息
+        for pin_obj in models.Pin.objects.filter(Q(id__in=pin_id_list)):
+            group_dict[pin_obj.id] = {
+                "pin_uri": pin_obj.uuid,
+                "pin_thumbnail": pin_obj.thumbnail,
+                "pin_note": pin_obj.note,
+                "pin_url": pin_obj.url,
+                "product_sku": pin_obj.product.sku if pin_obj.product else "",
+                # "views": today.pin_views,
+                "saves": pin_obj.saves,
+                "likes": pin_obj.likes,
+                "comments": pin_obj.comments,
+            }
         return group_dict
 
 
