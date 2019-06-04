@@ -136,3 +136,9 @@ class RuleStatusSerializer(serializers.ModelSerializer):
         # depth = 2
         fields = ("id", "state",)
 
+    def update(self, instance, validated_data):
+        print(validated_data)
+        rule_instance = super(RuleStatusSerializer, self).update(instance, validated_data)
+        if validated_data["state"] in [2, 5]:
+            models.PublishRecord.objects.filter(rule=rule_instance).update(state=validated_data["state"])
+        return instance
