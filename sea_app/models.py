@@ -182,7 +182,7 @@ class PinterestAccount(models.Model):
 
     class Meta:
         # managed = False
-        unique_together = ("account", "user")
+        unique_together = ("email", "user")
         db_table = 'pinterest_account'
         ordering = ["-id"]
 
