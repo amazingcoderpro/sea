@@ -277,9 +277,11 @@ class SendPinView(APIView):
         if token:
             result = PinterestApi(access_token=token).create_pin(publish_instance.board.uuid, publish_instance.product.name, publish_instance.product.image_url, publish_instance.product.url)
             if result["code"] != 1:
+                models.PublishRecord.objects.filter(id=kwargs["pk"]).update(state=3, remark=result["msg"])
                 return Response({"detail": result["msg"]},
                                 status=status.HTTP_400_BAD_REQUEST)
             else:
+                models.PublishRecord.objects.filter(id=kwargs["pk"]).update(state=1)
                 return Response({"detail": result["msg"]})
         else:
             return Response({"detail": "This pinterest_account is not authorized"}, status=status.HTTP_400_BAD_REQUEST)
