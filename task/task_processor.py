@@ -434,7 +434,7 @@ class TaskProcessor:
                             continue
 
                         pro_uuid = "google" # 测试
-                        ga_data = gapi.get_report(key_words=pro_uuid, start_time="7daysAgo", end_time="today")
+                        ga_data = gapi.get_report(key_words=pro_uuid, start_time="1daysAgo", end_time="today")
                         time_now = datetime.datetime.now()
                         if ga_data.get("code", 0) == 1:
                             data = ga_data.get("data", {})
