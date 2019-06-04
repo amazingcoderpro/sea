@@ -7,6 +7,7 @@ from sea_app import models
 from sea_app.serializers import store
 from sea_app.filters import store as store_filter
 from sea_app.pageNumber.pageNumber import PNPagination
+from sea_app.permission import permission
 
 
 class StoreView(generics.ListCreateAPIView):
@@ -24,5 +25,5 @@ class StoreOperView(generics.RetrieveUpdateDestroyAPIView):
     """店铺 删 该 查"""
     queryset = models.Store.objects.all()
     serializer_class = store.StoreSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated,permission.RulePermission)
     authentication_classes = (JSONWebTokenAuthentication,)

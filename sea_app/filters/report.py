@@ -26,18 +26,18 @@ class DailyReportFilter(BaseFilterBackend):
         if search_word:
             # 查询pin_uri or board_uri or pin_note or board_nam
             set_list = set_list.filter(
-                Q(pin_uri=search_word) | Q(pin_note__icontains=search_word) | Q(board_uri=search_word) | Q(
+                Q(pin_uuid=search_word) | Q(pin_note__icontains=search_word) | Q(board_uuid=search_word) | Q(
                     board_name=search_word))
         else:
             # 按选择框输入查询
-            if condtions.get('pinterest_account_uri', '').strip():
-                set_list = set_list.filter(Q(pinterest_account_uri=condtions.get('pinterest_account_uri').strip()))
+            if condtions.get('pinterest_account_id', '').strip():
+                set_list = set_list.filter(Q(pinterest_account_id=condtions.get('pinterest_account_id').strip()))
 
-            if condtions.get('board_uri', '').strip():
-                set_list = set_list.filter(board_uri=condtions.get('board_uri').strip())
+            if condtions.get('board_id', '').strip():
+                set_list = set_list.filter(board_id=condtions.get('board_id').strip())
 
-            if condtions.get('pin_uri', '').strip():
-                set_list = queryset.filter(Q(pin_uri=condtions.get('pin_uri').strip()))
+            if condtions.get('pin_id', '').strip():
+                set_list = queryset.filter(Q(pin_id=condtions.get('pin_id').strip()))
 
         # return set_list.filter(~Q(pin_uri=None))
         return set_list
@@ -121,7 +121,7 @@ class AccountListFilter(BaseFilterBackend):
                     account_id_list.remove(today.pinterest_account_id)
                 # 获取账号数据
                 group_dict[today.pinterest_account_id] = {
-                    "account_uri": today.pinterest_account.account_uri,
+                    "account_uri": today.pinterest_account.account,
                     "account_name": today.pinterest_account.nickname,
                     "account_email": today.pinterest_account.email,
                     "account_description": today.pinterest_account.description,
@@ -147,7 +147,7 @@ class AccountListFilter(BaseFilterBackend):
         for account_id in account_id_list:
             account_obj = models.PinterestAccount.objects.get(pk=account_id)
             group_dict[account_id] = {
-                "account_uri": account_obj.account_uri,
+                "account_uri": account_obj.account,
                 "account_name": account_obj.nickname,
                 "account_email": account_obj.email,
                 "account_description": account_obj.description,
@@ -217,7 +217,7 @@ class BoardListFilter(BaseFilterBackend):
         for today in data_set:
             if today.board_id not in group_dict:
                 group_dict[today.board_id] = {
-                    "board_uri": today.board.board_uri,
+                    "board_uri": today.board.uuid,
                     "board_description": today.board.description,
                     "board_state": today.board.state,
                     "pins": [] if not today.pin_id else [today.pin_id],  # pin数
@@ -242,7 +242,7 @@ class PinListFilter(BaseFilterBackend):
         pin_id_list = []
         query_str = request.query_params.dict().get("query_str")
         if query_str:
-            pin_set = models.Pin.objects.filter(Q(pin_uri=query_str) | Q(product__sku=query_str), Q(board_id=board_id))
+            pin_set = models.Pin.objects.filter(Q(uuid=query_str) | Q(product__sku=query_str), Q(board_id=board_id))
         else:
             pin_set = models.Pin.objects.filter(board_id=board_id)
         for pin in pin_set:
@@ -285,7 +285,7 @@ class PinListFilter(BaseFilterBackend):
         for today in data_set:
             if today.board_id not in group_dict:
                 group_dict[today.pin_id] = {
-                    "pin_uri": today.pin.pin_uri,
+                    "pin_uri": today.pin.uuid,
                     "pin_thumbnail": today.pin.thumbnail,
                     "pin_note": today.pin.note,
                     "pin_url": today.pin.url,

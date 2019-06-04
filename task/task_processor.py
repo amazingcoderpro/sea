@@ -18,6 +18,7 @@ import requests
 from sdk.pinterest.pinterest_api import PinterestApi
 from sdk.shopify.get_shopify_products import ProductsApi
 from sdk.googleanalytics.google_oauth_info import GoogleApi
+from config import SHOPIFY_CONFIG
 
 class DBUtil:
     def __init__(self, host="47.112.113.252", port=3306, db="sea", user="sea", password="sea@orderplus.com"):
@@ -48,39 +49,47 @@ class DBUtil:
 
 
 class TaskProcessor:
-    def __init__(self, rule_period=120, publish_pin_period=240, pinterest_period=7200, shopify_period=7200):
+    def __init__(self, ):
         self.bk_scheduler = BackgroundScheduler()
         self.bk_scheduler.start()
         self.pinterest_job = None
         self.shopify_job = None
         self.rule_job = None
         self.publish_pin_job = None
-        self.pinterest_period = pinterest_period    # 更新pinterests数据的频率
-        self.shopify_period = shopify_period        # 更新shopify数据的频率
-        self.rule_period = rule_period              # 解析rule的频率
-        self.publish_pin_period = publish_pin_period    # 发布pin的频率
 
-    def start(self):
-        logger.info("TaskProcessor start work.")
+    def start_job_analyze_rule_job(self, interval=120):
         # 规则解析任务　
+        logger.info("start_job_analyze_rule_job")
         self.analyze_rule()
-        self.rule_job = self.bk_scheduler.add_job(self.analyze_rule, 'interval', seconds=self.rule_period, max_instances=50)
+        self.rule_job = self.bk_scheduler.add_job(self.analyze_rule, 'interval', seconds=interval, max_instances=50)
 
-        # 定时发布pin
-        self.publish_pins(self.publish_pin_period)
-        self.publish_pin_job = self.bk_scheduler.add_job(self.publish_pins, 'interval', seconds=self.publish_pin_period, args=(self.publish_pin_period,))
-
+    def start_job_update_pinterest_data(self, interval=7200):
         # 定时更新pinterest数据
+        logger.info("start_job_update_pinterest_data")
         self.update_pinterest_data()
-        self.pinterest_job = self.bk_scheduler.add_job(self.update_pinterest_data, 'interval', seconds=self.pinterest_period)
+        self.pinterest_job = self.bk_scheduler.add_job(self.update_pinterest_data, 'interval', seconds=interval)
 
+    def start_job_publish_pin_job(self, interval=240):
+        # # 定时发布pin
+        logger.info("start_job_publish_pin_job")
+        self.publish_pins(interval)
+        self.publish_pin_job = self.bk_scheduler.add_job(self.publish_pins, 'interval', seconds=interval, args=(interval,))
+
+    def start_job_update_shopify_data(self, interval=7200):
         # 定时更新shopify数据
+        logger.info("start_job_update_shopify_data")
         self.update_shopify_data()
-        self.shopify_job = self.bk_scheduler.add_job(self.update_shopify_data, 'interval', seconds=self.shopify_period)
+        self.shopify_job = self.bk_scheduler.add_job(self.update_shopify_data, 'interval', seconds=interval)
 
+    def start_all(self, rule_interval=120, publish_pin_interval=240, pinterest_update_interval=3800, shopify_update_interval=3800):
+        logger.info("TaskProcessor start all work.")
+        self.start_job_analyze_rule_job(rule_interval)
+        self.start_job_update_pinterest_data(pinterest_update_interval)
+        self.start_job_publish_pin_job(publish_pin_interval)
+        self.start_job_update_shopify_data(shopify_update_interval)
 
-    def stop(self):
-        logger.warning("TaskProcessor stop work.")
+    def stop_all(self):
+        logger.warning("TaskProcessor stop_all work.")
         self.bk_scheduler.remove_all_jobs()
 
     def pause(self):
@@ -429,13 +438,13 @@ class TaskProcessor:
                         time_now = datetime.datetime.now()
                         if ga_data.get("code", 0) == 1:
                             data = ga_data.get("data", {})
-                            pv = data.get("pageviews", 0)
-                            uv = data.get("uniquePageviews", 0)
-                            hits = data.get("hits", 0)
-                            transactions = data.get("transactions", 0)
-                            revenue = 0
+                            pv = int(data.get("pageviews", 0))
+                            uv = int(data.get("uniquePageviews", 0))
+                            hits = int(data.get("hits", 0))
+                            transactions = int(data.get("transactions", 0))
+                            transactions_revenue = float(data.get("transactionRevenue", 0))
                             cursor.execute('''insert into `product_history_data` (`product_visitors`, `product_new_visitors`, `product_clicks`, `product_scan`, `product_sales`, `product_revenue`, `update_time`, `product_id`, `store_id`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                            ''', (uv, uv, hits, pv, transactions, revenue, time_now, pro_id, store_id))
+                            ''', (uv, uv, hits, pv, transactions, transactions_revenue, time_now, pro_id, store_id))
                         else:
                             logger.warning("get GA data failed, store view id={}, key_words={}".format(store_view_id, pro_uuid))
 
@@ -497,7 +506,9 @@ class TaskProcessor:
                             end = rule_start_time + schedule["end"]
                             while beg <= end:
                                 execute_time_list.append(beg)
-                                beg += datetime.timedelta(seconds=int(schedule["interval"]))
+                                limit_interval = int(schedule["interval"])
+                                limit_interval = 1800 if limit_interval<1800 else limit_interval
+                                beg += datetime.timedelta(seconds=limit_interval)
 
                     rule_start_time += datetime.timedelta(days=1)
 
@@ -524,12 +535,12 @@ class TaskProcessor:
             cursor.close() if cursor else 0
             conn.close() if conn else 0
 
-    def get_records(self, execute_beg=None, execute_end=None, status=0):
+    def get_records(self,  status=0, execute_beg=None, execute_end=None):
         """
         获取执行时间在某一段时间内的发布记录, 数据来源PublishRecord表
         :param execute_beg: 执行时间范围起点, datetime类型
         :param execute_end: 执行时间范围终点, datetime类型
-        :param status: 发布状态　0－－未发布，１－－已发布
+        :param status: 发布状态　record ((0, '待发布'), (1, '已发布'), (2, '暂停中'), (3, '发布失败'), (4, "已取消"), (5, "已删除"))
         :return: list
         """
         try:
@@ -538,7 +549,7 @@ class TaskProcessor:
             if not cursor:
                 return False
 
-            # 先拿到所有状态为status,执行时间在指定范围内的record
+            # 先拿到所有状态为status, 执行时间在指定范围内的record
             if execute_beg and execute_end:
                 cursor.execute('''
                         select id, execute_time, board_id, product_id, rule_id from `publish_record` where state=%s and execute_time between %s and %s''',
@@ -554,7 +565,7 @@ class TaskProcessor:
             else:
                 cursor.execute('''
                         select id, execute_time, board_id, product_id, rule_id from `publish_record` where state=%s''',
-                               (status, execute_beg))
+                               (status, ))
 
             records = cursor.fetchall()
             if not records:
@@ -567,18 +578,18 @@ class TaskProcessor:
 
                 # 取到待发布的pin所隶属的board信息
                 cursor.execute('''
-                        select board_uuid, name, pinterest_account_id, state from `board` where id=%s
+                        select uuid, name, pinterest_account_id, state from `board` where id=%s
                         ''', board_id)
                 board = cursor.fetchone()
                 board_uuid, board_name, pinterest_account_id, board_state = board
 
                 # 取到待发布的pin所隶属的账号信息，　主要是token
                 cursor.execute('''
-                        select account_uuid, state, token from `pinterest_account` where id=%s
+                        select account, state, token from `pinterest_account` where id=%s
                         ''', pinterest_account_id)
                 account = cursor.fetchone()
 
-                account_uuid, account_state, token = account
+                account, account_state, token = account
 
                 # 取到待发布的pin所关联的产品信息
                 cursor.execute('''
@@ -593,14 +604,16 @@ class TaskProcessor:
                                   "board_name": board_name,
                                   "board_state": board_state,
                                   "account_id": pinterest_account_id,
-                                  "account_uuid": account_uuid,
+                                  "account": account,
                                   "account_state": account_state,
                                   "token": token,
                                   "product_id": product_id,
                                   "product_uuid": product_uuid,
-                                  "img_url": image_url,
-                                  "note": name,
-                                  "link": product_url}
+                                  "product_link": product_url,
+                                  "product_img_url": image_url,
+                                  "product_name": name,
+                                  "product_sku": sku,
+                                  "rule_id": rule_id}
 
                 target_records.append(pending_record)
         except Exception as e:
@@ -614,7 +627,7 @@ class TaskProcessor:
     def publish_pins(self, period=240):
         logger.info("publish_pins_by_recodes checking")
         #获取最近period秒内的所有状态为0的(待发布的)record, 前后误差10秒
-        records = self.get_records(0, datetime.datetime.now()-datetime.timedelta(seconds=period/2+10), datetime.datetime.now()+datetime.timedelta(seconds=period/2+10))
+        records = self.get_records(0, datetime.datetime.now()-datetime.timedelta(seconds=int(period/2+10)), datetime.datetime.now()+datetime.timedelta(seconds=int(period/2+10)))
         if not records:
             logger.info("there have no record for publishing.")
             return True
@@ -626,13 +639,14 @@ class TaskProcessor:
 
             for record in records:
                 pin_api = PinterestApi(access_token=record["token"])
-                note = record["note"]
-                utm_params = "/?utm_source=pinterest&utm_medium={}&utm_content={}&product_id={}".format(
-                    record["account_uuid"], record["board_name"], record["product_uuid"])
-                link_with_utm = record["link"] + utm_params
+                rule_id = record["rule_id"]
+                product_name = record["product_name"]
+                utm_format = SHOPIFY_CONFIG.get("utm_format", "")
+                url_suffix = utm_format.format(pinterest_account=record["account"], board_name=record["board_name"], product_id=record["product_uuid"])
+                link_with_utm = record["product_link"] + url_suffix
                 board_id = record["board_id"]
                 product_id = record["product_id"]
-                ret = pin_api.create_pin(board_id=record["board_uuid"], note=record["note"], image_url=record["img_url"], link=link_with_utm)
+                ret = pin_api.create_pin(board_id=record["board_uuid"], note=product_name, image_url=record["product_img_url"], link=link_with_utm)
                 time_now = datetime.datetime.now()
                 if ret["code"] == 1:
                     data = json.loads(ret[1])["data"]
@@ -641,25 +655,43 @@ class TaskProcessor:
                     # site_url = data["original_link"]
                     thumbnail = self.image_2_base64(record["img_url"])
                     cursor.execute('''insert into `pin` (`pin_uuid`, `url`, `description`, `origin_link`, `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    ''', (pin_uuid, url, note, link_with_utm, thumbnail, time_now, time_now, board_id, product_id))
+                    ''', (pin_uuid, url, product_name, link_with_utm, thumbnail, time_now, time_now, board_id, product_id))
                     pin_id = cursor.lastrowid
 
-                    state = 1
+                    # rule (-1, '新建'), (0, '待执行'), (1, '运行中'), (2, '暂停中'), (3, '已完成'), (4, '已过期'), (5, '已删除')
+                    # record ((0, '待发布'), (1, '已发布'), (2, '暂停中'), (3, '发布失败'), (4, "已取消"), (5, "已删除"))
+                    record_state = 1
                     remark = "success"
                     update_time = finished_time = time_now
 
-                    cursor.execute('''
-                            update `publish_record` set state=%s, remark=%s, finished_time=%s, pin_id=%s, update_time=%s where id=%s
-                            ''', (state, remark, finished_time, pin_id, update_time, record["id"]))
+                    # 发布成功后，更新record表
+                    cursor.execute(
+                        '''update `publish_record` set state=%s, remark=%s, finished_time=%s, pin_id=%s, update_time=%s where id=%s''',
+                        (record_state, remark, finished_time, pin_id, update_time, record["id"]))
+
+                    # 将格式化后的url更新到产品数库表中
+                    cursor.execute('''update `product` set url_with_utm=%s where id=%s''', (link_with_utm, product_id))
+
                 else:
                     # 发布失败
-                    state = 2
+                    record_state = 3
                     remark = ret.get("msg", "")
                     update_time = finished_time = time_now
                     cursor.execute('''
                             update `publish_record` set state=%s, remark=%s, finished_time=%s, update_time=%s where id=%s
-                            ''', (state, remark, finished_time, update_time, record["id"]))
+                            ''', (record_state, remark, finished_time, update_time, record["id"]))
+
+                # 再更新rule表,如果rule还是待运行状态(0)，则修改为正在运行状态(1)
+                rule_state = 1
+                cursor.execute('''update `rule` set state=%s, update_time=%s where id=%s and state=0''', (rule_state, update_time, rule_id))
                 conn.commit()
+
+                # 如果某一个规则下的所有record都已经发布完毕（无论是否全部成功）或被人为取消或删除，　而且该rule目前是运行中状态，则将该rule更新为已完成状（3）
+                cursor.execute('''select rule_id from `publish_record` where (state=0 or state=2) and rule_id=%s''', (rule_id, ))
+                rule_pending_records = cursor.fetchall()
+                if not rule_pending_records:
+                    # 如果当前rule处理运行状态，但是它的所有record中没有待执行和暂停中的，那代表这个rule已经被完成了
+                    cursor.execute('''update `rule` set state=%s, update_time=%s where id=%s and state=1''', (rule_state, update_time, rule_id))
         except Exception as e:
             logger.exception("publish_pins exception e={}".format(e))
             return False
@@ -710,20 +742,21 @@ class TaskProcessor:
 
 
 def test():
-    tsp = TaskProcessor(pinterest_period=600, shopify_period=600, rule_period=60, publish_pin_period=240)
-    # ret = tsp.analyze_rule()
-    tsp.start()
+    tsp = TaskProcessor()
+    tsp.start_all(rule_interval=60, publish_pin_interval=120, pinterest_update_interval=3800, shopify_update_interval=3800)
 
-    time.sleep(1000)
-    tsp.stop()
+    time.sleep(72300)
+    tsp.stop_all()
     time.sleep(20)
 
 
 def main():
     tsp = TaskProcessor()
-    tsp.start()
+    tsp.start_all(rule_interval=120, publish_pin_interval=240, pinterest_update_interval=86400, shopify_update_interval=86400)
     while 1:
         time.sleep(1)
 
+
 if __name__ == '__main__':
+    # test()
     main()
