@@ -156,7 +156,7 @@ class PinterestAccountManager(models.Manager):
 
 class PinterestAccount(models.Model):
     """Pin账户表"""
-    account = models.CharField(max_length=64, unique=True, verbose_name="PinterestAccount唯一标识码")
+    account = models.CharField(max_length=64, verbose_name="PinterestAccount唯一标识码")
     nickname = models.CharField( blank=True, null=True, max_length=64, verbose_name="账户名称")
     email = models.CharField(blank=True, null=True, max_length=255, verbose_name="登陆邮箱")
     type_choices = ((0, 'individual'), (1, 'business'))
@@ -182,6 +182,7 @@ class PinterestAccount(models.Model):
 
     class Meta:
         # managed = False
+        unique_together = ("account", "user")
         db_table = 'pinterest_account'
         ordering = ["-id"]
 
