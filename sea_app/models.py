@@ -329,7 +329,7 @@ class PublishRecord(models.Model):
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
     rule = models.ForeignKey(Rule, on_delete=models.DO_NOTHING)
     pin = models.ForeignKey(Pin, on_delete=models.DO_NOTHING, blank=True, null=True)
-    state_choices = ((0, 'pending'), (1, 'finished'), (2, 'failed'), (3, "cancelled"))
+    state_choices = ((0, '待发布'), (1, '已发布'), (2, '暂停中'), (3, '发布失败'), (3, "已取消"), (4, "已删除"))
     state = models.SmallIntegerField(choices=state_choices, default=0, verbose_name="发布状态")
     remark = models.TextField(blank=True, null=True, verbose_name="备注")
     execute_time = models.DateTimeField(verbose_name="执行时间")
