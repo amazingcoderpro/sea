@@ -177,6 +177,7 @@ class PinterestAccount(models.Model):
     followings = models.IntegerField(default=0, verbose_name="账户关注量")
     followers = models.IntegerField(default=0, verbose_name="账户粉丝")
     uuid = models.CharField(blank=True, null=True, max_length=64, verbose_name="账户的uuid")
+    thumbnail = models.TextField(verbose_name="缩略图", default="")
 
     objects = PinterestAccountManager()
 

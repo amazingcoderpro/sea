@@ -83,9 +83,9 @@ class TaskProcessor:
 
     def start_all(self, rule_interval=120, publish_pin_interval=240, pinterest_update_interval=3800, shopify_update_interval=3800):
         logger.info("TaskProcessor start all work.")
-        # self.start_job_analyze_rule_job(rule_interval)
-        # self.start_job_update_pinterest_data(pinterest_update_interval)
-        # self.start_job_publish_pin_job(publish_pin_interval)
+        self.start_job_analyze_rule_job(rule_interval)
+        self.start_job_update_pinterest_data(pinterest_update_interval)
+        self.start_job_publish_pin_job(publish_pin_interval)
         self.start_job_update_shopify_data(shopify_update_interval)
 
     def stop_all(self):
@@ -116,7 +116,7 @@ class TaskProcessor:
             authorized = 1
             account_state = 0
             cursor.execute('''
-                    select id, token, account from `pinterest_account` where state=%s and authorized=%s
+                    select id, token, account, nickname from `pinterest_account` where state=%s and authorized=%s
                     ''', (account_state, authorized))
             accounts = cursor.fetchall()
             if not accounts:
@@ -141,7 +141,7 @@ class TaskProcessor:
                     exist_pins_dict[exp[1]] = exp[0]
 
             for account in accounts:
-                account_id, token, account_uuid = account
+                account_id, token, account_uuid, nickname = account
                 if not token:
                     logger.warning("pinterest account token is None, account={}".format(account_uuid))
                     continue
@@ -167,8 +167,12 @@ class TaskProcessor:
                         account_followings = counts.get("following")
                         account_followers = counts.get("followers")
                         account_uuid = account_info.get("id", '')
-                        cursor.execute('''update `pinterest_account` set nickname=%s, description=%s, type=%s, create_time=%s, boards=%s, pins=%s, followings=%s, followers=%s, uuid=%s, update_time=%s where id=%s''',
-                                       (user_name, bio, account_type, create_at, boards, pins, account_followings, account_followers, account_uuid, time_now, account_id))
+                        img_url = account_info.get("image", {}).get("60x60", {}).get("url", "")
+                        account_thumbnail = ""
+                        if img_url:
+                            account_thumbnail = self.image_2_base64(img_url, is_thumb=True, size=(60, 60))
+                        cursor.execute('''update `pinterest_account` set nickname=%s, description=%s, type=%s, create_time=%s, boards=%s, pins=%s, followings=%s, followers=%s, uuid=%s, update_time=%s, thumbnail=%s where id=%s''',
+                                       (user_name, bio, account_type, create_at, boards, pins, account_followings, account_followers, account_uuid, time_now, account_id, account_thumbnail))
                         conn.commit()
                     else:
                         logger.warning("get pinterest account info empty! account={}, token={}".format(account_uuid, token))
@@ -219,8 +223,8 @@ class TaskProcessor:
                             cursor.execute(
                                 '''insert into `pinterest_history_data` (`board_uuid`, `board_name`, `board_followers`, 
                                 `board_id`, `pinterest_account_id`, `update_time`, `account_followings`, 
-                                `account_followers`, `account_views`, `pin_likes`, `pin_comments`, `pin_saves`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                                (uuid, name, board_followers, board_id, account_id, time_now, 0, 0, 0, 0, 0, 0))
+                                `account_followers`, `account_views`, `pin_likes`, `pin_comments`, `pin_saves`, `account_name`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                                (uuid, name, board_followers, board_id, account_id, time_now, 0, 0, 0, 0, 0, 0, nickname))
 
                             conn.commit()
                 else:
@@ -737,6 +741,8 @@ class TaskProcessor:
                 image.thumbnail(size)
 
             output_buffer = BytesIO()
+            if "jp" in image_src[-4:]:
+                format = "JPEG"
             image.save(output_buffer, format=format)
             byte_data = output_buffer.getvalue()
             base64_str = base64.b64encode(byte_data)
@@ -756,6 +762,8 @@ class TaskProcessor:
 
 def test():
     tsp = TaskProcessor()
+    # thu = tsp.image_2_base64(image_src="https://i.pinimg.com/60x60_RS/df/5c/53/df5c53facea5fd63d5796334b43f036d.jpg", format="jpeg")
+
     tsp.start_all(rule_interval=60, publish_pin_interval=120, pinterest_update_interval=3800, shopify_update_interval=3800)
 
     time.sleep(723000)
