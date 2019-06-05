@@ -84,8 +84,8 @@ class TaskProcessor:
     def start_all(self, rule_interval=120, publish_pin_interval=240, pinterest_update_interval=3800, shopify_update_interval=3800):
         logger.info("TaskProcessor start all work.")
         self.start_job_analyze_rule_job(rule_interval)
-        self.start_job_update_pinterest_data(pinterest_update_interval)
         self.start_job_publish_pin_job(publish_pin_interval)
+        self.start_job_update_pinterest_data(pinterest_update_interval)
         self.start_job_update_shopify_data(shopify_update_interval)
 
     def stop_all(self):
@@ -461,7 +461,7 @@ class TaskProcessor:
                             logger.warning("this product have no store view id, product id={}, store id={}".format(pro_id, store_id))
                             continue
 
-                        pro_uuid = "google" # 测试
+                        # pro_uuid = "google" # 测试
                         ga_data = gapi.get_report(key_words=pro_uuid, start_time="1daysAgo", end_time="today")
                         time_now = datetime.datetime.now()
                         if ga_data.get("code", 0) == 1:
