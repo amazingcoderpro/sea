@@ -604,7 +604,7 @@ def pins_period(new_queryset, old_queryset):
                 "pin_uri": pin_obj.pin_uuid,
                 "SKU": pin_obj.product.sku,
                 "image": pin_obj.pin_thumbnail,
-                "pin_date": pin_obj.pin.publish_time.strftime("%Y-%m-%d %H:%M:%S"),
+                "pin_date": pin_obj.pin.publish_time.strftime("%Y-%m-%d %H:%M:%S") if pin_obj.pin else "no pin date",
                 "saves": pin_obj.pin_saves,
                 "increment": pin_obj.pin_saves - old_saves
             }
