@@ -448,6 +448,9 @@ def account_overview_chart(pin_set_list, product_set_list, request, reslut_num=N
     # 按天循环时间范围内，获取当天数据
     start_time = request.GET.get("start_time", datetime.datetime.now() + datetime.timedelta(days=-7))
     end_time = request.GET.get("end_time", datetime.datetime.now())
+    if reslut_num is not None:
+        start_time = datetime.datetime.now() + datetime.timedelta(days=-2)
+        end_time = datetime.datetime.now()
     if isinstance(start_time, str):
         start_time = datetime.datetime(*map(int, start_time.split('-')))
     if isinstance(end_time, str):
