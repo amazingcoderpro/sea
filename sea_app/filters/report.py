@@ -123,6 +123,7 @@ class AccountListFilter(BaseFilterBackend):
                 group_dict[today.pinterest_account_id] = {
                     "account_uri": today.pinterest_account.account,
                     "account_name": today.pinterest_account.nickname,
+                    "account_thumbnail": today.pinterest_account.thumbnail,
                     "account_email": today.pinterest_account.email,
                     "account_description": today.pinterest_account.description,
                     "account_create_time": today.pinterest_account.create_time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -149,6 +150,7 @@ class AccountListFilter(BaseFilterBackend):
             group_dict[account_id] = {
                 "account_uri": account_obj.account,
                 "account_name": account_obj.nickname,
+                "account_thumbnail": account_obj.thumbnail,
                 "account_email": account_obj.email,
                 "account_description": account_obj.description,
                 "account_create_time": account_obj.create_time.strftime("%Y-%m-%d %H:%M:%S"),
