@@ -14,9 +14,15 @@ def get_request_params(request):
     start_time = request.GET.get("start_time", datetime.datetime.now() + datetime.timedelta(days=-7))
     end_time = request.GET.get("end_time", datetime.datetime.now())
     if isinstance(start_time, str):
-        start_time = datetime.datetime(*map(int, start_time.split('-')))
+        try:
+            start_time = datetime.datetime(*map(int, start_time.split('-')))
+        except:
+            start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
     if isinstance(end_time, str):
-        end_time = datetime.datetime(*map(int, end_time.split('-')))
+        try:
+            end_time = datetime.datetime(*map(int, end_time.split('-')))
+        except:
+            end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
     pinterest_account_id = request.GET.get("pinterest_account_id")
     board_id = request.GET.get("board_id")
     pin_id = request.GET.get("pin_id")
@@ -152,9 +158,15 @@ def subaccount_report_view(request, type):
     start_time = request.GET.get("start_time", datetime.datetime.now() + datetime.timedelta(days=-7))
     end_time = request.GET.get("end_time", datetime.datetime.now())
     if isinstance(start_time, str):
-        start_time = datetime.datetime(*map(int, start_time.split('-')))
+        try:
+            start_time = datetime.datetime(*map(int, start_time.split('-')))
+        except:
+            start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
     if isinstance(end_time, str):
-        end_time = datetime.datetime(*map(int, end_time.split('-')))
+        try:
+            end_time = datetime.datetime(*map(int, end_time.split('-')))
+        except:
+            end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
 
     while end_time >= start_time:
         pin_set_list_result = pin_set_list.filter(
@@ -449,9 +461,15 @@ def account_overview_chart(pin_set_list, product_set_list, request, reslut_num=N
         start_time = datetime.datetime.now() + datetime.timedelta(days=-2)
         end_time = datetime.datetime.now()
     if isinstance(start_time, str):
-        start_time = datetime.datetime(*map(int, start_time.split('-')))
+        try:
+            start_time = datetime.datetime(*map(int, start_time.split('-')))
+        except:
+            start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
     if isinstance(end_time, str):
-        end_time = datetime.datetime(*map(int, end_time.split('-')))
+        try:
+            end_time = datetime.datetime(*map(int, end_time.split('-')))
+        except:
+            end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
     time_list = time_range_list(start_time, end_time)
     overview_list = []
     for day in time_list[::-1]:
@@ -586,7 +604,7 @@ def pins_period(new_queryset, old_queryset):
                 "pin_uri": pin_obj.pin_uuid,
                 "SKU": pin_obj.product.sku,
                 "image": pin_obj.pin_thumbnail,
-                "pin_date": pin_obj.pin.publish_time.strftime("%Y-%m-%d %H:%M:%S"),
+                "pin_date": pin_obj.pin.publish_time.strftime("%Y-%m-%d %H:%M:%S") if pin_obj.pin else "no pin date",
                 "saves": pin_obj.pin_saves,
                 "increment": pin_obj.pin_saves - old_saves
             }
@@ -700,9 +718,15 @@ def operation_record(request, result_num=None):
     start_time = request.GET.get("start_time", datetime.datetime.now() + datetime.timedelta(days=-7))
     end_time = request.GET.get("end_time", datetime.datetime.now())
     if isinstance(start_time, str):
-        start_time = datetime.datetime(*map(int, start_time.split('-')))
+        try:
+            start_time = datetime.datetime(*map(int, start_time.split('-')))
+        except:
+            start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
     if isinstance(end_time, str):
-        end_time = datetime.datetime(*map(int, end_time.split('-')))
+        try:
+            end_time = datetime.datetime(*map(int, end_time.split('-')))
+        except:
+            end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
     # username_id = request.GET.get("user_id")  # 必传
     # 获取当前用户及下属用户的所有操作记录
     # if username_id:
