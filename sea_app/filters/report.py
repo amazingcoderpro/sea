@@ -260,7 +260,7 @@ class PinListFilter(BaseFilterBackend):
         pin_id_list = []
         query_str = request.query_params.dict().get("query_str")
         if query_str:
-            pin_set = models.Pin.objects.filter(Q(uuid=query_str) | Q(product__sku=query_str), Q(board_id=board_id))
+            pin_set = models.Pin.objects.filter(Q(note=query_str) | Q(product__sku=query_str), Q(board_id=board_id))
         else:
             pin_set = models.Pin.objects.filter(board_id=board_id)
         for pin in pin_set:
@@ -289,6 +289,8 @@ class PinListFilter(BaseFilterBackend):
             p_info["comments_increment"] = p_info["comments"] - yesterday_comment
             p_info["under_board_id"] = board_id
             p_info["under_account_id"] = account_id
+            p_info["under_board_name"] = models.Board.objects.get(pk=board_id).name
+            p_info["under_account_name"] = models.PinterestAccount.objects.get(pk=account_id).nickname
         # 获取pin数据
         pins_list = []
         for p_index, p in enumerate(today_group_dict.items()):

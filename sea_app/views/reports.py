@@ -47,7 +47,7 @@ def get_common_data(request):
     pin_set_list = models.PinterestHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)),
                                                               Q(pinterest_account_id__in=account_id_list))
     if search_word:
-        # 查询pin_uri or board_uri or pin_description or board_name
+        # 查询pin_uuid or board_uuid or pin_note or board_name
         pin_set_list = pin_set_list.filter(
             Q(pin_uuid=search_word) | Q(pin_note__icontains=search_word) | Q(board_uuid=search_word) | Q(
                 board_name=search_word))
@@ -69,13 +69,15 @@ def get_common_data(request):
 
 
 def daily_report(pin_set_list, product_set_list):
-    # 组装每日pin数据
+    # 组装每日最新pin数据
     data_list = []
     group_dict = {}
     for item in pin_set_list:
         date = item.update_time.date()
         if date not in group_dict:
+            latest_time = item.update_time
             group_dict[date] = {
+                "accounts": [item.pinterest_account_id, ],  # account数
                 "account_followings": item.account_followings,
                 "account_followers": item.account_followers,
                 "account_views": item.account_views,
@@ -93,6 +95,10 @@ def daily_report(pin_set_list, product_set_list):
                 "products": [] if not item.product_id else [item.product_id],  # product
             }
         else:
+            # 需要区分是当天最新的其它数据，还是当天其他时间的数据,每次数据时间间隔要大于20分钟
+            if (latest_time - item.update_time) > datetime.timedelta(minutes=20):
+                continue
+            group_dict[date]["accounts"].append(item.pinterest_account_id)
             group_dict[date]["account_followings"] += item.account_followings
             group_dict[date]["account_followers"] += item.account_followers
             group_dict[date]["boards"].append(item.board_id)
@@ -107,6 +113,7 @@ def daily_report(pin_set_list, product_set_list):
     for day, info in group_dict.items():
         data = {
             "date": day.strftime("%Y-%m-%d"),
+            "accounts": len(set(filter(lambda x: x, info["accounts"]))),  # account数
             "account_followings": info["account_followings"],
             "account_followers": info["account_followers"],
             "account_views": info["account_views"],
@@ -133,8 +140,14 @@ def daily_report(pin_set_list, product_set_list):
         # else:
         #     data["store_visitors"] = 0
         #     data["store_new_visitors"] = 0
-        product_list = product_set_list_pre.filter(Q(product_id__in=info["products"]))
+        p_list = list(set(filter(lambda x: x, info["accounts"])))
+        product_list = product_set_list_pre.filter(Q(product_id__in=p_list))
+        has_data_p_list = []
         for item in product_list:
+            # 只能叠加当天最新一次拉取的数据
+            if item.product_id in has_data_p_list:
+                continue
+            has_data_p_list.append(item.product_id)
             data["product_sales"] += item.product_sales
             data["product_revenue"] += item.product_revenue
             data["product_visitors"] = item.product_visitors
