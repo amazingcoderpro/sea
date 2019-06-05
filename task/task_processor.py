@@ -718,7 +718,7 @@ class TaskProcessor:
 
         return True
 
-    def image_2_thumbnail(self, image_src, image_thumb, size=(100, 100)):
+    def image_2_thumbnail(self, image_src, image_thumb, size=(70, 70)):
         if not os.path.exists(image_src):
             response = requests.get(image_src)
             image = Image.open(BytesIO(response.content))
@@ -728,7 +728,7 @@ class TaskProcessor:
         image.thumbnail(size).save(image_thumb)
         return True
 
-    def image_2_base64(self, image_src, is_thumb=True, size=(100, 100), format='png'):
+    def image_2_base64(self, image_src, is_thumb=True, size=(70, 70), format='png'):
         try:
             base64_str = ""
             if not os.path.exists(image_src):
@@ -766,9 +766,8 @@ def test():
 
     tsp.start_all(rule_interval=60, publish_pin_interval=120, pinterest_update_interval=3800, shopify_update_interval=3800)
 
-    time.sleep(723000)
-    tsp.stop_all()
-    time.sleep(20)
+    while 1:
+        time.sleep(1)
 
 
 def main():
@@ -779,5 +778,5 @@ def main():
 
 
 if __name__ == '__main__':
-    test()
-    # main()
+    # test()
+    main()
