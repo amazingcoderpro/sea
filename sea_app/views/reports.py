@@ -158,9 +158,15 @@ def subaccount_report_view(request, type):
     start_time = request.GET.get("start_time", datetime.datetime.now() + datetime.timedelta(days=-7))
     end_time = request.GET.get("end_time", datetime.datetime.now())
     if isinstance(start_time, str):
-        start_time = datetime.datetime(*map(int, start_time.split('-')))
+        try:
+            start_time = datetime.datetime(*map(int, start_time.split('-')))
+        except:
+            start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
     if isinstance(end_time, str):
-        end_time = datetime.datetime(*map(int, end_time.split('-')))
+        try:
+            end_time = datetime.datetime(*map(int, end_time.split('-')))
+        except:
+            end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
 
     while end_time >= start_time:
         pin_set_list_result = pin_set_list.filter(
