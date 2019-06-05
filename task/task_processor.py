@@ -18,7 +18,8 @@ import requests
 from sdk.pinterest.pinterest_api import PinterestApi
 from sdk.shopify.get_shopify_products import ProductsApi
 from sdk.googleanalytics.google_oauth_info import GoogleApi
-from config import SHOPIFY_CONFIG
+from ./config import SHOPIFY_CONFIG
+
 
 class DBUtil:
     def __init__(self, host="47.112.113.252", port=3306, db="sea", user="sea", password="sea@orderplus.com"):
