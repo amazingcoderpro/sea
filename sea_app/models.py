@@ -133,7 +133,7 @@ class Product(models.Model):
     uuid = models.CharField(max_length=64, verbose_name="产品唯一标识", unique=True)
     name = models.CharField(max_length=255, verbose_name="产品名称")
     image_url = models.CharField(max_length=255, verbose_name="图片URL")
-    thumbnail = models.TextField(verbose_name="缩略图", default="")
+    thumbnail = models.TextField(verbose_name="缩略图", blank=True, null=True, default=None)
     price = models.CharField(max_length=255, verbose_name="产品价格")
     category = models.ForeignKey(ProductCategory, on_delete=models.DO_NOTHING, blank=True, null=True)
     tag = models.CharField(max_length=255, verbose_name="所属标签")
@@ -156,7 +156,7 @@ class PinterestAccountManager(models.Manager):
 
 class PinterestAccount(models.Model):
     """Pin账户表"""
-    account = models.CharField(max_length=64, unique=True, verbose_name="PinterestAccount唯一标识码")
+    account = models.CharField(max_length=64, verbose_name="PinterestAccount唯一标识码")
     nickname = models.CharField( blank=True, null=True, max_length=64, verbose_name="账户名称")
     email = models.CharField(blank=True, null=True, max_length=255, verbose_name="登陆邮箱")
     type_choices = ((0, 'individual'), (1, 'business'))
@@ -177,11 +177,13 @@ class PinterestAccount(models.Model):
     followings = models.IntegerField(default=0, verbose_name="账户关注量")
     followers = models.IntegerField(default=0, verbose_name="账户粉丝")
     uuid = models.CharField(blank=True, null=True, max_length=64, verbose_name="账户的uuid")
+    thumbnail = models.TextField(verbose_name="缩略图", default=None, blank=True, null=True)
 
     objects = PinterestAccountManager()
 
     class Meta:
         # managed = False
+        unique_together = ("email", "user")
         db_table = 'pinterest_account'
         ordering = ["-id"]
 
@@ -219,7 +221,7 @@ class Pin(models.Model):
     url = models.URLField(max_length=255, blank=True, null=True, verbose_name="Pin URL")
     note = models.TextField(verbose_name="Pin 描述")
     origin_link = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
-    thumbnail = models.TextField(verbose_name="缩略图")
+    thumbnail = models.TextField(verbose_name="缩略图", blank=True, null=True, default=None)
     publish_time = models.DateTimeField(auto_now_add=True, verbose_name="发布时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     board = models.ForeignKey(Board, on_delete=models.DO_NOTHING, blank=True, null=True)
@@ -248,7 +250,7 @@ class PinterestHistoryData(models.Model):
     pin = models.ForeignKey(Pin, on_delete=models.DO_NOTHING, blank=True, null=True)
     pin_uuid = models.CharField(max_length=64, blank=True, null=True, verbose_name="Pin唯一标识码")
     pin_note = models.TextField(blank=True, null=True, verbose_name="Pin 描述")
-    pin_thumbnail = models.TextField(blank=True, null=True, verbose_name="缩略图")
+    pin_thumbnail = models.TextField(blank=True, null=True, default=None, verbose_name="缩略图")
     pin_likes = models.IntegerField(default=0, verbose_name="喜欢量, pinteres平台已经没有了, 暂时保留")
     pin_comments = models.IntegerField(default=0, verbose_name="评论量")
     pin_saves = models.IntegerField(default=0, verbose_name="转发量")

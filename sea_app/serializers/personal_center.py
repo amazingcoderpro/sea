@@ -142,34 +142,34 @@ class UserOperSerializer(serializers.ModelSerializer):
     #     return attrs
 
 
-class SetPasswordSerializer(serializers.ModelSerializer):
-    """用户删 改 查"""
-    password2 = serializers.CharField(write_only=True)
-
-    class Meta:
-        model = models.User
-        fields = ("id", "username", "password", "password2", "email")
-        extra_kwargs = {
-            # 'username': { 'read_only': True},
-            'password': {'write_only': True, 'read_only': False},
-            'email': {'write_only': False, 'read_only': True},
-        }
-
-    def validate(self, attrs):
-        if not attrs["password"] == attrs["password2"]:
-            raise serializers.ValidationError("Two passwords are inconsistent, please re-enter")
-        del attrs["password2"]
-        return attrs
-
-    def update(self, instance, validated_data):
-        if instance.password:
-            raise serializers.ValidationError("User has set password")
-        if instance.username != validated_data["username"]:
-            raise serializers.ValidationError("username is incorrect")
-        user = super(SetPasswordSerializer, self).update(instance, validated_data=validated_data)
-        user.set_password(validated_data["password"])
-        user.save()
-        return instance
+# class SetPasswordSerializer(serializers.ModelSerializer):
+#     """用户删 改 查"""
+#     password2 = serializers.CharField(write_only=True)
+#
+#     class Meta:
+#         model = models.User
+#         fields = ("id", "username", "password", "password2", "email")
+#         extra_kwargs = {
+#             # 'username': { 'read_only': True},
+#             'password': {'write_only': True, 'read_only': False},
+#             'email': {'write_only': False, 'read_only': True},
+#         }
+#
+#     def validate(self, attrs):
+#         if not attrs["password"] == attrs["password2"]:
+#             raise serializers.ValidationError("Two passwords are inconsistent, please re-enter")
+#         del attrs["password2"]
+#         return attrs
+#
+#     def update(self, instance, validated_data):
+#         if instance.password:
+#             raise serializers.ValidationError("User has set password")
+#         if instance.username != validated_data["username"]:
+#             raise serializers.ValidationError("username is incorrect")
+#         user = super(SetPasswordSerializer, self).update(instance, validated_data=validated_data)
+#         user.set_password(validated_data["password"])
+#         user.save()
+#         return instance
 
 
 class SetPasswordsSerializer(serializers.ModelSerializer):

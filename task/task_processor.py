@@ -20,6 +20,7 @@ from sdk.shopify.get_shopify_products import ProductsApi
 from sdk.googleanalytics.google_oauth_info import GoogleApi
 from config import SHOPIFY_CONFIG
 
+
 class DBUtil:
     def __init__(self, host="47.112.113.252", port=3306, db="sea", user="sea", password="sea@orderplus.com"):
         self.conn_pool = {}
@@ -84,8 +85,8 @@ class TaskProcessor:
     def start_all(self, rule_interval=120, publish_pin_interval=240, pinterest_update_interval=3800, shopify_update_interval=3800):
         logger.info("TaskProcessor start all work.")
         self.start_job_analyze_rule_job(rule_interval)
-        self.start_job_update_pinterest_data(pinterest_update_interval)
         self.start_job_publish_pin_job(publish_pin_interval)
+        self.start_job_update_pinterest_data(pinterest_update_interval)
         self.start_job_update_shopify_data(shopify_update_interval)
 
     def stop_all(self):
@@ -101,7 +102,7 @@ class TaskProcessor:
         logger.info("TaskProcessor resume.")
         self.bk_scheduler.resume()
 
-    def update_pinterest_data(self):
+    def update_pinterest_data(self, specific_account_id=-1):
         """
         拉取所有pinteres 正常账号下的所有board, 并增量式的插入数据库，有则更新，无则插入
         :return:
@@ -113,37 +114,47 @@ class TaskProcessor:
                 return False
 
             # 拉取所有正常状态的账号
-            authorized = 1
-            account_state = 0
-            cursor.execute('''
-                    select id, token, account from `pinterest_account` where state=%s and authorized=%s
-                    ''', (account_state, authorized))
-            accounts = cursor.fetchall()
-            if not accounts:
-                logger.info("accounts is empty!")
-                return True
+            if specific_account_id >= 0:
+                cursor.execute('''
+                        select id, token, account, nickname from `pinterest_account` where id=%s''', (specific_account_id))
+                accounts = cursor.fetchall()
+                if not accounts:
+                    logger.info("accounts is empty!")
+                    return False
+            else:
+                authorized = 1
+                account_state = 0
+                cursor.execute('''
+                        select id, token, account, nickname from `pinterest_account` where state=%s and authorized=%s
+                        ''', (account_state, authorized))
+                accounts = cursor.fetchall()
+                if not accounts:
+                    logger.info("accounts is empty!")
+                    return True
 
             # 拿到所有已经存在的board
             cursor.execute('''
-                    select id, uuid from `board` where id>=0''')
+                    select id, uuid, pinterest_account_id from `board` where id>=0''')
             exist_boards = cursor.fetchall()
             exist_boards_dict = {}
             if exist_boards:
                 for exb in exist_boards:
-                    exist_boards_dict[exb[1]] = exb[0]
+                    exist_boards_dict[exb[1]] = "{}/{}".format(exb[0], exb[2])
 
             cursor.execute('''
-                    select id, uuid from `pin` where id>=0''')
+                    select id, uuid, board_id from `pin` where id>=0''')
             exist_pins = cursor.fetchall()
             exist_pins_dict = {}
             if exist_pins:
                 for exp in exist_pins:
-                    exist_pins_dict[exp[1]] = exp[0]
+                    exist_pins_dict[exp[1]] = "{}/{}".format(exp[0], exp[2])
 
             for account in accounts:
-                account_id, token, account_uuid = account
+                account_id, token, account_uuid, nickname = account
                 if not token:
                     logger.warning("pinterest account token is None, account={}".format(account_uuid))
+                    if specific_account_id > 0:
+                        return False
                     continue
 
                 logger.info("start update pinterest account={} infomations".format(account_uuid))
@@ -167,13 +178,24 @@ class TaskProcessor:
                         account_followings = counts.get("following")
                         account_followers = counts.get("followers")
                         account_uuid = account_info.get("id", '')
-                        cursor.execute('''update `pinterest_account` set nickname=%s, description=%s, type=%s, create_time=%s, boards=%s, pins=%s, followings=%s, followers=%s, uuid=%s, update_time=%s where id=%s''',
-                                       (user_name, bio, account_type, create_at, boards, pins, account_followings, account_followers, account_uuid, time_now, account_id))
+                        img_url = account_info.get("image", {}).get("60x60", {}).get("url", "")
+                        account_thumbnail = ""
+                        if img_url:
+                            account_thumbnail = self.image_2_base64(img_url, is_thumb=True, size=(60, 60))
+                        cursor.execute('''update `pinterest_account` set nickname=%s, description=%s, type=%s, create_time=%s, boards=%s, pins=%s, followings=%s, followers=%s, uuid=%s, update_time=%s, thumbnail=%s where id=%s''',
+                                       (user_name, bio, account_type, create_at, boards, pins, account_followings, account_followers, account_uuid, time_now, account_thumbnail, account_id))
                         conn.commit()
                     else:
                         logger.warning("get pinterest account info empty! account={}, token={}".format(account_uuid, token))
                 else:
                     logger.error("get user info failed, account={}, token={}, ret={}".format(account_uuid, token, ret))
+                    # 如果是授权失败，后面的不用执行了
+                    err_msg = ret.get("msg", "")
+                    if "Authentication failed" in err_msg or 'Authorization failed.' in err_msg:
+                        logger.error("get user info failed, because {}".format(err_msg))
+                        if specific_account_id > 0:
+                            return False
+                        continue
 
                 # 获取该账号下的所有board,并刷新数据库
                 ret = p_api.get_user_boards()
@@ -201,9 +223,9 @@ class TaskProcessor:
                             board_pins = counts.get("pins", 0)
                             board_collaborators = counts.get("collaborators", 0)
                             board_followers = counts.get("followers", 0)
-                            # 如果board　uuid 已经存在，则进行更新即可
-                            if uuid in exist_boards_dict.keys():
-                                board_id = exist_boards_dict[uuid]
+                            # 如果board　uuid 已经存在，且属于同一个账号，　则进行更新即可
+                            if uuid in exist_boards_dict.keys() and account_id == int(exist_boards_dict[uuid].split("/")[1]):
+                                board_id = int(exist_boards_dict[uuid].split("/")[0])
                                 cursor.execute(
                                     '''update `board` set name=%s, description=%s, state=%s, update_time=%s, pins=%s, followers=%s, collaborators=%s where id=%s''',
                                     (name, description, state, update_time, board_pins, board_followers,
@@ -219,8 +241,8 @@ class TaskProcessor:
                             cursor.execute(
                                 '''insert into `pinterest_history_data` (`board_uuid`, `board_name`, `board_followers`, 
                                 `board_id`, `pinterest_account_id`, `update_time`, `account_followings`, 
-                                `account_followers`, `account_views`, `pin_likes`, `pin_comments`, `pin_saves`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                                (uuid, name, board_followers, board_id, account_id, time_now, 0, 0, 0, 0, 0, 0))
+                                `account_followers`, `account_views`, `pin_likes`, `pin_comments`, `pin_saves`, `account_name`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                                (uuid, name, board_followers, board_id, account_id, time_now, 0, 0, 0, 0, 0, 0, nickname))
 
                             conn.commit()
                 else:
@@ -265,18 +287,19 @@ class TaskProcessor:
                             pin_views = 0
                             pin_clicks = 0
 
-                            # 如果pin　uuid 已经存在，则进行更新即可
-                            if uuid in exist_pins_dict.keys():
+                            # 如果pin　uuid 已经存在,且属于同一个board，则进行更新即可
+                            if uuid in exist_pins_dict.keys() and board_id == int(exist_pins_dict[uuid].split("/")[1]):
                                 # , saves = % s, comments = % s
-                                pin_id = exist_pins_dict[uuid]
+                                pin_id = int(exist_pins_dict[uuid].split("/")[0])
                                 cursor.execute(
                                     '''update `pin` set note=%s, update_time=%s, saves=%s, comments=%s, likes=%s where id=%s''',
                                     (note, update_time, pin_saves, pin_comments, pin_likes, pin_id))
                                 conn.commit()
-                            elif uuid in pin_uuids:
-                                # 测试发现，pinterest可能会给出重复数据
-                                continue
                             else:
+                                if uuid in pin_uuids:
+                                    # 测试发现，pinterest可能会给出重复数据,如果这一把已经更新过，则不再更新
+                                    continue
+
                                 board_id = None
                                 product_id = None
                                 # 通过uuid找到对应的board
@@ -286,7 +309,7 @@ class TaskProcessor:
                                     board_id = board[0]
 
                                 # 通过pin背后的链接，找到他对应的产品
-                                cursor.execute("select id from `product` where url=%s", original_link)
+                                cursor.execute("select id from `product` where url_with_utm=%s", original_link)
                                 product = cursor.fetchone()
                                 product_id = -1
                                 if product:
@@ -396,10 +419,11 @@ class TaskProcessor:
                                     shop_country_name, shop_city, datetime.datetime.strptime(created_at[0:-6], "%Y-%m-%dT%H:%M:%S"),
                                     datetime.datetime.strptime(updated_at[0:-6], "%Y-%m-%dT%H:%M:%S"), shop_currency, store_id))
                     conn.commit()
+                else:
+                    logger.warning("get shop info failed. ret={}".format(ret))
 
                 # 获取店铺里的所有产品
-                gapi = GoogleApi(view_id=store_view_id, json_path=os.path.join(os.path.dirname(sys.path[0]),
-                                                                               "sdk//googleanalytics//client_secrets.json"))
+                gapi = GoogleApi(view_id=store_view_id, json_path=os.path.join(os.path.dirname(sys.path[0]), "sdk//googleanalytics//client_secrets.json"))
                 ret = papi.get_all_products()
                 if ret["code"] == 1:
                     time_now = datetime.datetime.now()
@@ -438,7 +462,7 @@ class TaskProcessor:
                             logger.warning("this product have no store view id, product id={}, store id={}".format(pro_id, store_id))
                             continue
 
-                        pro_uuid = "google" # 测试
+                        # pro_uuid = "google" # 测试
                         ga_data = gapi.get_report(key_words=pro_uuid, start_time="1daysAgo", end_time="today")
                         time_now = datetime.datetime.now()
                         if ga_data.get("code", 0) == 1:
@@ -455,6 +479,8 @@ class TaskProcessor:
 
                         conn.commit()
                     return True
+                else:
+                    logger.warning("get shop products failed. ret={}".format(ret))
 
         except Exception as e:
             logger.exception("get_products e={}".format(e))
@@ -711,7 +737,7 @@ class TaskProcessor:
 
         return True
 
-    def image_2_thumbnail(self, image_src, image_thumb, size=(100, 100)):
+    def image_2_thumbnail(self, image_src, image_thumb, size=(70, 70)):
         if not os.path.exists(image_src):
             response = requests.get(image_src)
             image = Image.open(BytesIO(response.content))
@@ -721,7 +747,7 @@ class TaskProcessor:
         image.thumbnail(size).save(image_thumb)
         return True
 
-    def image_2_base64(self, image_src, is_thumb=True, size=(100, 100), format='png'):
+    def image_2_base64(self, image_src, is_thumb=True, size=(70, 70), format='png'):
         try:
             base64_str = ""
             if not os.path.exists(image_src):
@@ -734,6 +760,8 @@ class TaskProcessor:
                 image.thumbnail(size)
 
             output_buffer = BytesIO()
+            if "jp" in image_src[-4:]:
+                format = "JPEG"
             image.save(output_buffer, format=format)
             byte_data = output_buffer.getvalue()
             base64_str = base64.b64encode(byte_data)
@@ -753,16 +781,17 @@ class TaskProcessor:
 
 def test():
     tsp = TaskProcessor()
+    # thu = tsp.image_2_base64(image_src="https://i.pinimg.com/60x60_RS/df/5c/53/df5c53facea5fd63d5796334b43f036d.jpg", format="jpeg")
+
     tsp.start_all(rule_interval=60, publish_pin_interval=120, pinterest_update_interval=3800, shopify_update_interval=3800)
 
-    time.sleep(72300)
-    tsp.stop_all()
-    time.sleep(20)
+    while 1:
+        time.sleep(1)
 
 
 def main():
     tsp = TaskProcessor()
-    tsp.start_all(rule_interval=120, publish_pin_interval=240, pinterest_update_interval=86400, shopify_update_interval=86400)
+    tsp.start_all(rule_interval=120, publish_pin_interval=240, pinterest_update_interval=3800, shopify_update_interval=3800)
     while 1:
         time.sleep(1)
 

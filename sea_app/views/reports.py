@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 # Created by: Leemon7
 # Created on: 2019/5/17
-import json
-import time
 
 from django.db.models import Q
-from rest_framework.response import Response
 
 import datetime
 
@@ -17,9 +14,15 @@ def get_request_params(request):
     start_time = request.GET.get("start_time", datetime.datetime.now() + datetime.timedelta(days=-7))
     end_time = request.GET.get("end_time", datetime.datetime.now())
     if isinstance(start_time, str):
-        start_time = datetime.datetime(*map(int, start_time.split('-')))
+        try:
+            start_time = datetime.datetime(*map(int, start_time.split('-')))
+        except:
+            start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
     if isinstance(end_time, str):
-        end_time = datetime.datetime(*map(int, end_time.split('-')))
+        try:
+            end_time = datetime.datetime(*map(int, end_time.split('-')))
+        except:
+            end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
     pinterest_account_id = request.GET.get("pinterest_account_id")
     board_id = request.GET.get("board_id")
     pin_id = request.GET.get("pin_id")
@@ -44,7 +47,7 @@ def get_common_data(request):
     pin_set_list = models.PinterestHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)),
                                                               Q(pinterest_account_id__in=account_id_list))
     if search_word:
-        # 查询pin_uri or board_uri or pin_description or board_name
+        # 查询pin_uuid or board_uuid or pin_note or board_name
         pin_set_list = pin_set_list.filter(
             Q(pin_uuid=search_word) | Q(pin_note__icontains=search_word) | Q(board_uuid=search_word) | Q(
                 board_name=search_word))
@@ -66,13 +69,15 @@ def get_common_data(request):
 
 
 def daily_report(pin_set_list, product_set_list):
-    # 组装每日pin数据
+    # 组装每日最新pin数据
     data_list = []
     group_dict = {}
     for item in pin_set_list:
         date = item.update_time.date()
         if date not in group_dict:
+            latest_time = item.update_time
             group_dict[date] = {
+                "accounts": [item.pinterest_account_id, ],  # account数
                 "account_followings": item.account_followings,
                 "account_followers": item.account_followers,
                 "account_views": item.account_views,
@@ -90,6 +95,10 @@ def daily_report(pin_set_list, product_set_list):
                 "products": [] if not item.product_id else [item.product_id],  # product
             }
         else:
+            # 需要区分是当天最新的其它数据，还是当天其他时间的数据,每次数据时间间隔要大于20分钟
+            if (latest_time - item.update_time) > datetime.timedelta(minutes=20):
+                continue
+            group_dict[date]["accounts"].append(item.pinterest_account_id)
             group_dict[date]["account_followings"] += item.account_followings
             group_dict[date]["account_followers"] += item.account_followers
             group_dict[date]["boards"].append(item.board_id)
@@ -104,6 +113,7 @@ def daily_report(pin_set_list, product_set_list):
     for day, info in group_dict.items():
         data = {
             "date": day.strftime("%Y-%m-%d"),
+            "accounts": len(set(filter(lambda x: x, info["accounts"]))),  # account数
             "account_followings": info["account_followings"],
             "account_followers": info["account_followers"],
             "account_views": info["account_views"],
@@ -130,8 +140,14 @@ def daily_report(pin_set_list, product_set_list):
         # else:
         #     data["store_visitors"] = 0
         #     data["store_new_visitors"] = 0
-        product_list = product_set_list_pre.filter(Q(product_id__in=info["products"]))
+        p_list = list(set(filter(lambda x: x, info["accounts"])))
+        product_list = product_set_list_pre.filter(Q(product_id__in=p_list))
+        has_data_p_list = []
         for item in product_list:
+            # 只能叠加当天最新一次拉取的数据
+            if item.product_id in has_data_p_list:
+                continue
+            has_data_p_list.append(item.product_id)
             data["product_sales"] += item.product_sales
             data["product_revenue"] += item.product_revenue
             data["product_visitors"] = item.product_visitors
@@ -155,9 +171,15 @@ def subaccount_report_view(request, type):
     start_time = request.GET.get("start_time", datetime.datetime.now() + datetime.timedelta(days=-7))
     end_time = request.GET.get("end_time", datetime.datetime.now())
     if isinstance(start_time, str):
-        start_time = datetime.datetime(*map(int, start_time.split('-')))
+        try:
+            start_time = datetime.datetime(*map(int, start_time.split('-')))
+        except:
+            start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
     if isinstance(end_time, str):
-        end_time = datetime.datetime(*map(int, end_time.split('-')))
+        try:
+            end_time = datetime.datetime(*map(int, end_time.split('-')))
+        except:
+            end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
 
     while end_time >= start_time:
         pin_set_list_result = pin_set_list.filter(
@@ -448,10 +470,19 @@ def account_overview_chart(pin_set_list, product_set_list, request, reslut_num=N
     # 按天循环时间范围内，获取当天数据
     start_time = request.GET.get("start_time", datetime.datetime.now() + datetime.timedelta(days=-7))
     end_time = request.GET.get("end_time", datetime.datetime.now())
+    if reslut_num is not None:
+        start_time = datetime.datetime.now() + datetime.timedelta(days=-2)
+        end_time = datetime.datetime.now()
     if isinstance(start_time, str):
-        start_time = datetime.datetime(*map(int, start_time.split('-')))
+        try:
+            start_time = datetime.datetime(*map(int, start_time.split('-')))
+        except:
+            start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
     if isinstance(end_time, str):
-        end_time = datetime.datetime(*map(int, end_time.split('-')))
+        try:
+            end_time = datetime.datetime(*map(int, end_time.split('-')))
+        except:
+            end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
     time_list = time_range_list(start_time, end_time)
     overview_list = []
     for day in time_list[::-1]:
@@ -460,7 +491,7 @@ def account_overview_chart(pin_set_list, product_set_list, request, reslut_num=N
         overview_list.append(day_count)
         if reslut_num and len(overview_list) >= reslut_num:
             break
-    return overview_list
+    return tuple(overview_list)
 
 
 def account_overview_table(overview_list):
@@ -586,7 +617,7 @@ def pins_period(new_queryset, old_queryset):
                 "pin_uri": pin_obj.pin_uuid,
                 "SKU": pin_obj.product.sku,
                 "image": pin_obj.pin_thumbnail,
-                "pin_date": pin_obj.pin.publish_time.strftime("%Y-%m-%d %H:%M:%S"),
+                "pin_date": pin_obj.pin.publish_time.strftime("%Y-%m-%d %H:%M:%S") if pin_obj.pin else "no pin date",
                 "saves": pin_obj.pin_saves,
                 "increment": pin_obj.pin_saves - old_saves
             }
@@ -700,9 +731,15 @@ def operation_record(request, result_num=None):
     start_time = request.GET.get("start_time", datetime.datetime.now() + datetime.timedelta(days=-7))
     end_time = request.GET.get("end_time", datetime.datetime.now())
     if isinstance(start_time, str):
-        start_time = datetime.datetime(*map(int, start_time.split('-')))
+        try:
+            start_time = datetime.datetime(*map(int, start_time.split('-')))
+        except:
+            start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
     if isinstance(end_time, str):
-        end_time = datetime.datetime(*map(int, end_time.split('-')))
+        try:
+            end_time = datetime.datetime(*map(int, end_time.split('-')))
+        except:
+            end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
     # username_id = request.GET.get("user_id")  # 必传
     # 获取当前用户及下属用户的所有操作记录
     # if username_id:
