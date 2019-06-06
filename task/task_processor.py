@@ -18,7 +18,7 @@ import requests
 from sdk.pinterest.pinterest_api import PinterestApi
 from sdk.shopify.get_shopify_products import ProductsApi
 from sdk.googleanalytics.google_oauth_info import GoogleApi
-from ./config import SHOPIFY_CONFIG
+from config import SHOPIFY_CONFIG
 
 
 class DBUtil:
@@ -134,20 +134,20 @@ class TaskProcessor:
 
             # 拿到所有已经存在的board
             cursor.execute('''
-                    select id, uuid from `board` where id>=0''')
+                    select id, uuid, pinterest_account_id from `board` where id>=0''')
             exist_boards = cursor.fetchall()
             exist_boards_dict = {}
             if exist_boards:
                 for exb in exist_boards:
-                    exist_boards_dict[exb[1]] = exb[0]
+                    exist_boards_dict[exb[1]] = "{}/{}".format(exb[0], exb[2])
 
             cursor.execute('''
-                    select id, uuid from `pin` where id>=0''')
+                    select id, uuid, board_id from `pin` where id>=0''')
             exist_pins = cursor.fetchall()
             exist_pins_dict = {}
             if exist_pins:
                 for exp in exist_pins:
-                    exist_pins_dict[exp[1]] = exp[0]
+                    exist_pins_dict[exp[1]] = "{}/{}".format(exp[0], exp[2])
 
             for account in accounts:
                 account_id, token, account_uuid, nickname = account
@@ -223,9 +223,9 @@ class TaskProcessor:
                             board_pins = counts.get("pins", 0)
                             board_collaborators = counts.get("collaborators", 0)
                             board_followers = counts.get("followers", 0)
-                            # 如果board　uuid 已经存在，则进行更新即可
-                            if uuid in exist_boards_dict.keys():
-                                board_id = exist_boards_dict[uuid]
+                            # 如果board　uuid 已经存在，且属于同一个账号，　则进行更新即可
+                            if uuid in exist_boards_dict.keys() and account_id == int(exist_boards_dict[uuid].split("/")[1]):
+                                board_id = int(exist_boards_dict[uuid].split("/")[0])
                                 cursor.execute(
                                     '''update `board` set name=%s, description=%s, state=%s, update_time=%s, pins=%s, followers=%s, collaborators=%s where id=%s''',
                                     (name, description, state, update_time, board_pins, board_followers,
@@ -287,73 +287,73 @@ class TaskProcessor:
                             pin_views = 0
                             pin_clicks = 0
 
-                            # 如果pin　uuid 已经存在，则进行更新即可
-                            if uuid in exist_pins_dict.keys():
+                            # 如果pin　uuid 已经存在,且属于同一个board，则进行更新即可
+                            if uuid in exist_pins_dict.keys() and board_id == int(exist_pins_dict[uuid].split("/")[1]):
                                 # , saves = % s, comments = % s
-                                pin_id = exist_pins_dict[uuid]
+                                pin_id = int(exist_pins_dict[uuid].split("/")[0])
                                 cursor.execute(
                                     '''update `pin` set note=%s, update_time=%s, saves=%s, comments=%s, likes=%s where id=%s''',
                                     (note, update_time, pin_saves, pin_comments, pin_likes, pin_id))
                                 conn.commit()
-
-                            if uuid in pin_uuids:
-                                # 测试发现，pinterest可能会给出重复数据,如果这一把已经更新过，则不再更新
-                                continue
-
-                            board_id = None
-                            product_id = None
-                            # 通过uuid找到对应的board
-                            cursor.execute("select id from `board` where uuid=%s", board_uuid)
-                            board = cursor.fetchone()
-                            if board:
-                                board_id = board[0]
-
-                            # 通过pin背后的链接，找到他对应的产品
-                            cursor.execute("select id from `product` where url_with_utm=%s", original_link)
-                            product = cursor.fetchone()
-                            product_id = -1
-                            if product:
-                                product_id = product[0]
-
-                            if product_id >= 0:
-                                cursor.execute('''insert into `pin` (`uuid`, `url`, `note`, `origin_link`, 
-                                    `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`, `saves`, 
-                                    `comments`, `likes`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
-                                               (uuid, url, note, original_link, pin_thumbnail, create_time, update_time,
-                                                board_id, product_id, pin_saves, pin_comments, pin_likes))
                             else:
-                                cursor.execute('''insert into `pin` (`uuid`, `url`, `note`, `origin_link`, 
-                                    `thumbnail`, `publish_time`, `update_time`, `board_id`, `saves`, 
-                                    `comments`, `likes`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
-                                               (uuid, url, note, original_link, pin_thumbnail, create_time, update_time,
-                                                board_id, pin_saves, pin_comments, pin_likes))
-                            pin_id = cursor.lastrowid
+                                if uuid in pin_uuids:
+                                    # 测试发现，pinterest可能会给出重复数据,如果这一把已经更新过，则不再更新
+                                    continue
 
-                            # 先合入，因为下面的历史表中有外键关联
-                            conn.commit()
-                            pin_uuids.append(uuid)
+                                board_id = None
+                                product_id = None
+                                # 通过uuid找到对应的board
+                                cursor.execute("select id from `board` where uuid=%s", board_uuid)
+                                board = cursor.fetchone()
+                                if board:
+                                    board_id = board[0]
 
-                            # 　更新历史数据表
-                            if product_id >= 0:
-                                cursor.execute(
-                                    '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
-                                    `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
-                                    `pin_id`, `pinterest_account_id`, `product_id`, `account_followings`, 
-                                    `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`) 
-                                    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                                    (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
-                                     update_time, board_id, pin_id, account_id, product_id, 0, 0, 0, 0, "", ""))
-                            else:
-                                cursor.execute(
-                                    '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
-                                    `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
-                                    `pin_id`, `pinterest_account_id`, `account_followings`, 
-                                    `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`) 
-                                    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                                    (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
-                                     update_time, board_id, pin_id, account_id, 0, 0, 0, 0, "", ""))
+                                # 通过pin背后的链接，找到他对应的产品
+                                cursor.execute("select id from `product` where url_with_utm=%s", original_link)
+                                product = cursor.fetchone()
+                                product_id = -1
+                                if product:
+                                    product_id = product[0]
 
-                            conn.commit()
+                                if product_id >= 0:
+                                    cursor.execute('''insert into `pin` (`uuid`, `url`, `note`, `origin_link`, 
+                                        `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`, `saves`, 
+                                        `comments`, `likes`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
+                                                   (uuid, url, note, original_link, pin_thumbnail, create_time, update_time,
+                                                    board_id, product_id, pin_saves, pin_comments, pin_likes))
+                                else:
+                                    cursor.execute('''insert into `pin` (`uuid`, `url`, `note`, `origin_link`, 
+                                        `thumbnail`, `publish_time`, `update_time`, `board_id`, `saves`, 
+                                        `comments`, `likes`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
+                                                   (uuid, url, note, original_link, pin_thumbnail, create_time, update_time,
+                                                    board_id, pin_saves, pin_comments, pin_likes))
+                                pin_id = cursor.lastrowid
+
+                                # 先合入，因为下面的历史表中有外键关联
+                                conn.commit()
+                                pin_uuids.append(uuid)
+
+                                # 　更新历史数据表
+                                if product_id >= 0:
+                                    cursor.execute(
+                                        '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
+                                        `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
+                                        `pin_id`, `pinterest_account_id`, `product_id`, `account_followings`, 
+                                        `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`) 
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                                        (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
+                                         update_time, board_id, pin_id, account_id, product_id, 0, 0, 0, 0, "", ""))
+                                else:
+                                    cursor.execute(
+                                        '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
+                                        `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
+                                        `pin_id`, `pinterest_account_id`, `account_followings`, 
+                                        `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`) 
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                                        (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
+                                         update_time, board_id, pin_id, account_id, 0, 0, 0, 0, "", ""))
+
+                                conn.commit()
                 else:
                     logger.error(
                         "update pins get_user_pins error, account={} token={}, ret={}".format(account_uuid, token, ret))
