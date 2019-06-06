@@ -377,7 +377,7 @@ class TaskProcessor:
             if not cursor:
                 return False
 
-            if specific_sotre_uri > 0:
+            if specific_sotre_uri:
                 cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where url=%s''', (specific_sotre_uri,))
             else:
                 cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where id>=0''')

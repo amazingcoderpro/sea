@@ -40,7 +40,7 @@ class LoginView(generics.CreateAPIView):
                     if obj.code == code:
                         obj.is_active = 1
                         obj.save()
-
+                        print("------active ", username)
                         TaskProcessor().update_shopify_data(username)
                 else:
                     return Response({"detail": "The account is not activated"}, status=status.HTTP_400_BAD_REQUEST)
@@ -216,9 +216,10 @@ class PinterestCallback(APIView):
         #         return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=1")
         pin_account = models.PinterestAccount.objects.filter(account=account_uri, user=request.user.id)
         pin_account.update(token=token, authorized=1)
+        pin_account_id = pin_account[0].id
 
-        print("----------------update pinterest id=", pin_account.id)
-        TaskProcessor().update_pinterest_data(pin_account.id)
+        print("-----update pinterest id=", pin_account_id)
+        TaskProcessor().update_pinterest_data(pin_account_id)
         return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=1")
 
 
