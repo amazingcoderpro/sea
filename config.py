@@ -23,7 +23,8 @@ SHOPIFY_CONFIG = {
                "read_checkouts", "write_resource_feedbacks", "write_checkouts", "read_reports", "write_reports",
                "read_price_rules", "write_price_rules", "read_marketing_events", "write_marketing_events",
                "read_resource_feedbacks", "read_shopify_payments_disputes", "write_fulfillments"],
-    "utm_format":"?utm_source=pinbooster&utm_medium={pinterest_account}&utm_campaign={board_name}&utm_keyword={product_id}"
+    "utm_format": "/?utm_source=pinbooster&utm_medium={pinterest_account}&utm_campaign={board_name}&utm_term={product_id}",
+    "utm_source": "pinbooster"
 }
 
 
@@ -36,4 +37,8 @@ PINTEREST_CONFIG = {
 
 GA_CONFIG = {
     'google_developer': "test123@eternal-argon-241002.iam.gserviceaccount.com"
+}
+
+SYS_CONFIG = {
+    "system_timezone": "UTC/GMT +8 hours"
 }

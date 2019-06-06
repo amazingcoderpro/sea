@@ -18,7 +18,8 @@ import requests
 from sdk.pinterest.pinterest_api import PinterestApi
 from sdk.shopify.get_shopify_products import ProductsApi
 from sdk.googleanalytics.google_oauth_info import GoogleApi
-from config import SHOPIFY_CONFIG
+from ./config import SHOPIFY_CONFIG
+
 
 class DBUtil:
     def __init__(self, host="47.112.113.252", port=3306, db="sea", user="sea", password="sea@orderplus.com"):
@@ -84,8 +85,8 @@ class TaskProcessor:
     def start_all(self, rule_interval=120, publish_pin_interval=240, pinterest_update_interval=3800, shopify_update_interval=3800):
         logger.info("TaskProcessor start all work.")
         self.start_job_analyze_rule_job(rule_interval)
-        self.start_job_update_pinterest_data(pinterest_update_interval)
         self.start_job_publish_pin_job(publish_pin_interval)
+        self.start_job_update_pinterest_data(pinterest_update_interval)
         self.start_job_update_shopify_data(shopify_update_interval)
 
     def stop_all(self):
@@ -101,7 +102,7 @@ class TaskProcessor:
         logger.info("TaskProcessor resume.")
         self.bk_scheduler.resume()
 
-    def update_pinterest_data(self):
+    def update_pinterest_data(self, specific_account_id=-1):
         """
         拉取所有pinteres 正常账号下的所有board, 并增量式的插入数据库，有则更新，无则插入
         :return:
@@ -113,15 +114,23 @@ class TaskProcessor:
                 return False
 
             # 拉取所有正常状态的账号
-            authorized = 1
-            account_state = 0
-            cursor.execute('''
-                    select id, token, account, nickname from `pinterest_account` where state=%s and authorized=%s
-                    ''', (account_state, authorized))
-            accounts = cursor.fetchall()
-            if not accounts:
-                logger.info("accounts is empty!")
-                return True
+            if specific_account_id >= 0:
+                cursor.execute('''
+                        select id, token, account, nickname from `pinterest_account` where id=%s''', (specific_account_id))
+                accounts = cursor.fetchall()
+                if not accounts:
+                    logger.info("accounts is empty!")
+                    return False
+            else:
+                authorized = 1
+                account_state = 0
+                cursor.execute('''
+                        select id, token, account, nickname from `pinterest_account` where state=%s and authorized=%s
+                        ''', (account_state, authorized))
+                accounts = cursor.fetchall()
+                if not accounts:
+                    logger.info("accounts is empty!")
+                    return True
 
             # 拿到所有已经存在的board
             cursor.execute('''
@@ -144,6 +153,8 @@ class TaskProcessor:
                 account_id, token, account_uuid, nickname = account
                 if not token:
                     logger.warning("pinterest account token is None, account={}".format(account_uuid))
+                    if specific_account_id > 0:
+                        return False
                     continue
 
                 logger.info("start update pinterest account={} infomations".format(account_uuid))
@@ -172,12 +183,19 @@ class TaskProcessor:
                         if img_url:
                             account_thumbnail = self.image_2_base64(img_url, is_thumb=True, size=(60, 60))
                         cursor.execute('''update `pinterest_account` set nickname=%s, description=%s, type=%s, create_time=%s, boards=%s, pins=%s, followings=%s, followers=%s, uuid=%s, update_time=%s, thumbnail=%s where id=%s''',
-                                       (user_name, bio, account_type, create_at, boards, pins, account_followings, account_followers, account_uuid, time_now, account_id, account_thumbnail))
+                                       (user_name, bio, account_type, create_at, boards, pins, account_followings, account_followers, account_uuid, time_now, account_thumbnail, account_id))
                         conn.commit()
                     else:
                         logger.warning("get pinterest account info empty! account={}, token={}".format(account_uuid, token))
                 else:
                     logger.error("get user info failed, account={}, token={}, ret={}".format(account_uuid, token, ret))
+                    # 如果是授权失败，后面的不用执行了
+                    err_msg = ret.get("msg", "")
+                    if "Authentication failed" in err_msg or 'Authorization failed.' in err_msg:
+                        logger.error("get user info failed, because {}".format(err_msg))
+                        if specific_account_id > 0:
+                            return False
+                        continue
 
                 # 获取该账号下的所有board,并刷新数据库
                 ret = p_api.get_user_boards()
@@ -277,64 +295,65 @@ class TaskProcessor:
                                     '''update `pin` set note=%s, update_time=%s, saves=%s, comments=%s, likes=%s where id=%s''',
                                     (note, update_time, pin_saves, pin_comments, pin_likes, pin_id))
                                 conn.commit()
-                            elif uuid in pin_uuids:
-                                # 测试发现，pinterest可能会给出重复数据
+
+                            if uuid in pin_uuids:
+                                # 测试发现，pinterest可能会给出重复数据,如果这一把已经更新过，则不再更新
                                 continue
+
+                            board_id = None
+                            product_id = None
+                            # 通过uuid找到对应的board
+                            cursor.execute("select id from `board` where uuid=%s", board_uuid)
+                            board = cursor.fetchone()
+                            if board:
+                                board_id = board[0]
+
+                            # 通过pin背后的链接，找到他对应的产品
+                            cursor.execute("select id from `product` where url_with_utm=%s", original_link)
+                            product = cursor.fetchone()
+                            product_id = -1
+                            if product:
+                                product_id = product[0]
+
+                            if product_id >= 0:
+                                cursor.execute('''insert into `pin` (`uuid`, `url`, `note`, `origin_link`, 
+                                    `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`, `saves`, 
+                                    `comments`, `likes`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
+                                               (uuid, url, note, original_link, pin_thumbnail, create_time, update_time,
+                                                board_id, product_id, pin_saves, pin_comments, pin_likes))
                             else:
-                                board_id = None
-                                product_id = None
-                                # 通过uuid找到对应的board
-                                cursor.execute("select id from `board` where uuid=%s", board_uuid)
-                                board = cursor.fetchone()
-                                if board:
-                                    board_id = board[0]
+                                cursor.execute('''insert into `pin` (`uuid`, `url`, `note`, `origin_link`, 
+                                    `thumbnail`, `publish_time`, `update_time`, `board_id`, `saves`, 
+                                    `comments`, `likes`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
+                                               (uuid, url, note, original_link, pin_thumbnail, create_time, update_time,
+                                                board_id, pin_saves, pin_comments, pin_likes))
+                            pin_id = cursor.lastrowid
 
-                                # 通过pin背后的链接，找到他对应的产品
-                                cursor.execute("select id from `product` where url=%s", original_link)
-                                product = cursor.fetchone()
-                                product_id = -1
-                                if product:
-                                    product_id = product[0]
+                            # 先合入，因为下面的历史表中有外键关联
+                            conn.commit()
+                            pin_uuids.append(uuid)
 
-                                if product_id >= 0:
-                                    cursor.execute('''insert into `pin` (`uuid`, `url`, `note`, `origin_link`, 
-                                        `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`, `saves`, 
-                                        `comments`, `likes`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
-                                                   (uuid, url, note, original_link, pin_thumbnail, create_time, update_time,
-                                                    board_id, product_id, pin_saves, pin_comments, pin_likes))
-                                else:
-                                    cursor.execute('''insert into `pin` (`uuid`, `url`, `note`, `origin_link`, 
-                                        `thumbnail`, `publish_time`, `update_time`, `board_id`, `saves`, 
-                                        `comments`, `likes`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
-                                                   (uuid, url, note, original_link, pin_thumbnail, create_time, update_time,
-                                                    board_id, pin_saves, pin_comments, pin_likes))
-                                pin_id = cursor.lastrowid
+                            # 　更新历史数据表
+                            if product_id >= 0:
+                                cursor.execute(
+                                    '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
+                                    `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
+                                    `pin_id`, `pinterest_account_id`, `product_id`, `account_followings`, 
+                                    `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`) 
+                                    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                                    (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
+                                     update_time, board_id, pin_id, account_id, product_id, 0, 0, 0, 0, "", ""))
+                            else:
+                                cursor.execute(
+                                    '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
+                                    `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
+                                    `pin_id`, `pinterest_account_id`, `account_followings`, 
+                                    `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`) 
+                                    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                                    (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
+                                     update_time, board_id, pin_id, account_id, 0, 0, 0, 0, "", ""))
 
-                                # 先合入，因为下面的历史表中有外键关联
-                                conn.commit()
-                                pin_uuids.append(uuid)
-
-                                # 　更新历史数据表
-                                if product_id >= 0:
-                                    cursor.execute(
-                                        '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
-                                        `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
-                                        `pin_id`, `pinterest_account_id`, `product_id`, `account_followings`, 
-                                        `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                                        (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
-                                         update_time, board_id, pin_id, account_id, product_id, 0, 0, 0, 0, "", ""))
-                                else:
-                                    cursor.execute(
-                                        '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
-                                        `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
-                                        `pin_id`, `pinterest_account_id`, `account_followings`, 
-                                        `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                                        (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
-                                         update_time, board_id, pin_id, account_id, 0, 0, 0, 0, "", ""))
-
-                                conn.commit()
+                            conn.commit()
                 else:
                     logger.error(
                         "update pins get_user_pins error, account={} token={}, ret={}".format(account_uuid, token, ret))
@@ -443,7 +462,7 @@ class TaskProcessor:
                             logger.warning("this product have no store view id, product id={}, store id={}".format(pro_id, store_id))
                             continue
 
-                        pro_uuid = "google" # 测试
+                        # pro_uuid = "google" # 测试
                         ga_data = gapi.get_report(key_words=pro_uuid, start_time="1daysAgo", end_time="today")
                         time_now = datetime.datetime.now()
                         if ga_data.get("code", 0) == 1:
@@ -772,11 +791,11 @@ def test():
 
 def main():
     tsp = TaskProcessor()
-    tsp.start_all(rule_interval=120, publish_pin_interval=240, pinterest_update_interval=86400, shopify_update_interval=86400)
+    tsp.start_all(rule_interval=120, publish_pin_interval=240, pinterest_update_interval=3800, shopify_update_interval=3800)
     while 1:
         time.sleep(1)
 
 
 if __name__ == '__main__':
-    test()
-    # main()
+    # test()
+    main()
