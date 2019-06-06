@@ -205,7 +205,7 @@ class PinterestCallback(APIView):
         if result["code"] != 1:
             return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
         # 判断token是否为当前用户的token
-        token = result["data"]["access_token"]
+        token = result["data"].get("access_token", "")
         print("current token：{}".format(token))
         # user_info = pinterest_api.PinterestApi(access_token=token).get_user_info()
         # print("current user info: {}".format(user_info))
@@ -214,12 +214,18 @@ class PinterestCallback(APIView):
         #         models.PinterestAccount.objects.filter(account=account_uri).update(
         #             token=token, authorized=1)
         #         return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=1")
-        pin_account = models.PinterestAccount.objects.filter(account=account_uri, user=request.user.id)
-        pin_account.update(token=token, authorized=1)
-        pin_account_id = pin_account[0].id
 
-        print("-----update pinterest id=", pin_account_id)
-        TaskProcessor().update_pinterest_data(pin_account_id)
+        if token:
+            pin_account = models.PinterestAccount.objects.filter(account=account_uri, user=request.user.id)
+            if pin_account:
+                pin_account.update(token=token, authorized=1)
+                pin_account_id = pin_account.first().id
+                print("-----update pinterest id=", pin_account_id)
+                TaskProcessor().update_pinterest_data(pin_account_id)
+            else:
+                return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
+        else:
+            return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
         return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=1")
 
 

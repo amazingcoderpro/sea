@@ -427,7 +427,7 @@ class TaskProcessor:
 
                 # 获取店铺里的所有产品
                 #
-                gapi = GoogleApi(view_id=store_view_id, ga_source=SHOPIFY_CONFIG.get("utm_source", "pinbooster"), json_path=os.path.join(os.path.dirname(sys.path[0]), "sdk//googleanalytics//client_secrets.json"))
+                gapi = GoogleApi(view_id=store_view_id, ga_source=SHOPIFY_CONFIG.get("utm_source", "pinbooster"), json_path=os.path.join(sys.path[0], "sdk//googleanalytics//client_secrets.json"))
                 # 拿到所有的ga数据
                 reports = gapi.get_report(key_word="", start_time="1daysAgo", end_time="today")
                 ret = papi.get_all_products()
