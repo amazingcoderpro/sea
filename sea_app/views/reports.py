@@ -389,8 +389,9 @@ def get_num(queryset, fieldname):
     # 通过queryset获取计数
     lst = []
     for item in queryset:
-        lst.append(getattr(item, fieldname))
-    return len(set(lst))
+        if getattr(item, fieldname) not in lst:
+            lst.append(getattr(item, fieldname))
+    return len(lst)
 
 
 def count_num(queryset, fieldname):
@@ -405,11 +406,15 @@ def site_count(pin_set_list, product_set_list, oneday=datetime.datetime.now()):
     # 获取oneday的数据，默认取昨天更新的数据
     # 获取站点总数
     site_num = get_num(product_set_list, "store_id")
-    pin_queryset = pin_set_list.filter(Q(update_time__range=(oneday + datetime.timedelta(days=-1), oneday)))
-    if not pin_queryset:
+    lastest_pin_data = pin_set_list.filter(
+        Q(update_time__range=(oneday.date(), oneday.date() + datetime.timedelta(days=1)))).first()
+    # 获取当天最晚一批数据的更新时间
+    if not lastest_pin_data:
         return {"site_num": site_num, "subaccount_num": 0, "board_num": 0, "pin_num": 0,
                 "visitor_num": 0, "click_num": 0, "sales_num": 0, "revenue_num": 0,
                 "board_followers": 0, "pin_saves": 0}
+    pin_queryset = pin_set_list.filter(
+        Q(update_time__range=(lastest_pin_data.update_time + datetime.timedelta(hours=-1), lastest_pin_data.update_time)))
     # 获取帐号总数
     subaccount_set = pin_queryset.filter(Q(board_id=None), Q(pin_id=None))
     subaccount_num = get_num(subaccount_set, "pinterest_account_id")
@@ -435,12 +440,6 @@ def site_count(pin_set_list, product_set_list, oneday=datetime.datetime.now()):
     click_num = count_num(product_set, "product_clicks")
     # 获取revenue总数
     revenue_num = count_num(product_set, "product_revenue")
-    # 获取visitor总数,需要关联pin中的product_id,通过product_set获取store_set
-    # store_id_list = []
-    # for product in product_set:
-    #     store_id_list.append(product.store_id)
-    # store_id_list = set(store_id_list)
-    # store_set = product_set_list.filter(Q(store_id__in=store_id_list), Q(product_id=None))
     visitor_num = count_num(product_set, "product_visitors")
 
     return {
