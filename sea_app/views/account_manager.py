@@ -233,12 +233,20 @@ class PinManageView(generics.RetrieveUpdateDestroyAPIView):
 
     def put(self, request, *args, **kwargs):
         data = request.data
-        pin_obj = models.Pin.objects.get(pin_uuid=data["pin_uri"])
+        pin_obj = models.Pin.objects.filter(uuid=data["pin_uri"]).first()
         access_token = pin_obj.board.pinterest_account.token
-        board_uuid = models.Board.objects.get(pk=data["board"]).uuid
-        result = PinterestApi(access_token=access_token).edit_pin(data["pin_uri"], board_uuid, data["note"], data["url"])
+        # 通过board_name 查找board_uri
+        board_obj = models.Board.objects.get(name=data["board_name"])
+        if not board_obj:
+            return Response({"detail": "No board named is {}".format(data["board_name"])}, status=status.HTTP_400_BAD_REQUEST)
+        result = PinterestApi(access_token=access_token).edit_pin(data["pin_uri"], board_obj.uuid, data["note"], data["url"])
         if result["code"] == 1:
-            return self.update(request, *args, **kwargs)
+            # 更新数据库
+            pin_obj.board = board_obj
+            pin_obj.note = data["note"]
+            pin_obj.url = data["url"]
+            pin_obj.save()
+            return Response(status=status.HTTP_200_OK)
         else:
             return Response({"detail": result["msg"]}, status=status.HTTP_400_BAD_REQUEST)
 

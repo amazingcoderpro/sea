@@ -26,8 +26,9 @@ class BoardListSerializer(serializers.ModelSerializer):
 
 
 class PinListSerializer(serializers.ModelSerializer):
-    baord_uri = serializers.CharField(source="board.uuid", read_only=True)
+    board_uri = serializers.CharField(source="board.uuid", read_only=True)
+    board_name = serializers.CharField(source="board.name")
     class Meta:
         model = models.Pin
-        fields = ("id", "note", "board", "uuid", "url", "baord_uri")
+        fields = ("id", "note", "board", "uuid", "url", "board_uri", "board_name")
 
