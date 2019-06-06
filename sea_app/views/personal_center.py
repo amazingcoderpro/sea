@@ -195,9 +195,6 @@ class ShopifyCallback(APIView):
 
 
 class PinterestCallback(APIView):
-    permission_classes = (IsAuthenticated,)
-    authentication_classes = (JSONWebTokenAuthentication,)
-
     """pinterest 回调接口"""
     def get(self, request, *args, **kwargs):
         code = request.query_params.get("code", None)
