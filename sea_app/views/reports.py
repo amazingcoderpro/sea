@@ -557,24 +557,27 @@ def top_pins(request, period=7):
     # 过滤PinterestHistoryData数据(时间范围内最新的一次数据)
     query_time = start_time
     while query_time <= end_time:
-        old_queryset = models.PinterestHistoryData.objects.filter(Q(update_time__range=(query_time.date() + datetime.timedelta(days=-1), query_time.date())),
-                                                              Q(product_id__in=product_id_list))
+        old_queryset = models.PinterestHistoryData.objects.filter(
+            Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
+            Q(product_id__in=product_id_list))
         if old_queryset:
             break
         query_time += datetime.timedelta(days=1)
     query_time = end_time
     while query_time >= start_time:
-        new_queryset = models.PinterestHistoryData.objects.filter(Q(update_time__range=(query_time.date() + datetime.timedelta(days=-1), query_time.date())),
-                                                              Q(product_id__in=product_id_list))
+        # 最新数据为截止到今天0：00：00的数据
+        new_queryset = models.PinterestHistoryData.objects.filter(
+            Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
+            Q(product_id__in=product_id_list))
         if new_queryset:
             break
         query_time += datetime.timedelta(days=-1)
-    pin_dict = pins_period(new_queryset,old_queryset)
+    pin_dict = pins_period(new_queryset, old_queryset)
 
     query_time = prev_start_time
     while query_time <= start_time:
         prev_old_queryset = models.PinterestHistoryData.objects.filter(
-            Q(update_time__range=(query_time.date() + datetime.timedelta(days=-1), query_time.date())),
+            Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
             Q(product_id__in=product_id_list))
         if prev_old_queryset:
             break
@@ -582,7 +585,7 @@ def top_pins(request, period=7):
     query_time = start_time
     while query_time >= prev_start_time:
         prev_new_queryset = models.PinterestHistoryData.objects.filter(
-            Q(update_time__range=(query_time.date() + datetime.timedelta(days=-1), query_time.date())),
+            Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
             Q(product_id__in=product_id_list))
         if prev_new_queryset:
             break
@@ -594,11 +597,11 @@ def top_pins(request, period=7):
         if not prev_pin:
             prev_saves = 0
         else:
-            prev_saves = prev_pin.get("increment",0)
+            prev_saves = prev_pin.get("increment", 0)
         if prev_saves == 0:
-            trends = pin.get("increment",0)
+            trends = pin.get("increment", 0)
         else:
-            trends = (pin.get("increment",0) - prev_saves) * 1.0 / prev_saves
+            trends = (pin.get("increment", 0) - prev_saves) * 1.0 / prev_saves
         pin["trends"] = trends
     # 计算前5名
     top_5_pins = sorted(pin_dict.values(), key=lambda v: v["saves"], reverse=True)[0:5]
@@ -606,7 +609,7 @@ def top_pins(request, period=7):
 
 
 def pins_period(new_queryset, old_queryset):
-    # 计算同一个pin在一个周期的增量（最后一天的数据，减去第一天的数据)
+    # 计算同一个pin在一个周期的增量（最后一天的数据减去第一天的数据)
 
     pin_dict = {}
     for pin_obj in new_queryset:
@@ -697,12 +700,12 @@ def top_board(request, period=7):
     return top_5_board
 
 
-def board_period(new_queryset,old_queryset):
+def board_period(new_queryset, old_queryset):
     new_board_dict = board_period_part(new_queryset)
     old_board_dict = board_period_part(old_queryset)
     for b_id, data in new_board_dict.items():
         old_followers = old_board_dict.get(b_id)
-        old_followers = old_followers.get("followers",0) if old_followers else 0
+        old_followers = old_followers.get("followers", 0) if old_followers else 0
         data["pins"] = len(set(filter(lambda x: x, data["pins"])))
         data["increment"] = data.get("followers", 0) - old_followers
     return new_board_dict
@@ -755,7 +758,8 @@ def operation_record(request, result_num=None):
     #     id_list.append(sub_user.id)
     # 查找记录表
     record_set = models.OperationRecord.objects.filter(Q(user_id=current_user_id),
-                 Q(operation_time__range=(start_time, end_time))).order_by("-operation_time")
+                                                       Q(operation_time__range=(start_time, end_time))).order_by(
+        "-operation_time")
     record_list = []
     for index, record in enumerate(record_set[:result_num]):
         record_list.append({
@@ -766,6 +770,3 @@ def operation_record(request, result_num=None):
             "operation_time": record.operation_time.strftime("%Y-%m-%d %H:%M:%S")
         })
     return record_list
-
-
-
