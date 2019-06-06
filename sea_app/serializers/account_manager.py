@@ -3,7 +3,6 @@ from rest_framework import serializers
 
 from sea_app import models
 
-
 class BoardSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Board

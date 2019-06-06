@@ -365,7 +365,7 @@ class TaskProcessor:
             cursor.close() if cursor else 0
             conn.close() if conn else 0
 
-    def update_shopify_data(self):
+    def update_shopify_data(self, specific_sotre_uri=""):
         """
          获取所有店铺的所有products, 并保存至数据库
          :return:
@@ -377,7 +377,10 @@ class TaskProcessor:
             if not cursor:
                 return False
 
-            cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where id>=0''')
+            if specific_sotre_uri:
+                cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where url=%s''', (specific_sotre_uri,))
+            else:
+                cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where id>=0''')
             stores = cursor.fetchall()
 
             # 取中已经存在的所有products, 只需更新即可
@@ -424,7 +427,7 @@ class TaskProcessor:
 
                 # 获取店铺里的所有产品
                 #
-                gapi = GoogleApi(view_id=store_view_id, ga_source=SHOPIFY_CONFIG.get("utm_source", "pinbooster"), json_path=os.path.join(os.path.dirname(sys.path[0]), "sdk//googleanalytics//client_secrets.json"))
+                gapi = GoogleApi(view_id=store_view_id, ga_source=SHOPIFY_CONFIG.get("utm_source", "pinbooster"), json_path=os.path.join(sys.path[0], "sdk//googleanalytics//client_secrets.json"))
                 # 拿到所有的ga数据
                 reports = gapi.get_report(key_word="", start_time="1daysAgo", end_time="today")
                 ret = papi.get_all_products()

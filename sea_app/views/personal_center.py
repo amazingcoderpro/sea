@@ -21,7 +21,7 @@ from sdk.shopify.get_shopify_products import ProductsApi
 from sdk.pinterest import pinterest_api
 from sea_app.views import reports
 from sea_app.utils import random_code
-
+from task.task_processor import TaskProcessor
 
 class LoginView(generics.CreateAPIView):
     """登陆"""
@@ -40,6 +40,8 @@ class LoginView(generics.CreateAPIView):
                     if obj.code == code:
                         obj.is_active = 1
                         obj.save()
+                        print("------active ", username)
+                        TaskProcessor().update_shopify_data(username)
                 else:
                     return Response({"detail": "The account is not activated"}, status=status.HTTP_400_BAD_REQUEST)
             user = auth.authenticate(username=username, password=password)
@@ -203,7 +205,7 @@ class PinterestCallback(APIView):
         if result["code"] != 1:
             return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
         # 判断token是否为当前用户的token
-        token = result["data"]["access_token"]
+        token = result["data"].get("access_token", "")
         print("current token：{}".format(token))
         # user_info = pinterest_api.PinterestApi(access_token=token).get_user_info()
         # print("current user info: {}".format(user_info))
@@ -212,7 +214,18 @@ class PinterestCallback(APIView):
         #         models.PinterestAccount.objects.filter(account=account_uri).update(
         #             token=token, authorized=1)
         #         return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=1")
-        models.PinterestAccount.objects.filter(account=account_uri).update(token=token, authorized=1)
+
+        if token:
+            pin_account = models.PinterestAccount.objects.filter(account=account_uri)
+            if pin_account:
+                pin_account.update(token=token, authorized=1)
+                pin_account_id = pin_account.first().id
+                print("-----update pinterest id=", pin_account_id)
+                TaskProcessor().update_pinterest_data(pin_account_id)
+            else:
+                return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
+        else:
+            return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
         return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=1")
 
 
