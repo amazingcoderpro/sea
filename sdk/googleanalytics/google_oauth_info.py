@@ -19,7 +19,7 @@ class GoogleApi():
             self.KEY_FILE_LOCATION = 'client_secrets.json'
         self.VIEW_ID = view_id
 
-    def get_report(self, key_words, start_time, end_time):
+    def get_report(self, key_word, start_time, end_time):
         """
          Queries the Analytics Reporting API V4.
         Args:
@@ -44,48 +44,47 @@ class GoogleApi():
                                     {"expression": "ga:pageviews"},  # pv
                                     {"expression": "ga:uniquePageviews"},  # uv
                                     {"expression": "ga:transactions"},  # 交易数量
-                                    # {"expression": "ga:localItemRevenue"},
                                     {"expression": "ga:transactionRevenue"},  # 销售总金额
                                     {"expression": "ga:hits"},  # 点击量
-                                    {"expression": "ga:itemRevenue"}
+                                    # {"expression": "ga:itemRevenue"}
                                 ],
                                 "dimensions": [
                                     {"name": "ga:source"},
+                                    {"name": "ga:keyword"},
                                 ],
-                                # "dimensionFilterClauses": [
-                                #     {
-                                #         "filters": [
-                                #             {
-                                #                 "dimensionName": "ga:source",
-                                #                 "operator": "EXACT",
-                                #                 "expressions": ["pinbooster"]
-                                #             }]
-                                #         }]
+                                "dimensionFilterClauses": [
+                                    {
+                                        "filters": [
+                                            {
+                                                "dimensionName": "ga:source",
+                                                "operator": "EXACT",
+                                                "expressions": ["9980"]
+                                            }]
+                                        }]
                                  }]
                                 }).execute()
 
-            statistics_info = []
+            results = {}
             for report in analytics_info.get('reports', []):
-                columnHeader = report.get('columnHeader', {})
-                dimensionHeaders = columnHeader.get('dimensions', [])
-                metricHeaders = columnHeader.get('metricHeader', {}).get('metricHeaderEntries', [])
-
                 for row in report.get('data', {}).get('rows', []):
                     dimensions = row.get('dimensions', [])
                     dateRangeValues = row.get('metrics', [])
-                    for header, dimension in zip(dimensionHeaders, dimensions):
-                        if key_words in dimension:
-                            for i, values in enumerate(dateRangeValues):
-                                for metricHeader, value in zip(metricHeaders, values.get('values')):
-                                    shop_info = metricHeader.get('name').replace("ga:", "") + ', ' + value
-                                    f = shop_info.split(",")
-                                    statistics_info.append(f)
-
-            data = dict(statistics_info)
-            for key in data.keys():
-                data[key] = float(data[key].strip()) if key in ["transactions", "itemRevenue","transactionRevenue"] else int(data[key].strip())
-            logger.info("get google analytics info is successed, data={}".format(data))
-            return {"code": 1, "data": data, "msg": ""}
+                    if dimensions[1] == key_word or not key_word:
+                        temp_key_word = dimensions[1]
+                        values = dateRangeValues[0].get('values', [])
+                        if values:
+                            if temp_key_word not in results:
+                                results[temp_key_word] = {"page_view": int(values[0]), "unique_view": int(values[1]),
+                                                  "transactions": int(values[2]), "transaction_revenue": float(values[3]),
+                                                  "hits": int(values[4])}
+                            else:
+                                results[temp_key_word]["page_view"] += int(values[0])
+                                results[temp_key_word]["unique_view"] += int(values[1])
+                                results[temp_key_word]["transactions"] += int(values[2])
+                                results[temp_key_word]["transaction_revenue"] += float(values[3])
+                                results[temp_key_word]["hits"] += int(values[4])
+                # print(results)
+                return {"code": 1, "data": results, "msg": ""}
         except Exception as e:
             logger.error("get google analytics info is failed, msg={}".format(str(e)))
             return {"code": 2, "data": "", "msg": str(e)}
@@ -93,7 +92,7 @@ class GoogleApi():
 
 if __name__ == '__main__':
     google_data = GoogleApi(view_id="195406097")
-    google_data.get_report(key_words="pinbooster", start_time="1daysAgo", end_time="today")
+    google_data.get_report(key_word="23232323233", start_time="1daysAgo", end_time="today")
 
 
 
