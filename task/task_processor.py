@@ -424,6 +424,7 @@ class TaskProcessor:
 
                 # 获取店铺里的所有产品
                 gapi = GoogleApi(view_id=store_view_id, json_path=os.path.join(os.path.dirname(sys.path[0]), "sdk//googleanalytics//client_secrets.json"))
+                reports = gapi.get_report(start_time="1daysAgo", end_time="today")
                 ret = papi.get_all_products()
                 if ret["code"] == 1:
                     time_now = datetime.datetime.now()
@@ -457,21 +458,21 @@ class TaskProcessor:
                             pro_id = cursor.lastrowid
 
                         conn.commit()
-
                         if not store_view_id:
                             logger.warning("this product have no store view id, product id={}, store id={}".format(pro_id, store_id))
                             continue
 
                         # pro_uuid = "google" # 测试
-                        ga_data = gapi.get_report(key_words=pro_uuid, start_time="1daysAgo", end_time="today")
+                        # ga_data = gapi.get_report(key_words=pro_uuid, start_time="1daysAgo", end_time="today")
                         time_now = datetime.datetime.now()
-                        if ga_data.get("code", 0) == 1:
-                            data = ga_data.get("data", {})
-                            pv = int(data.get("pageviews", 0))
-                            uv = int(data.get("uniquePageviews", 0))
-                            hits = int(data.get("hits", 0))
-                            transactions = int(data.get("transactions", 0))
-                            transactions_revenue = float(data.get("transactionRevenue", 0))
+                        if reports.get("code", 0) == 1:
+                            data = reports.get("data", {})
+                            pro_report = data.get(pro_uuid, {})
+                            pv = int(pro_report.get("page_view", 0))
+                            uv = int(pro_report.get("unique_view", 0))
+                            hits = int(pro_report.get("hits", 0))
+                            transactions = int(pro_report.get("transactions", 0))
+                            transactions_revenue = float(pro_report.get("transaction_revenue", 0))
                             cursor.execute('''insert into `product_history_data` (`product_visitors`, `product_new_visitors`, `product_clicks`, `product_scan`, `product_sales`, `product_revenue`, `update_time`, `product_id`, `store_id`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                             ''', (uv, uv, hits, pv, transactions, transactions_revenue, time_now, pro_id, store_id))
                         else:
