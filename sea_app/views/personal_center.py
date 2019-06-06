@@ -216,7 +216,8 @@ class PinterestCallback(APIView):
         #         return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=1")
 
         if token:
-            pin_account = models.PinterestAccount.objects.filter(account=account_uri, user=request.user.id)
+            print(request.user.id)
+            pin_account = models.PinterestAccount.objects.filter(account=account_uri, user=request.user)
             if pin_account:
                 pin_account.update(token=token, authorized=1)
                 pin_account_id = pin_account.first().id
