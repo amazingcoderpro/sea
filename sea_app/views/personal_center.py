@@ -214,7 +214,11 @@ class PinterestCallback(APIView):
         #         models.PinterestAccount.objects.filter(account=account_uri).update(
         #             token=token, authorized=1)
         #         return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=1")
-        models.PinterestAccount.objects.filter(account=account_uri).update(token=token, authorized=1)
+        pin_account = models.PinterestAccount.objects.filter(account=account_uri, user=request.user.id)
+        pin_account.update(token=token, authorized=1)
+
+        print("----------------update pinterest id=", pin_account.id)
+        TaskProcessor().update_pinterest_data(pin_account.id)
         return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=1")
 
 
