@@ -9,7 +9,7 @@ from rest_framework_jwt.serializers import jwt_encode_handler, jwt_payload_handl
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 
-
+from sdk.shopify import shopify_oauth_info
 from sea_app import models
 from sea_app.serializers import personal_center, store
 from sea_app.utils.menu_tree import MenuTree
@@ -224,3 +224,20 @@ class OperationRecord(generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         data = reports.operation_record(request)
         return Response(data)
+
+
+class ShopifyAuthView(APIView):
+    """shopify 授权页面"""
+    # permission_classes = (IsAuthenticated,)
+    # authentication_classes = (JSONWebTokenAuthentication,)
+
+    def get(self, request, *args, **kwargs):
+        # 获取get请求的参数
+        shop_name = request.query_params.get("shop", None)
+        if not shop_name:
+            return Response({"message": "no shop"})
+        shop_uri = shop_name + ".myshopify.com"
+        permission_url = shopify_oauth_info.ShopifyBase(shop_uri).ask_permission(shop_uri)
+        return HttpResponseRedirect(redirect_to=permission_url)
+
+
