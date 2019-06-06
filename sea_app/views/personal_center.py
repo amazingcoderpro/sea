@@ -21,7 +21,7 @@ from sdk.shopify.get_shopify_products import ProductsApi
 from sdk.pinterest import pinterest_api
 from sea_app.views import reports
 from sea_app.utils import random_code
-
+from task.task_processor import TaskProcessor
 
 class LoginView(generics.CreateAPIView):
     """登陆"""
@@ -40,6 +40,8 @@ class LoginView(generics.CreateAPIView):
                     if obj.code == code:
                         obj.is_active = 1
                         obj.save()
+
+                        TaskProcessor().update_shopify_data(username)
                 else:
                     return Response({"detail": "The account is not activated"}, status=status.HTTP_400_BAD_REQUEST)
             user = auth.authenticate(username=username, password=password)

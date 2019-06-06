@@ -2,7 +2,7 @@ from django.db import transaction
 from rest_framework import serializers
 
 from sea_app import models
-
+from task.task_processor import TaskProcessor
 
 class BoardSerializer(serializers.ModelSerializer):
     class Meta:
@@ -125,6 +125,8 @@ class PinterestAccountCreateSerializer(serializers.ModelSerializer):
         instance = super(PinterestAccountCreateSerializer, self).create(validated_data)
         instance.user = self.context["request"].user
         instance.save()
+
+        TaskProcessor().update_pinterest_data(instance.id)
         return instance
 
 
