@@ -6,7 +6,7 @@ from config import logger
 
 
 class GoogleApi():
-    def __init__(self, view_id, json_path=""):
+    def __init__(self, view_id, ga_source="pinbooster", json_path=""):
         """
         获取店铺的GA数据
         :param view_id: 视图的id
@@ -18,6 +18,7 @@ class GoogleApi():
         else:
             self.KEY_FILE_LOCATION = 'client_secrets.json'
         self.VIEW_ID = view_id
+        self.ga_source = ga_source
 
     def get_report(self, key_word, start_time, end_time):
         """
@@ -58,7 +59,7 @@ class GoogleApi():
                                             {
                                                 "dimensionName": "ga:source",
                                                 "operator": "EXACT",
-                                                "expressions": ["9980"]
+                                                "expressions": [self.ga_source]
                                             }]
                                         }]
                                  }]
