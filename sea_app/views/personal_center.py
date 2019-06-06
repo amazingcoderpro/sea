@@ -195,6 +195,9 @@ class ShopifyCallback(APIView):
 
 
 class PinterestCallback(APIView):
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
     """pinterest 回调接口"""
     def get(self, request, *args, **kwargs):
         code = request.query_params.get("code", None)
@@ -216,8 +219,9 @@ class PinterestCallback(APIView):
         #         return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=1")
 
         if token:
+            print("========================")
             print(request.user.id)
-            pin_account = models.PinterestAccount.objects.filter(account=account_uri, user=request.user)
+            pin_account = models.PinterestAccount.objects.filter(account=account_uri, user_id=request.user.id)
             if pin_account:
                 pin_account.update(token=token, authorized=1)
                 pin_account_id = pin_account.first().id
