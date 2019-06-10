@@ -226,6 +226,9 @@ class TaskProcessor:
                             # 如果board　uuid 已经存在，且属于同一个账号，　则进行更新即可
                             if uuid in exist_boards_dict.keys() and account_id == int(exist_boards_dict[uuid].split("/")[1]):
                                 board_id = int(exist_boards_dict[uuid].split("/")[0])
+                                logger.info(
+                                    "board is exist, board uuid={}, account={}, board id={}".format(uuid, account_id,
+                                                                                                    board_id))
                                 cursor.execute(
                                     '''update `board` set name=%s, description=%s, state=%s, update_time=%s, pins=%s, followers=%s, collaborators=%s where id=%s''',
                                     (name, description, state, update_time, board_pins, board_followers,
@@ -289,8 +292,10 @@ class TaskProcessor:
 
                             # 如果pin　uuid 已经存在,且属于同一个board，则进行更新即可
                             if uuid in exist_pins_dict.keys() and board_id == int(exist_pins_dict[uuid].split("/")[1]):
-                                # , saves = % s, comments = % s
                                 pin_id = int(exist_pins_dict[uuid].split("/")[0])
+                                logger.info(
+                                    "pin is already exist, update uui={}, board id={}, pin id={}".format(uuid, board_id,
+                                                                                                     pin_id))
                                 cursor.execute(
                                     '''update `pin` set note=%s, update_time=%s, saves=%s, comments=%s, likes=%s where id=%s''',
                                     (note, update_time, pin_saves, pin_comments, pin_likes, pin_id))
@@ -303,7 +308,7 @@ class TaskProcessor:
                                 board_id = None
                                 product_id = None
                                 # 通过uuid找到对应的board
-                                cursor.execute("select id from `board` where uuid=%s", board_uuid)
+                                cursor.execute("select id from `board` where uuid=%s and pinterest_account_id=", board_uuid, account_id)
                                 board = cursor.fetchone()
                                 if board:
                                     board_id = board[0]
