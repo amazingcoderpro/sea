@@ -290,6 +290,14 @@ class TaskProcessor:
                             pin_views = 0
                             pin_clicks = 0
 
+                            board_id = -1
+                            # 通过uuid找到对应的board
+                            cursor.execute("select id from `board` where uuid=%s and pinterest_account_id=%s", board_uuid,
+                                           account_id)
+                            board = cursor.fetchone()
+                            if board:
+                                board_id = board[0]
+
                             # 如果pin　uuid 已经存在,且属于同一个board，则进行更新即可
                             if uuid in exist_pins_dict.keys() and board_id == int(exist_pins_dict[uuid].split("/")[1]):
                                 pin_id = int(exist_pins_dict[uuid].split("/")[0])
@@ -303,15 +311,8 @@ class TaskProcessor:
                             else:
                                 if uuid in pin_uuids:
                                     # 测试发现，pinterest可能会给出重复数据,如果这一把已经更新过，则不再更新
+                                    logger.info("pin uuid duplicate!")
                                     continue
-
-                                board_id = None
-                                product_id = None
-                                # 通过uuid找到对应的board
-                                cursor.execute("select id from `board` where uuid=%s and pinterest_account_id=", board_uuid, account_id)
-                                board = cursor.fetchone()
-                                if board:
-                                    board_id = board[0]
 
                                 # 通过pin背后的链接，找到他对应的产品
                                 cursor.execute("select id from `product` where url_with_utm=%s", original_link)
