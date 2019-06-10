@@ -82,11 +82,11 @@ class TaskProcessor:
         self.update_shopify_data()
         self.shopify_job = self.bk_scheduler.add_job(self.update_shopify_data, 'interval', seconds=interval)
 
-    def start_all(self, rule_interval=120, publish_pin_interval=240, pinterest_update_interval=3800, shopify_update_interval=3800):
+    def start_all(self, rule_interval=120, publish_pin_interval=240, pinterest_update_interval=7200, shopify_update_interval=7200):
         logger.info("TaskProcessor start all work.")
-        # self.start_job_analyze_rule_job(rule_interval)
-        # self.start_job_publish_pin_job(publish_pin_interval)
-        # self.start_job_update_pinterest_data(pinterest_update_interval)
+        self.start_job_analyze_rule_job(rule_interval)
+        self.start_job_publish_pin_job(publish_pin_interval)
+        self.start_job_update_pinterest_data(pinterest_update_interval)
         self.start_job_update_shopify_data(shopify_update_interval)
 
     def stop_all(self):
@@ -797,7 +797,7 @@ def test():
 
 def main():
     tsp = TaskProcessor()
-    tsp.start_all(rule_interval=120, publish_pin_interval=240, pinterest_update_interval=3800, shopify_update_interval=3800)
+    tsp.start_all(rule_interval=120, publish_pin_interval=240, pinterest_update_interval=7200, shopify_update_interval=7200)
     while 1:
         time.sleep(1)
 

@@ -8,7 +8,7 @@ from task.task_processor import TaskProcessor
 
 def main():
     tsp = TaskProcessor()
-    tsp.start_all(rule_interval=120, publish_pin_interval=240, pinterest_update_interval=3800, shopify_update_interval=3800)
+    tsp.start_all(rule_interval=120, publish_pin_interval=240, pinterest_update_interval=4000, shopify_update_interval=4000)
     while 1:
         time.sleep(1)
 
