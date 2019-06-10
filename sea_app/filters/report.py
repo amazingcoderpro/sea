@@ -72,8 +72,16 @@ class AccountListFilter(BaseFilterBackend):
         today_date = datetime.today().date()
         today_data_set = queryset.filter(Q(update_time__range=(today_date, today_date + timedelta(days=1))),
                                          Q(pinterest_account_id__in=account_id_list))
+        if today_data_set:
+            # 取今天最新的一批数据
+            lastest_time = today_data_set.first().update_time
+            today_data_set = today_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
         yesterday_data_set = queryset.filter(Q(update_time__range=(today_date + timedelta(days=-1), today_date)),
                                              Q(pinterest_account_id__in=account_id_list))
+        if yesterday_data_set:
+            # 取昨天最新的一批数据
+            lastest_time = yesterday_data_set.first().update_time
+            yesterday_data_set = yesterday_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
         today_group_dict = self.get_data(today_data_set, account_id_list)
         yesterday_group_dict = self.get_data(yesterday_data_set)
         for a_id, info in today_group_dict.items():
@@ -179,8 +187,16 @@ class BoardListFilter(BaseFilterBackend):
         today_date = datetime.today().date()
         today_data_set = queryset.filter(Q(update_time__range=(today_date, today_date + timedelta(days=1))),
                                          Q(board_id__in=board_id_list))
+        if today_data_set:
+            # 取今天最新的一批数据
+            lastest_time = today_data_set.first().update_time
+            today_data_set = today_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
         yesterday_data_set = queryset.filter(Q(update_time__range=(today_date + timedelta(days=-1), today_date)),
                                              Q(board_id__in=board_id_list))
+        if yesterday_data_set:
+            # 取昨天最新的一批数据
+            lastest_time = yesterday_data_set.first().update_time
+            yesterday_data_set = yesterday_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
         today_group_dict = self.get_data(today_data_set, board_id_list)
         yesterday_group_dict = self.get_data(yesterday_data_set)
         # 获取board增量
@@ -269,8 +285,16 @@ class PinListFilter(BaseFilterBackend):
         today_date = datetime.today().date()
         today_data_set = queryset.filter(Q(update_time__range=(today_date, today_date + timedelta(days=1))),
                                          Q(pin_id__in=pin_id_list))
+        if today_data_set:
+            # 取今天最新的一批数据
+            lastest_time = today_data_set.first().update_time
+            today_data_set = today_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
         yesterday_data_set = queryset.filter(Q(update_time__range=(today_date + timedelta(days=-1), today_date)),
                                              Q(pin_id__in=pin_id_list))
+        if yesterday_data_set:
+            # 取昨天最新的一批数据
+            lastest_time = yesterday_data_set.first().update_time
+            yesterday_data_set = yesterday_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
         today_group_dict = self.get_data(today_data_set, pin_id_list)
         yesterday_group_dict = self.get_data(yesterday_data_set)
         # 获取pin增量

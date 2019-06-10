@@ -95,8 +95,8 @@ def daily_report(pin_set_list, product_set_list):
                 "products": [] if not item.product_id else [item.product_id],  # product
             }
         else:
-            # 需要区分是当天最新的其它数据，还是当天其他时间的数据,每次数据时间间隔要大于20分钟
-            if (latest_time - item.update_time) > datetime.timedelta(minutes=20):
+            # 需要区分是当天最新的其它数据，还是当天其他时间的数据,每次数据时间间隔要大于60分钟
+            if (latest_time - item.update_time) > datetime.timedelta(minutes=60):
                 continue
             group_dict[date]["accounts"].append(item.pinterest_account_id)
             group_dict[date]["account_followings"] += item.account_followings
@@ -167,6 +167,8 @@ def daily_report_view(request):
 def subaccount_report_view(request, type):
     """子账号视图函数"""
     pin_set_list, product_set_list = get_common_data(request)
+    if not pin_set_list:
+        return []
     # 取PinterestHistoryData最新一天的数据, ProductHistoryData时间范围内所有数据
     start_time = request.GET.get("start_time", datetime.datetime.now() + datetime.timedelta(days=-7))
     end_time = request.GET.get("end_time", datetime.datetime.now())
@@ -187,7 +189,13 @@ def subaccount_report_view(request, type):
         if pin_set_list_result:
             break
         end_time += datetime.timedelta(days=-1)
-    pin_set_list = pin_set_list_result
+    # 取有数据当天的最晚的一批数据
+    if not pin_set_list_result:
+        return []
+    lastest_time = pin_set_list_result.first().update_time
+    pin_set_list = pin_set_list.filter(
+        Q(update_time__range=(lastest_time + datetime.timedelta(hours=-1), lastest_time)))
+
     if type == 'pins':
         # pins report
         data_list = pins_report(pin_set_list, product_set_list)
@@ -253,9 +261,13 @@ def subaccount_report(pin_set_list, product_set_list):
             "product_sales": 0,
             "product_revenue": 0
         }
-        # 组装product对应pin的数据
+        # 组装product对应pin的数据,并且还需要是最新的product数据
         product_set_list = product_set_list.filter(Q(product_id__in=info["products"]))
+        has_data_p_list = []
         for item in product_set_list:
+            if (item.update_time.date(), item.product_id) in has_data_p_list:
+                continue
+            has_data_p_list.append((item.update_time.date(), item.product_id))
             data["product_visitors"] += item.product_visitors
             data["product_new_visitors"] += item.product_new_visitors
             data["product_sales"] += item.product_sales
@@ -312,7 +324,11 @@ def board_report(pin_set_list, product_set_list):
         }
         # 组装product对应pin的数据
         product_set_list = product_set_list.filter(Q(product_id__in=info["products"]))
+        has_data_p_list = []
         for item in product_set_list:
+            if (item.update_time.date(), item.product_id) in has_data_p_list:
+                continue
+            has_data_p_list.append((item.update_time.date(), item.product_id))
             data["product_visitors"] += item.product_visitors
             data["product_new_visitors"] += item.product_new_visitors
             data["product_clicks"] += item.product_clicks
@@ -375,7 +391,11 @@ def pins_report(pin_set_list, product_set_list):
         #     data["store_visitors"] += item.store_visitors
         #     data["store_new_visitors"] += item.store_new_visitors
         product_obj_list = product_set_list.filter(Q(product_id=info["product_id"]))
+        has_data_p_list = []
         for product_obj in product_obj_list:
+            if (product_obj.update_time.date(), product_obj.product_id) in has_data_p_list:
+                continue
+            has_data_p_list.append((product_obj.update_time.date(), product_obj.product_id))
             data["product_visitors"] += product_obj.product_visitors
             data["product_new_visitors"] += product_obj.product_new_visitors
             data["product_sales"] += product_obj.product_sales
