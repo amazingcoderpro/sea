@@ -16,11 +16,11 @@ v1_urlpatterns = [
     url(r'select/pin/$', cache_page(5*60)(account_manager.PinListView.as_view())),
 
     # 账户管理
-    url(r'account_list/$', cache_page(5*60)(account_manager.AccountListManageView.as_view())),
-    url(r'account_list/(?P<aid>[0-9]+)/$', cache_page(5*60)(account_manager.BoardListManageView.as_view())),
-    url(r'account_list/(?P<aid>[0-9]+)/(?P<bid>[0-9]+)/$', cache_page(5*60)(account_manager.PinListManageView.as_view())),
+    url(r'account_list/$', cache_page(0.1)(account_manager.AccountListManageView.as_view())),
+    url(r'account_list/(?P<aid>[0-9]+)/$', cache_page(0.1)(account_manager.BoardListManageView.as_view())),
+    url(r'account_list/(?P<aid>[0-9]+)/(?P<bid>[0-9]+)/$', cache_page(0.1)(account_manager.PinListManageView.as_view())),
     url(r'board_manage/(?P<pk>[0-9]+)/$', account_manager.BoardManageView.as_view()),
-    url(r'pin_manage/(?P<pk>[0-9]+)/$', account_manager.PinManageView.as_view()),
+    url(r'pin_manage/$', account_manager.PinManageView.as_view()),
     url(r'account_manage/(?P<pk>[0-9]+)/$', account_manager.AccountManageView.as_view()),
     # 增加账户
     url(r'pinterest_account/$', account_manager.PinterestAccountCreateView.as_view()),
@@ -42,6 +42,7 @@ rule_urlpatterns = [
 
     # 修改规则状态
     url(r'state/(?P<pk>[0-9]+)/$', account_manager.RuleStatusView.as_view()),
+    # url(r'state/batch/$', account_manager.RuleStatusView.as_view()),
 
     # 发布记录和发布列表
     url(r'report/$', account_manager.ReportView.as_view()),

@@ -9,9 +9,8 @@ import datetime
 from sea_app import models
 
 
-def get_request_params(request):
-    # 获取请求参数
-    start_time = request.GET.get("start_time", datetime.datetime.now() + datetime.timedelta(days=-7))
+def get_request_datetime(request):
+    start_time = request.GET.get("start_time", datetime.datetime.now() + datetime.timedelta(days=-6))
     end_time = request.GET.get("end_time", datetime.datetime.now())
     if isinstance(start_time, str):
         try:
@@ -23,6 +22,12 @@ def get_request_params(request):
             end_time = datetime.datetime(*map(int, end_time.split('-')))
         except:
             end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
+    return start_time, end_time
+
+
+def get_request_params(request):
+    # 获取请求参数
+    start_time, end_time = get_request_datetime(request)
     pinterest_account_id = request.GET.get("pinterest_account_id")
     board_id = request.GET.get("board_id")
     pin_id = request.GET.get("pin_id")
@@ -68,13 +73,16 @@ def get_common_data(request):
     return pin_set_list, product_set_list
 
 
-def daily_report(pin_set_list, product_set_list):
+def daily_report(pin_set_list, product_set_list, request):
+    start_time, end_time = get_request_datetime(request)
+    time_list = time_range_list(start_time, end_time)
     # 组装每日最新pin数据
     data_list = []
     group_dict = {}
     for item in pin_set_list:
         date = item.update_time.date()
         if date not in group_dict:
+            time_list.remove(date)
             latest_time = item.update_time
             group_dict[date] = {
                 "accounts": [item.pinterest_account_id, ],  # account数
@@ -154,13 +162,34 @@ def daily_report(pin_set_list, product_set_list):
             data["product_new_visitors"] = item.product_new_visitors
 
         data_list.append(data)
-    return data_list
+    for day in time_list:
+        data_list.append(
+            {
+                "date": day.strftime("%Y-%m-%d"),
+                "accounts": 0,
+                "account_followings": 0,
+                "account_followers": 0,
+                "account_views": 0,
+                "boards": 0,
+                "board_followers": 0,
+                "pins": 0,
+                "pin_saves": 0,
+                "pin_likes": 0,
+                "pin_comments": 0,
+                "product_clicks": 0,
+                "product_visitors": 0,
+                "product_new_visitors": 0,
+                "product_sales": 0,
+                "product_revenue": 0,
+            }
+        )
+    return sorted(data_list, key=lambda x: x["date"], reverse=True)
 
 
 def daily_report_view(request):
     """日报视图函数"""
     pin_set_list, product_set_list = get_common_data(request)
-    data_list = daily_report(pin_set_list, product_set_list)
+    data_list = daily_report(pin_set_list, product_set_list, request)
     return data_list
 
 
@@ -170,18 +199,7 @@ def subaccount_report_view(request, type):
     if not pin_set_list:
         return []
     # 取PinterestHistoryData最新一天的数据, ProductHistoryData时间范围内所有数据
-    start_time = request.GET.get("start_time", datetime.datetime.now() + datetime.timedelta(days=-7))
-    end_time = request.GET.get("end_time", datetime.datetime.now())
-    if isinstance(start_time, str):
-        try:
-            start_time = datetime.datetime(*map(int, start_time.split('-')))
-        except:
-            start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
-    if isinstance(end_time, str):
-        try:
-            end_time = datetime.datetime(*map(int, end_time.split('-')))
-        except:
-            end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
+    start_time, end_time = get_request_datetime(request)
 
     while end_time >= start_time:
         pin_set_list_result = pin_set_list.filter(
@@ -422,19 +440,20 @@ def count_num(queryset, fieldname):
     return fieldname_num
 
 
-def site_count(pin_set_list, product_set_list, oneday=datetime.datetime.now()):
+def site_count(pin_set_list, product_set_list, oneday=datetime.datetime.now().date()):
     # 获取oneday的数据，默认取昨天更新的数据
     # 获取站点总数
     site_num = get_num(product_set_list, "store_id")
     lastest_pin_data = pin_set_list.filter(
-        Q(update_time__range=(oneday.date(), oneday.date() + datetime.timedelta(days=1)))).first()
+        Q(update_time__range=(oneday, oneday + datetime.timedelta(days=1)))).first()
     # 获取当天最晚一批数据的更新时间
     if not lastest_pin_data:
         return {"site_num": site_num, "subaccount_num": 0, "board_num": 0, "pin_num": 0,
                 "visitor_num": 0, "click_num": 0, "sales_num": 0, "revenue_num": 0,
                 "board_followers": 0, "pin_saves": 0}
     pin_queryset = pin_set_list.filter(
-        Q(update_time__range=(lastest_pin_data.update_time + datetime.timedelta(hours=-1), lastest_pin_data.update_time)))
+        Q(update_time__range=(
+        lastest_pin_data.update_time + datetime.timedelta(hours=-1), lastest_pin_data.update_time)))
     # 获取帐号总数
     subaccount_set = pin_queryset.filter(Q(board_id=None), Q(pin_id=None))
     subaccount_num = get_num(subaccount_set, "pinterest_account_id")
@@ -480,28 +499,14 @@ def time_range_list(start_time, end_time):
     time_list = []
     for i in range((end_time.date() - start_time.date()).days + 1):
         day = start_time + datetime.timedelta(days=i)
-        time_list.append(day)
+        time_list.append(day.date())
     return time_list
 
 
 def account_overview_chart(pin_set_list, product_set_list, request, reslut_num=None):
     """账户总览 图"""
     # 按天循环时间范围内，获取当天数据
-    start_time = request.GET.get("start_time", datetime.datetime.now() + datetime.timedelta(days=-7))
-    end_time = request.GET.get("end_time", datetime.datetime.now())
-    if reslut_num is not None:
-        start_time = datetime.datetime.now() + datetime.timedelta(days=-2)
-        end_time = datetime.datetime.now()
-    if isinstance(start_time, str):
-        try:
-            start_time = datetime.datetime(*map(int, start_time.split('-')))
-        except:
-            start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
-    if isinstance(end_time, str):
-        try:
-            end_time = datetime.datetime(*map(int, end_time.split('-')))
-        except:
-            end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
+    start_time, end_time = get_request_datetime(request)
     time_list = time_range_list(start_time, end_time)
     overview_list = []
     for day in time_list[::-1]:
@@ -541,7 +546,7 @@ def account_overview_table(overview_list):
             total_data["click_num"] += data["click_num"]
             total_data["sales_num"] += data["sales_num"]
             total_data["revenue_num"] += data["revenue_num"]
-    total_data.pop("date")
+    # total_data.pop("date")
     return total_data
 
 
@@ -750,18 +755,7 @@ def board_period_part(queryset):
 
 def operation_record(request, result_num=None):
     # 获取请求参数
-    start_time = request.GET.get("start_time", datetime.datetime.now() + datetime.timedelta(days=-7))
-    end_time = request.GET.get("end_time", datetime.datetime.now())
-    if isinstance(start_time, str):
-        try:
-            start_time = datetime.datetime(*map(int, start_time.split('-')))
-        except:
-            start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
-    if isinstance(end_time, str):
-        try:
-            end_time = datetime.datetime(*map(int, end_time.split('-')))
-        except:
-            end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
+    start_time, end_time = get_request_datetime(request)
     # username_id = request.GET.get("user_id")  # 必传
     # 获取当前用户及下属用户的所有操作记录
     # if username_id:

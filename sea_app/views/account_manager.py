@@ -121,8 +121,7 @@ class AccountListManageView(generics.ListAPIView):
 
         page = self.paginate_queryset(queryset)
         if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(queryset)
+            return self.get_paginated_response(page)
         return Response(queryset)
 
 
@@ -140,8 +139,7 @@ class BoardListManageView(generics.ListAPIView):
 
         page = self.paginate_queryset(queryset)
         if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(queryset)
+            return self.get_paginated_response(page)
         return Response(queryset)
 
 
@@ -159,8 +157,7 @@ class PinListManageView(generics.ListAPIView):
 
         page = self.paginate_queryset(queryset)
         if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(queryset)
+            return self.get_paginated_response(page)
         return Response(queryset)
 
 
@@ -216,7 +213,10 @@ class BoardManageView(generics.RetrieveUpdateDestroyAPIView):
             return Response({"detail": result["msg"]}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, *args, **kwargs):
-        board_obj = models.Board.objects.get(pk=kwargs["pk"])
+        try:
+            board_obj = models.Board.objects.get(pk=kwargs["pk"])
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         result = PinterestApi(access_token=board_obj.pinterest_account.token).delete_board(board_obj.uuid)
         if result["code"] == 1:
             return self.destroy(request, *args, **kwargs)
@@ -251,12 +251,15 @@ class PinManageView(generics.RetrieveUpdateDestroyAPIView):
             return Response({"detail": result["msg"]}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, *args, **kwargs):
-        pin_obj = models.Pin.objects.get(pk=kwargs["pk"])
-        result = PinterestApi(access_token=pin_obj.board.pinterest_account.token).delete_pin(pin_obj.uuid)
-        if result["code"] == 1:
-            return self.destroy(request, *args, **kwargs)
-        else:
-            return Response({"detail": result["msg"]}, status=status.HTTP_400_BAD_REQUEST)
+        pin_id_list = request.query_params.dict()["pin_list"]
+        for pin_id in eval(pin_id_list):
+            pin_obj = models.Pin.objects.get(pk=pin_id)
+            result = PinterestApi(access_token=pin_obj.board.pinterest_account.token).delete_pin(pin_obj.uuid)
+            if result["code"] == 1:
+                pin_obj.delete()
+            else:
+                return Response({"detail": result["msg"]}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_200_OK)
 
 
 class AccountManageView(generics.DestroyAPIView):
@@ -272,6 +275,12 @@ class RuleStatusView(generics.UpdateAPIView):
     serializer_class = account_manager.RuleStatusSerializer
     permission_classes = (IsAuthenticated, RulePermission)
     authentication_classes = (JSONWebTokenAuthentication,)
+
+    # def put(self, request, *args, **kwargs):
+    #     #     rule_id_list = eval(request.query_params.dict()["rule_list"])
+    #     #     statedata = request.data["statedata"]
+    #     #     models.Rule.objects.filter(id__in=rule_id_list).update(state=statedata)
+    #     #     return Response(status.HTTP_204_NO_CONTENT)
 
 
 class SendPinView(APIView):
