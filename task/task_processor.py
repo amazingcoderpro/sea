@@ -13,7 +13,6 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from config import logger
 from PIL import Image
 import pymysql
-import json
 import requests
 from sdk.pinterest.pinterest_api import PinterestApi
 from sdk.shopify.get_shopify_products import ProductsApi
@@ -82,11 +81,11 @@ class TaskProcessor:
         self.update_shopify_data()
         self.shopify_job = self.bk_scheduler.add_job(self.update_shopify_data, 'interval', seconds=interval)
 
-    def start_all(self, rule_interval=120, publish_pin_interval=240, pinterest_update_interval=3800, shopify_update_interval=3800):
+    def start_all(self, rule_interval=120, publish_pin_interval=240, pinterest_update_interval=7200, shopify_update_interval=7200):
         logger.info("TaskProcessor start all work.")
-        # self.start_job_analyze_rule_job(rule_interval)
-        # self.start_job_publish_pin_job(publish_pin_interval)
-        # self.start_job_update_pinterest_data(pinterest_update_interval)
+        self.start_job_analyze_rule_job(rule_interval)
+        self.start_job_publish_pin_job(publish_pin_interval)
+        self.start_job_update_pinterest_data(pinterest_update_interval)
         self.start_job_update_shopify_data(shopify_update_interval)
 
     def stop_all(self):
@@ -226,6 +225,9 @@ class TaskProcessor:
                             # 如果board　uuid 已经存在，且属于同一个账号，　则进行更新即可
                             if uuid in exist_boards_dict.keys() and account_id == int(exist_boards_dict[uuid].split("/")[1]):
                                 board_id = int(exist_boards_dict[uuid].split("/")[0])
+                                logger.info(
+                                    "board is exist, board uuid={}, account={}, board id={}".format(uuid, account_id,
+                                                                                                    board_id))
                                 cursor.execute(
                                     '''update `board` set name=%s, description=%s, state=%s, update_time=%s, pins=%s, followers=%s, collaborators=%s where id=%s''',
                                     (name, description, state, update_time, board_pins, board_followers,
@@ -287,10 +289,20 @@ class TaskProcessor:
                             pin_views = 0
                             pin_clicks = 0
 
+                            board_id = -1
+                            # 通过uuid找到对应的board
+                            cursor.execute("select id from `board` where uuid=%s and pinterest_account_id=%s", (board_uuid,
+                                           account_id))
+                            board = cursor.fetchone()
+                            if board:
+                                board_id = board[0]
+
                             # 如果pin　uuid 已经存在,且属于同一个board，则进行更新即可
                             if uuid in exist_pins_dict.keys() and board_id == int(exist_pins_dict[uuid].split("/")[1]):
-                                # , saves = % s, comments = % s
                                 pin_id = int(exist_pins_dict[uuid].split("/")[0])
+                                logger.info(
+                                    "pin is already exist, update uui={}, board id={}, pin id={}".format(uuid, board_id,
+                                                                                                     pin_id))
                                 cursor.execute(
                                     '''update `pin` set note=%s, update_time=%s, saves=%s, comments=%s, likes=%s where id=%s''',
                                     (note, update_time, pin_saves, pin_comments, pin_likes, pin_id))
@@ -298,15 +310,8 @@ class TaskProcessor:
                             else:
                                 if uuid in pin_uuids:
                                     # 测试发现，pinterest可能会给出重复数据,如果这一把已经更新过，则不再更新
+                                    logger.info("pin uuid duplicate!")
                                     continue
-
-                                board_id = None
-                                product_id = None
-                                # 通过uuid找到对应的board
-                                cursor.execute("select id from `board` where uuid=%s", board_uuid)
-                                board = cursor.fetchone()
-                                if board:
-                                    board_id = board[0]
 
                                 # 通过pin背后的链接，找到他对应的产品
                                 cursor.execute("select id from `product` where url_with_utm=%s", original_link)
@@ -447,15 +452,17 @@ class TaskProcessor:
                             pro_price = float(variants[0].get("price", "0"))
 
                         pro_tags = pro.get("tags", "")
+                        pro_image = pro.get("image", {}).get("src", "")
+                        thumbnail = self.image_2_base64(pro_image)
                         if pro_uuid in exist_products_dict.keys():
                             pro_id = exist_products_dict[pro_uuid]
-                            cursor.execute('''update `product` set url=%s, name=%s, price=%s, tag=%s, update_time=%s where id=%s''',
-                                           (pro_url, pro_title, pro_price, pro_tags, time_now, pro_id))
+                            logger.info("product is already exist, pro_uuid={}, pro_id={}".format(pro_uuid, pro_id))
+                            cursor.execute('''update `product` set url=%s, name=%s, price=%s, tag=%s, update_time=%s, image_url=%s, thumbnail=%s where id=%s''',
+                                           (pro_url, pro_title, pro_price, pro_tags, time_now, pro_image, thumbnail, pro_id))
                         else:
                             # pro_create_time = datetime.datetime.strptime(pro.get("created_at"), "%Y-%m-%dT%H:%M:%S")
                             pro_publish_time = datetime.datetime.strptime(pro.get("published_at", "")[0:-6], "%Y-%m-%dT%H:%M:%S")
-                            pro_image = pro.get("image", {}).get("src", "")
-                            thumbnail = self.image_2_base64(pro_image)
+
                             cursor.execute(
                                 "insert into `product` (`sku`, `url`, `name`, `image_url`,`thumbnail`, `price`, `tag`, `create_time`, `update_time`, `store_id`, `publish_time`, `uuid`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                                 (pro_sku, pro_url, pro_title, pro_image, thumbnail, pro_price, pro_tags, time_now,
@@ -688,7 +695,7 @@ class TaskProcessor:
                 ret = pin_api.create_pin(board_id=record["board_uuid"], note=product_name, image_url=record["product_img_url"], link=link_with_utm)
                 time_now = datetime.datetime.now()
                 if ret["code"] == 1:
-                    data = json.loads(ret[1])["data"]
+                    data = ret["data"]
                     pin_uuid = data["id"]
                     url = data["url"]
                     # site_url = data["original_link"]
@@ -756,6 +763,8 @@ class TaskProcessor:
     def image_2_base64(self, image_src, is_thumb=True, size=(70, 70), format='png'):
         try:
             base64_str = ""
+            if not image_src:
+                return base64_str
             if not os.path.exists(image_src):
                 response = requests.get(image_src)
                 image = Image.open(BytesIO(response.content))
@@ -797,7 +806,7 @@ def test():
 
 def main():
     tsp = TaskProcessor()
-    tsp.start_all(rule_interval=120, publish_pin_interval=240, pinterest_update_interval=3800, shopify_update_interval=3800)
+    tsp.start_all(rule_interval=120, publish_pin_interval=240, pinterest_update_interval=7200, shopify_update_interval=7200)
     while 1:
         time.sleep(1)
 
