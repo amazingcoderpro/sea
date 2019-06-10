@@ -452,15 +452,17 @@ class TaskProcessor:
                             pro_price = float(variants[0].get("price", "0"))
 
                         pro_tags = pro.get("tags", "")
+                        pro_image = pro.get("image", {}).get("src", "")
+                        thumbnail = self.image_2_base64(pro_image)
                         if pro_uuid in exist_products_dict.keys():
                             pro_id = exist_products_dict[pro_uuid]
-                            cursor.execute('''update `product` set url=%s, name=%s, price=%s, tag=%s, update_time=%s where id=%s''',
-                                           (pro_url, pro_title, pro_price, pro_tags, time_now, pro_id))
+                            logger.info("product is already exist, pro_uuid={}, pro_id={}".format(pro_uuid, pro_id))
+                            cursor.execute('''update `product` set url=%s, name=%s, price=%s, tag=%s, update_time=%s, image_url=%s, thumbnail=%s where id=%s''',
+                                           (pro_url, pro_title, pro_price, pro_tags, time_now, pro_image, thumbnail, pro_id))
                         else:
                             # pro_create_time = datetime.datetime.strptime(pro.get("created_at"), "%Y-%m-%dT%H:%M:%S")
                             pro_publish_time = datetime.datetime.strptime(pro.get("published_at", "")[0:-6], "%Y-%m-%dT%H:%M:%S")
-                            pro_image = pro.get("image", {}).get("src", "")
-                            thumbnail = self.image_2_base64(pro_image)
+
                             cursor.execute(
                                 "insert into `product` (`sku`, `url`, `name`, `image_url`,`thumbnail`, `price`, `tag`, `create_time`, `update_time`, `store_id`, `publish_time`, `uuid`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                                 (pro_sku, pro_url, pro_title, pro_image, thumbnail, pro_price, pro_tags, time_now,
@@ -761,6 +763,8 @@ class TaskProcessor:
     def image_2_base64(self, image_src, is_thumb=True, size=(70, 70), format='png'):
         try:
             base64_str = ""
+            if not image_src:
+                return base64_str
             if not os.path.exists(image_src):
                 response = requests.get(image_src)
                 image = Image.open(BytesIO(response.content))
