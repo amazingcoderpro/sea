@@ -100,9 +100,9 @@ class AccountListFilter(BaseFilterBackend):
         today_group_dict = self.get_data(today_data_set, account_id_list)
         yesterday_group_dict = self.get_data(yesterday_data_set)
         account_list = []
-        today_publish_set = models.PublishRecord.objects.filter(
-            Q(execute_time__range=(today_date, today_date + timedelta(days=1))),
-            Q(board__pinterest_account_id__in=today_group_dict.keys()))
+        # today_publish_set = models.PublishRecord.objects.filter(
+        #     Q(execute_time__range=(today_date, today_date + timedelta(days=1))),
+        #     Q(board__pinterest_account_id__in=today_group_dict.keys()))
         for a_id, info in today_group_dict.items():
             # 获取账号增量
             pin_id_under_account = list(set(filter(lambda x: x, info["pin_list"])))
@@ -133,10 +133,10 @@ class AccountListFilter(BaseFilterBackend):
             info["pinterest_account_id"] = a_id
             # info["index"] = index + 1
             # 获取账号数据相关联的board_id
-            today_publish_account = today_publish_set.filter(board__pinterest_account_id=a_id)
-            info["finished"] = today_publish_account.filter(state=1).count()
-            # info["pending"] = today_publish_account.filter(state=0).count()
-            info["failed"] = today_publish_account.filter(state=2).count()
+            # today_publish_account = today_publish_set.filter(board__pinterest_account_id=a_id)
+            # info["finished"] = today_publish_account.filter(state=1).count()
+            # # info["pending"] = today_publish_account.filter(state=0).count()
+            # info["failed"] = today_publish_account.filter(state=2).count()
             info.pop("pin_list")
             account_list.append(info)
         return {"count": len(account_set), "results": account_list}
@@ -178,9 +178,8 @@ class AccountListFilter(BaseFilterBackend):
         if account_id_list is None:
             return group_dict
         # 获取没有更新数据的基本信息
-        for account_id in account_id_list:
-            account_obj = models.PinterestAccount.objects.get(pk=account_id)
-            group_dict[account_id] = {
+        for account_obj in models.PinterestAccount.objects.filter(id__in=account_id_list):
+            group_dict[account_obj.id] = {
                 "account_uri": account_obj.account,
                 "account_name": account_obj.nickname,
                 "account_thumbnail": account_obj.thumbnail,
