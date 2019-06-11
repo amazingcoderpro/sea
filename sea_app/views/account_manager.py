@@ -119,9 +119,9 @@ class AccountListManageView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            return self.get_paginated_response(page)
+        # page = self.paginate_queryset(queryset)
+        # if page is not None:
+        #     return self.get_paginated_response(page)
         return Response(queryset)
 
 
@@ -137,9 +137,9 @@ class BoardListManageView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            return self.get_paginated_response(page)
+        # page = self.paginate_queryset(queryset)
+        # if page is not None:
+            # return self.get_paginated_response(queryset)
         return Response(queryset)
 
 
@@ -155,9 +155,9 @@ class PinListManageView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            return self.get_paginated_response(page)
+        # page = self.paginate_queryset(queryset)
+        # if page is not None:
+        #     return self.get_paginated_response(page)
         return Response(queryset)
 
 
@@ -205,7 +205,10 @@ class BoardManageView(generics.RetrieveUpdateDestroyAPIView):
 
     def put(self, request, *args, **kwargs):
         data = request.data
-        access_token = models.Board.objects.get(uuid=data["board_uri"]).pinterest_account.token
+        try:
+            access_token = models.Board.objects.get(id=kwargs["pk"], uuid=data["board_uri"]).pinterest_account.token
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         result = PinterestApi(access_token=access_token).edit_board(data["board_uri"], data["name"], data["description"])
         if result["code"] == 1:
             return self.update(request, *args, **kwargs)
@@ -233,7 +236,10 @@ class PinManageView(generics.RetrieveUpdateDestroyAPIView):
 
     def put(self, request, *args, **kwargs):
         data = request.data
-        pin_obj = models.Pin.objects.filter(uuid=data["pin_uri"]).first()
+        try:
+            pin_obj = models.Pin.objects.filter(uuid=data["pin_uri"]).first()
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         access_token = pin_obj.board.pinterest_account.token
         # 通过board_name 查找board_uri
         board_obj = models.Board.objects.get(name=data["board_name"])
@@ -253,7 +259,10 @@ class PinManageView(generics.RetrieveUpdateDestroyAPIView):
     def delete(self, request, *args, **kwargs):
         pin_id_list = request.query_params.dict()["pin_list"]
         for pin_id in eval(pin_id_list):
-            pin_obj = models.Pin.objects.get(pk=pin_id)
+            try:
+                pin_obj = models.Pin.objects.get(pk=pin_id)
+            except Exception as e:
+                return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
             result = PinterestApi(access_token=pin_obj.board.pinterest_account.token).delete_pin(pin_obj.uuid)
             if result["code"] == 1:
                 pin_obj.delete()
