@@ -2,6 +2,10 @@
 # Created by: Leemon7
 # Created on: 2019/6/3
 # Function:
+import httplib2
+from django.core.cache import cache
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.utils.cache import get_cache_key
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -48,3 +52,14 @@ class DashBoardView(APIView):
             raise Exception("part {} 参数超出范围".format(part))
         return Response(resp)
 
+
+def expire_page(path):
+    for key in cache._cache.keys():
+        key = key[key.index('v'):]
+        cache.delete(key)
+    return HttpResponseRedirect(redirect_to="http://www.baidu.com")
+    # request = HttpRequest()
+    # request.path = path
+    # key = get_cache_key(request)
+    # if cache.has_key(key):
+    #     #     cache.delete(key)
