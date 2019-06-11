@@ -41,16 +41,20 @@ class ProductsApi:
             logger.error("get shopify info is failed info={}".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
-    def get_all_products(self):
+    def get_all_products(self, limit=250, since_id=""):
         """
         获取所有商品的信息
         :return:
         """
-        products_url = f"https://{self.client_id}:{self.access_token}@{self.shop_uri}{self.version_url}products.json"
+        if not since_id:
+            products_url = f"https://{self.client_id}:{self.access_token}@{self.shop_uri}{self.version_url}products.json?limit={limit}"
+        if since_id:
+            products_url = f"https://{self.client_id}:{self.access_token}@{self.shop_uri}{self.version_url}products.json?limit={limit}&since_id={since_id}"
         try:
             result = requests.get(products_url)
             if result.status_code == 200:
                 logger.info("get shopify all prodects is success")
+                print(result.text)
                 return {"code": 1, "msg": "", "data": json.loads(result.text)}
             else:
                 logger.info("get shopify all prodects is failed")
@@ -121,15 +125,15 @@ class ProductsApi:
 
 
 if __name__ == '__main__':
-    client_id = "f9cd4d9b7362ae81038635518edfd98f"
-    access_token = "fa7fadd554e238cc6aafc0f15b9553f9"
+    client_id = "7fced15ff9d1a461f10979c3eae2eca8"
+    access_token = "b5e11d595f09d8e99ddb956f72eb8c84"
     shop = "ordersea.myshopify.com"
     scopes = "write_orders,read_customers"
     callback_uri = "http://www.orderplus.com/index.html"
     id = "3583116148816"
-    shop_uri = "arealook.myshopify.com"
+    shop_uri = "tiptopfree.myshopify.com"
     products_api = ProductsApi(access_token=access_token, shop_uri=shop_uri)
-    # products_api.get_all_products()
-    products_api.get_order(create_start_time="2019-05-22T0:0:0-04:00", create_end_time="2019-05-28T0:0:0-04:00", key_word="google", financial_status="paid")
+    products_api.get_all_products(limit="250", since_id="1833170796589")
+    # products_api.get_order(create_start_time="2019-05-22T0:0:0-04:00", create_end_time="2019-05-28T0:0:0-04:00", key_word="google", financial_status="paid")
     # products_api.get_shop_info()
     # products_api.get_product_id()

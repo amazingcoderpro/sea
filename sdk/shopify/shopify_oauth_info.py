@@ -69,8 +69,8 @@ class ShopifyBase():
 
 if __name__ == '__main__':
     # ShopifyBase = ShopifyBase(shop_uri="ordersea.myshopify.com")
-    ShopifyBase = ShopifyBase(shop_uri="ordersea.myshopify.com")
+    ShopifyBase = ShopifyBase(shop_uri="tiptopfree.myshopify.com")
     # ShopifyBase.reRequest(shop="ordersea", method="get", url="", headers=None, data=None)
-    # url = ShopifyBase.ask_permission(nonce="ordersea")
+    url = ShopifyBase.ask_permission(nonce="chicgostyle")
     # back_url = requests.get(url)
     ShopifyBase.get_token(code="a95f7442cfbb1a93badf9681601d8fe1")
