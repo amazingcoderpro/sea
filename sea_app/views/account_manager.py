@@ -1,5 +1,3 @@
-import json
-
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
@@ -146,18 +144,12 @@ class BoardListManageView(generics.ListAPIView):
 class PinListManageView(generics.ListAPIView):
     """账号管理 -- pin 列表显示"""
     queryset = models.PinterestHistoryData.objects.all()
-    serializer_class = report.DailyReportSerializer
-    pagination_class = PNPagination
     filter_backends = (report_filters.PinListFilter,)
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
-
-        # page = self.paginate_queryset(queryset)
-        # if page is not None:
-        #     return self.get_paginated_response(page)
         return Response(queryset)
 
 
