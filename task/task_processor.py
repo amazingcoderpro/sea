@@ -445,9 +445,11 @@ class TaskProcessor:
                         products = ret["data"].get("products", [])
 
                         for pro in products:
+                            print(products)
                             pro_uuid = str(pro.get("id", ""))
                             pro_title = pro.get("title", "")
-                            pro_url = "https://{}/products/{}".format(store_url, pro_title)
+                            handle = pro.get("handle", "")
+                            pro_url = "https://{}/products/{}".format(store_url, handle)
                             pro_type = pro.get("product_type", "")
                             variants = pro.get("variants", [])
                             pro_sku = ""
@@ -460,10 +462,12 @@ class TaskProcessor:
                             img_obj = pro.get("image", {})
                             if img_obj:
                                 pro_image = img_obj.get("src", "")
-                                thumbnail = self.image_2_base64(pro_image)
+                            elif pro.get("images", []):
+                                pro_image = pro.get("images")[0]
                             else:
                                 pro_image = ""
-                                thumbnail = ""
+                            thumbnail = self.image_2_base64(pro_image)
+
                             if pro_uuid in exist_products_dict.keys():
                                 pro_id = exist_products_dict[pro_uuid]
                                 logger.info("product is already exist, pro_uuid={}, pro_id={}".format(pro_uuid, pro_id))
