@@ -421,9 +421,9 @@ class TaskProcessor:
                     shop_city = shop.get("city", '')
                     shop_currency = shop.get("currency", "USD")
                     # shop_myshopify_domain = shop.get("myshopify_domain", "")
-                    cursor.execute('''update `store` set url=%s, uuid=%s, name=%s, timezone=%s, email=%s, owner_name=%s, 
+                    cursor.execute('''update `store` set uuid=%s, name=%s, timezone=%s, email=%s, owner_name=%s, 
                     owner_phone=%s, country=%s, city=%s, store_create_time=%s, store_update_time=%s, currency=%s where id=%s''',
-                                   (shop_domain, shop_uuid, shop_name, shop_timezone, shop_email, shop_owner, shop_phone,
+                                   (shop_uuid, shop_name, shop_timezone, shop_email, shop_owner, shop_phone,
                                     shop_country_name, shop_city, datetime.datetime.strptime(created_at[0:-6], "%Y-%m-%dT%H:%M:%S"),
                                     datetime.datetime.strptime(updated_at[0:-6], "%Y-%m-%dT%H:%M:%S"), shop_currency, store_id))
                     conn.commit()
