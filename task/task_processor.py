@@ -457,8 +457,13 @@ class TaskProcessor:
                                 pro_price = float(variants[0].get("price", "0"))
 
                             pro_tags = pro.get("tags", "")
-                            pro_image = pro.get("image", {}).get("src", "")
-                            thumbnail = self.image_2_base64(pro_image)
+                            img_obj = pro.get("image", {})
+                            if img_obj:
+                                pro_image = img_obj.get("src", "")
+                                thumbnail = self.image_2_base64(pro_image)
+                            else:
+                                pro_image = ""
+                                thumbnail = ""
                             if pro_uuid in exist_products_dict.keys():
                                 pro_id = exist_products_dict[pro_uuid]
                                 logger.info("product is already exist, pro_uuid={}, pro_id={}".format(pro_uuid, pro_id))
