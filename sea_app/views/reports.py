@@ -196,23 +196,23 @@ def daily_report_view(request):
 def subaccount_report_view(request, type):
     """子账号视图函数"""
     pin_set_list, product_set_list = get_common_data(request)
-    if not pin_set_list:
+    if not pin_set_list.exists():
         return []
     # 取PinterestHistoryData最新一天的数据, ProductHistoryData时间范围内所有数据
     start_time, end_time = get_request_datetime(request)
 
     while end_time >= start_time:
         pin_set_list_result = pin_set_list.filter(
-            Q(update_time__range=(end_time + datetime.timedelta(days=-1), end_time)))
-        if pin_set_list_result:
+            update_time__range=(end_time + datetime.timedelta(days=-1), end_time))
+        if pin_set_list_result.exists():
             break
         end_time += datetime.timedelta(days=-1)
     # 取有数据当天的最晚的一批数据
-    if not pin_set_list_result:
+    if not pin_set_list_result.exists():
         return []
     lastest_time = pin_set_list_result.first().update_time
     pin_set_list = pin_set_list.filter(
-        Q(update_time__range=(lastest_time + datetime.timedelta(hours=-1), lastest_time)))
+        update_time__range=(lastest_time + datetime.timedelta(hours=-1), lastest_time))
 
     if type == 'pins':
         # pins report
@@ -246,7 +246,7 @@ def subaccount_report(pin_set_list, product_set_list):
                 "account_views": item.account_views,
                 "pins": [] if not item.pin_id else [item.pin_id],  # pin数
                 "pin_saves": item.pin_saves,
-                "pin_likes": item.pin_likes,
+                # "pin_likes": item.pin_likes,
                 "pin_comments": item.pin_comments,
                 # "product_clicks": item.product_clicks,
                 "products": [] if not item.product_id else [item.product_id],  # product
@@ -255,7 +255,7 @@ def subaccount_report(pin_set_list, product_set_list):
             group_dict[subaccount_id]["boards"].append(item.board_id)  # board数
             group_dict[subaccount_id]["pins"].append(item.pin_id)  # pin数
             group_dict[subaccount_id]["pin_saves"] += item.pin_saves
-            group_dict[subaccount_id]["pin_likes"] += item.pin_likes
+            # group_dict[subaccount_id]["pin_likes"] += item.pin_likes
             group_dict[subaccount_id]["pin_comments"] += item.pin_comments
             # group_dict[subaccount_id]["pin_view"] += item.pin_views
             # group_dict[subaccount_id]["pin_clicks"] += item.pin_clicks
@@ -270,7 +270,7 @@ def subaccount_report(pin_set_list, product_set_list):
             "boards": len(set(filter(lambda x: x, info["boards"]))),
             "pins": len(set(filter(lambda x: x, info["pins"]))),
             "pin_saves": info["pin_saves"],
-            "pin_likes": info["pin_likes"],
+            # "pin_likes": info["pin_likes"],
             "pin_comments": info["pin_comments"],
             # "pin_clicks": info["pin_clicks"],
             "product_visitors": 0,
@@ -280,7 +280,7 @@ def subaccount_report(pin_set_list, product_set_list):
             "product_revenue": 0
         }
         # 组装product对应pin的数据,并且还需要是最新的product数据
-        product_set_list = product_set_list.filter(Q(product_id__in=info["products"]))
+        product_set_list = product_set_list.filter(product_id__in=info["products"])
         has_data_p_list = []
         for item in product_set_list:
             if (item.update_time.date(), item.product_id) in has_data_p_list:
@@ -309,7 +309,7 @@ def board_report(pin_set_list, product_set_list):
                 "board_followers": item.board_followers,
                 "pins": [] if not item.pin_id else [item.pin_id],  # pin数
                 "pin_saves": item.pin_saves,
-                "pin_likes": item.pin_likes,
+                # "pin_likes": item.pin_likes,
                 "pin_comments": item.pin_comments,
                 # "pin_view": item.pin_views,
                 # "pin_clicks": item.pin_clicks,
@@ -318,7 +318,7 @@ def board_report(pin_set_list, product_set_list):
         else:
             group_dict[board_id]["pins"].append(item.pin_id)  # pin数
             group_dict[board_id]["pin_saves"] += item.pin_saves
-            group_dict[board_id]["pin_likes"] += item.pin_likes
+            # group_dict[board_id]["pin_likes"] += item.pin_likes
             group_dict[board_id]["pin_comments"] += item.pin_comments
             # group_dict[board_id]["pin_view"] += item.pin_views
             # group_dict[board_id]["pin_clicks"] += item.pin_clicks
@@ -331,7 +331,7 @@ def board_report(pin_set_list, product_set_list):
             "board_followers": info["board_followers"],
             "pins": len(set(filter(lambda x: x, info["pins"]))),
             "pin_saves": info["pin_saves"],
-            "pin_likes": info["pin_likes"],
+            # "pin_likes": info["pin_likes"],
             "pin_comments": info["pin_comments"],
             # "pin_view": info["pin_view"],
             "product_visitors": 0,
@@ -341,7 +341,7 @@ def board_report(pin_set_list, product_set_list):
             "product_revenue": 0
         }
         # 组装product对应pin的数据
-        product_set_list = product_set_list.filter(Q(product_id__in=info["products"]))
+        product_set_list = product_set_list.filter(product_id__in=info["products"])
         has_data_p_list = []
         for item in product_set_list:
             if (item.update_time.date(), item.product_id) in has_data_p_list:
@@ -370,7 +370,7 @@ def pins_report(pin_set_list, product_set_list):
                 "update_time": item.update_time,
                 "pin_thumbnail": item.pin_thumbnail,
                 "pin_saves": item.pin_saves,
-                "pin_likes": item.pin_likes,
+                # "pin_likes": item.pin_likes,
                 "pin_comments": item.pin_comments,
                 # "pin_view": item.pin_views,
                 # "pin_clicks": item.pin_clicks,
@@ -382,7 +382,7 @@ def pins_report(pin_set_list, product_set_list):
                     "update_time": item.update_time,
                     "pin_thumbnail": item.pin_thumbnail,
                     "pin_saves": item.pin_saves,
-                    "pin_likes": item.pin_likes,
+                    # "pin_likes": item.pin_likes,
                     "pin_comments": item.pin_comments,
                     # "pin_view": item.pin_views,
                     # "pin_clicks": item.pin_clicks,
@@ -393,7 +393,7 @@ def pins_report(pin_set_list, product_set_list):
             "pin_uri": pin_uuid,
             "pin_thumbnail": info["pin_thumbnail"],
             "pin_saves": info["pin_saves"],
-            "pin_likes": info["pin_likes"],
+            # "pin_likes": info["pin_likes"],
             "pin_comments": info["pin_comments"],
             # "pin_view": info["pin_view"],
             "product_visitors": 0,
@@ -408,7 +408,7 @@ def pins_report(pin_set_list, product_set_list):
         # for item in store_set_list:
         #     data["store_visitors"] += item.store_visitors
         #     data["store_new_visitors"] += item.store_new_visitors
-        product_obj_list = product_set_list.filter(Q(product_id=info["product_id"]))
+        product_obj_list = product_set_list.filter(product_id=info["product_id"])
         has_data_p_list = []
         for product_obj in product_obj_list:
             if (product_obj.update_time.date(), product_obj.product_id) in has_data_p_list:
@@ -455,7 +455,7 @@ def site_count(pin_set_list, product_set_list, oneday=datetime.datetime.now().da
         Q(update_time__range=(
         lastest_pin_data.update_time + datetime.timedelta(hours=-1), lastest_pin_data.update_time)))
     # 获取帐号总数
-    subaccount_set = pin_queryset.filter(Q(board_id=None), Q(pin_id=None))
+    subaccount_set = pin_queryset.filter(board_id=None, pin_id=None)
     subaccount_num = get_num(subaccount_set, "pinterest_account_id")
     # 获取Board总数
     board_set = pin_queryset.filter(~Q(board_id=None), Q(pin_id=None))
@@ -469,11 +469,11 @@ def site_count(pin_set_list, product_set_list, oneday=datetime.datetime.now().da
     # 获取product_id_list
     product_id_list = []
     for pin in pin_set:
-        product_id_list.append(pin.product_id)
-    product_id_list = set(product_id_list)
+        if pin.product_id not in product_id_list:
+            product_id_list.append(pin.product_id)
 
     # 获取sales总数
-    product_set = product_set_list.filter(Q(product_id__in=product_id_list))
+    product_set = product_set_list.filter(product_id__in=product_id_list)
     sales_num = count_num(product_set, "product_sales")
     # 获取click总数
     click_num = count_num(product_set, "product_clicks")
@@ -576,15 +576,16 @@ def top_pins(request, period=7):
                                                                 Q(store_id=store_id))
     product_id_list = []
     for product in product_set_list:
-        product_id_list.append(product.product_id)
-    product_id_list = list(set(filter(lambda x: x, product_id_list)))
+        if product.product_id and product.product_id not in product_id_list:
+            product_id_list.append(product.product_id)
     # 过滤PinterestHistoryData数据(时间范围内最新的一次数据)
+    new_queryset = old_queryset = []
     query_time = start_time
     while query_time <= end_time:
         old_queryset = models.PinterestHistoryData.objects.filter(
             Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
             Q(product_id__in=product_id_list))
-        if old_queryset:
+        if old_queryset.exists():
             break
         query_time += datetime.timedelta(days=1)
     query_time = end_time
@@ -593,17 +594,17 @@ def top_pins(request, period=7):
         new_queryset = models.PinterestHistoryData.objects.filter(
             Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
             Q(product_id__in=product_id_list))
-        if new_queryset:
+        if new_queryset.exists():
             break
         query_time += datetime.timedelta(days=-1)
     pin_dict = pins_period(new_queryset, old_queryset)
-
+    prev_new_queryset = prev_old_queryset = []
     query_time = prev_start_time
     while query_time <= start_time:
         prev_old_queryset = models.PinterestHistoryData.objects.filter(
             Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
             Q(product_id__in=product_id_list))
-        if prev_old_queryset:
+        if prev_old_queryset.exists():
             break
         query_time += datetime.timedelta(days=1)
     query_time = start_time
@@ -611,7 +612,7 @@ def top_pins(request, period=7):
         prev_new_queryset = models.PinterestHistoryData.objects.filter(
             Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
             Q(product_id__in=product_id_list))
-        if prev_new_queryset:
+        if prev_new_queryset.exists():
             break
         query_time += datetime.timedelta(days=-1)
     prev_pin_dict = pins_period(prev_new_queryset, prev_old_queryset)
@@ -638,7 +639,7 @@ def pins_period(new_queryset, old_queryset):
     pin_dict = {}
     for pin_obj in new_queryset:
         if pin_obj.pin_id not in pin_dict:
-            old_saves = old_queryset.filter(Q(pin_id=pin_obj.pin_id)).first()
+            old_saves = old_queryset.filter(pin_id=pin_obj.pin_id).first()
             old_saves = old_saves.pin_saves if old_saves else 0
             pin_dict[pin_obj.pin_id] = {
                 "pin_uri": pin_obj.pin_uuid,
@@ -664,20 +665,22 @@ def top_board(request, period=7):
                                                                 Q(store_id=store_id))
     # 获取board_id_list
     board_id_list = []
+    product_id_list = []
     for product_obj in product_set_list:
-        if not product_obj.product_id:
-            continue
-        pin_set_all = product_obj.product.pin_set.all()
-        for pin_set in pin_set_all:
+        if product_obj.product_id not in product_id_list:
+            product_id_list.append(product_obj.product_id)
+    pin_set_all = models.Pin.objects.filter(product_id__in=product_id_list)
+    for pin_set in pin_set_all:
+        if pin_set.board_id and pin_set.board_id not in board_id_list:
             board_id_list.append(pin_set.board_id)
-    board_id_list = list(set(filter(lambda x: x, board_id_list)))
     # 过滤PinterestHistoryData数据(时间范围内最新的一次数据)
+    new_queryset = old_queryset = []
     query_time = start_time
     while query_time <= end_time:
         old_queryset = models.PinterestHistoryData.objects.filter(
             Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
             Q(board_id__in=board_id_list))
-        if old_queryset:
+        if old_queryset.exists():
             break
         query_time += datetime.timedelta(days=1)
     query_time = end_time
@@ -685,17 +688,17 @@ def top_board(request, period=7):
         new_queryset = models.PinterestHistoryData.objects.filter(
             Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
             Q(board_id__in=board_id_list))
-        if new_queryset:
+        if new_queryset.exists():
             break
         query_time += datetime.timedelta(days=-1)
     board_dict = board_period(new_queryset, old_queryset)
-
+    prev_new_queryset = prev_old_queryset = []
     query_time = prev_start_time
     while query_time <= start_time:
         prev_old_queryset = models.PinterestHistoryData.objects.filter(
             Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
             Q(board_id__in=board_id_list))
-        if prev_old_queryset:
+        if prev_old_queryset.exists():
             break
         query_time += datetime.timedelta(days=1)
     query_time = start_time
@@ -703,7 +706,7 @@ def top_board(request, period=7):
         prev_new_queryset = models.PinterestHistoryData.objects.filter(
             Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
             Q(board_id__in=board_id_list))
-        if prev_new_queryset:
+        if prev_new_queryset.exists():
             break
         query_time += datetime.timedelta(days=-1)
     prev_pin_dict = board_period(prev_new_queryset, prev_old_queryset)
