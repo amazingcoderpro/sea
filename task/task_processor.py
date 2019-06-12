@@ -370,7 +370,7 @@ class TaskProcessor:
             cursor.close() if cursor else 0
             conn.close() if conn else 0
 
-    def update_shopify_data(self, specific_sotre_uri=""):
+    def update_shopify_data(self, user_id=""):
         """
          获取所有店铺的所有products, 并保存至数据库
          :return:
@@ -382,8 +382,8 @@ class TaskProcessor:
             if not cursor:
                 return False
 
-            if specific_sotre_uri:
-                cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where url=%s''', (specific_sotre_uri,))
+            if user_id:
+                cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where user_id=%s''', (user_id,))
             else:
                 cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where id>=0''')
             stores = cursor.fetchall()

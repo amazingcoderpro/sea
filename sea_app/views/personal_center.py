@@ -41,7 +41,7 @@ class LoginView(generics.CreateAPIView):
                         obj.is_active = 1
                         obj.save()
                         print("------active ", username)
-                        TaskProcessor().update_shopify_data(username)
+                        TaskProcessor().update_shopify_data(obj.id)
                 else:
                     return Response({"detail": "The account is not activated"}, status=status.HTTP_400_BAD_REQUEST)
             user = auth.authenticate(username=username, password=password)
