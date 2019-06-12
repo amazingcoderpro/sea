@@ -1,5 +1,3 @@
-import json
-
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
@@ -16,7 +14,7 @@ from sea_app.filters import report as report_filters
 from sea_app.serializers import account_manager, report
 from sea_app.filters import account_manager as account_manager_filters
 from sea_app.pageNumber.pageNumber import PNPagination
-from sea_app.permission.permission import RulePermission
+from sea_app.permission.permission import RulePermission,PublishRecordPermission
 from sdk.pinterest import pinterest_api
 
 
@@ -119,10 +117,9 @@ class AccountListManageView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(queryset)
+        # page = self.paginate_queryset(queryset)
+        # if page is not None:
+        #     return self.get_paginated_response(page)
         return Response(queryset)
 
 
@@ -138,29 +135,21 @@ class BoardListManageView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(queryset)
+        # page = self.paginate_queryset(queryset)
+        # if page is not None:
+            # return self.get_paginated_response(queryset)
         return Response(queryset)
 
 
 class PinListManageView(generics.ListAPIView):
     """账号管理 -- pin 列表显示"""
     queryset = models.PinterestHistoryData.objects.all()
-    serializer_class = report.DailyReportSerializer
-    pagination_class = PNPagination
     filter_backends = (report_filters.PinListFilter,)
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
-
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(queryset)
         return Response(queryset)
 
 
@@ -208,7 +197,10 @@ class BoardManageView(generics.RetrieveUpdateDestroyAPIView):
 
     def put(self, request, *args, **kwargs):
         data = request.data
-        access_token = models.Board.objects.get(uuid=data["board_uri"]).pinterest_account.token
+        try:
+            access_token = models.Board.objects.get(id=kwargs["pk"], uuid=data["board_uri"]).pinterest_account.token
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         result = PinterestApi(access_token=access_token).edit_board(data["board_uri"], data["name"], data["description"])
         if result["code"] == 1:
             return self.update(request, *args, **kwargs)
@@ -216,7 +208,10 @@ class BoardManageView(generics.RetrieveUpdateDestroyAPIView):
             return Response({"detail": result["msg"]}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, *args, **kwargs):
-        board_obj = models.Board.objects.get(pk=kwargs["pk"])
+        try:
+            board_obj = models.Board.objects.get(pk=kwargs["pk"])
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         result = PinterestApi(access_token=board_obj.pinterest_account.token).delete_board(board_obj.uuid)
         if result["code"] == 1:
             return self.destroy(request, *args, **kwargs)
@@ -233,7 +228,10 @@ class PinManageView(generics.RetrieveUpdateDestroyAPIView):
 
     def put(self, request, *args, **kwargs):
         data = request.data
-        pin_obj = models.Pin.objects.filter(uuid=data["pin_uri"]).first()
+        try:
+            pin_obj = models.Pin.objects.filter(uuid=data["pin_uri"]).first()
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         access_token = pin_obj.board.pinterest_account.token
         # 通过board_name 查找board_uri
         board_obj = models.Board.objects.get(name=data["board_name"])
@@ -251,12 +249,18 @@ class PinManageView(generics.RetrieveUpdateDestroyAPIView):
             return Response({"detail": result["msg"]}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, *args, **kwargs):
-        pin_obj = models.Pin.objects.get(pk=kwargs["pk"])
-        result = PinterestApi(access_token=pin_obj.board.pinterest_account.token).delete_pin(pin_obj.uuid)
-        if result["code"] == 1:
-            return self.destroy(request, *args, **kwargs)
-        else:
-            return Response({"detail": result["msg"]}, status=status.HTTP_400_BAD_REQUEST)
+        pin_id_list = request.query_params.dict()["pin_list"]
+        for pin_id in eval(pin_id_list):
+            try:
+                pin_obj = models.Pin.objects.get(pk=pin_id)
+            except Exception as e:
+                return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            result = PinterestApi(access_token=pin_obj.board.pinterest_account.token).delete_pin(pin_obj.uuid)
+            if result["code"] == 1:
+                pin_obj.delete()
+            else:
+                return Response({"detail": result["msg"]}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_200_OK)
 
 
 class AccountManageView(generics.DestroyAPIView):
@@ -272,6 +276,12 @@ class RuleStatusView(generics.UpdateAPIView):
     serializer_class = account_manager.RuleStatusSerializer
     permission_classes = (IsAuthenticated, RulePermission)
     authentication_classes = (JSONWebTokenAuthentication,)
+
+    # def put(self, request, *args, **kwargs):
+    #     #     rule_id_list = eval(request.query_params.dict()["rule_list"])
+    #     #     statedata = request.data["statedata"]
+    #     #     models.Rule.objects.filter(id__in=rule_id_list).update(state=statedata)
+    #     #     return Response(status.HTTP_204_NO_CONTENT)
 
 
 class SendPinView(APIView):
@@ -293,3 +303,17 @@ class SendPinView(APIView):
                 return Response({"detail": result["msg"]})
         else:
             return Response({"detail": "This pinterest_account is not authorized"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PublishRecordDelView(APIView):
+    """发布规则删除"""
+    queryset = models.PublishRecord.objects.all()
+    permission_classes = (IsAuthenticated, PublishRecordPermission)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def post(self, request, *args, **kwargs):
+        publish_record_list = request.data.get("publish_record_list", "None")
+        if not publish_record_list or type(eval(publish_record_list)) != list:
+            return Response({"detail": "parameter error"}, status=status.HTTP_400_BAD_REQUEST)
+        obj = models.PublishRecord.objects.filter(id__in=eval(publish_record_list)).update(state=5)
+        return Response([])

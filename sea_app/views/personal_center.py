@@ -160,6 +160,14 @@ class PinterestAccountAuthView(APIView):
         return Response({"message": url})
 
 
+class PinterestAccountCancelAuthView(generics.UpdateAPIView):
+    """账号取消授权"""
+    queryset = models.PinterestAccount.objects.all()
+    serializer_class = personal_center.CancelAuthSerializer
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+
 class ShopifyCallback(APIView):
     """shopify 回调接口"""
     def get(self, request):
