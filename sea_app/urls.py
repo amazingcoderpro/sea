@@ -45,7 +45,9 @@ rule_urlpatterns = [
 
     # 修改规则状态
     url(r'state/(?P<pk>[0-9]+)/$', account_manager.RuleStatusView.as_view()),
-    # url(r'state/batch/$', account_manager.RuleStatusView.as_view()),
+    #url(r'state/batch/$', account_manager.RuleStatusView.as_view()),
+    # 发布列表删除和批量删除
+    url(r'publish_record/delete/$', account_manager.PublishRecordDelView.as_view()),
 
     # 发布记录和发布列表
     url(r'report/$', account_manager.ReportView.as_view()),
@@ -64,7 +66,7 @@ account_urlpatterns = [
     # 注册 登陆
     url(r'^login/$', personal_center.LoginView.as_view()),
     url(r'^register/$', personal_center.RegisterView.as_view()),
-    # shopfy注册设置密码
+    # shopfy注册设置密码-->注册
     url(r'^set_password/(?P<pk>[0-9]+)/$', personal_center.SetPasswordView.as_view()),
     # 登陆状态下设置密码
     url(r'^set_passwords/(?P<pk>[0-9]+)/$', personal_center.SetPasswordsView.as_view()),
