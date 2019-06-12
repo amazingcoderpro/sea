@@ -244,7 +244,7 @@ class PinManageView(generics.RetrieveUpdateDestroyAPIView):
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         access_token = pin_obj.board.pinterest_account.token
         # 通过board_name 查找board_uri
-        board_obj = models.Board.objects.get(name=data["board_name"])
+        board_obj = models.Board.objects.get(pk=data["board"])
         if not board_obj:
             return Response({"detail": "No board named is {}".format(data["board_name"])}, status=status.HTTP_400_BAD_REQUEST)
         result = PinterestApi(access_token=access_token).edit_pin(data["pin_uri"], board_obj.uuid, data["note"], data["url"])
