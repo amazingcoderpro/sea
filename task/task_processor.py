@@ -445,7 +445,7 @@ class TaskProcessor:
                         products = ret["data"].get("products", [])
 
                         for pro in products:
-                            print(products)
+                            # print(products)
                             pro_uuid = str(pro.get("id", ""))
                             pro_title = pro.get("title", "")
                             handle = pro.get("handle", "")
