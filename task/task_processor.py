@@ -466,7 +466,12 @@ class TaskProcessor:
                                                (pro_url, pro_title, pro_price, pro_tags, time_now, pro_image, thumbnail, pro_id))
                             else:
                                 # pro_create_time = datetime.datetime.strptime(pro.get("created_at"), "%Y-%m-%dT%H:%M:%S")
-                                pro_publish_time = datetime.datetime.strptime(pro.get("published_at", "")[0:-6], "%Y-%m-%dT%H:%M:%S")
+                                try:
+                                    if pro.get("published_at", ""):
+                                        time_str = pro.get("published_at", "")[0:-6]
+                                    pro_publish_time = datetime.datetime.strptime(time_str, "%Y-%m-%dT%H:%M:%S")
+                                except:
+                                    pro_publish_time = None
 
                                 cursor.execute(
                                     "insert into `product` (`sku`, `url`, `name`, `image_url`,`thumbnail`, `price`, `tag`, `create_time`, `update_time`, `store_id`, `publish_time`, `uuid`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
