@@ -85,6 +85,7 @@ auth_urlpatterns = [
     # 店铺和账户授权
     url(r'store/(?P<pk>[0-9]+)/$', personal_center.StoreAuthView.as_view()),
     url(r'pinterest_account/(?P<pk>[0-9]+)/$', personal_center.PinterestAccountAuthView.as_view()),
+    url(r'pinterest_account/cancel_auth/(?P<pk>[0-9]+)/$', personal_center.PinterestAccountCancelAuthView.as_view()),
     url(r'shopify/callback/$', personal_center.ShopifyCallback.as_view()),
     url(r'shopify/ask_permission/$', personal_center.ShopifyAuthView.as_view()),
     url(r'pinterest/callback/$', personal_center.PinterestCallback.as_view()),
