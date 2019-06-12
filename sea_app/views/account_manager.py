@@ -160,6 +160,16 @@ class PinterestAccountCreateView(generics.CreateAPIView):
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        url = pinterest_api.PinterestApi().get_pinterest_url(serializer.data["account"])
+        result = serializer.data
+        result["url"] = url
+        return Response(result, status=status.HTTP_201_CREATED, headers=headers)
+
 
 class PinterestAccountListView(generics.ListAPIView):
     """账号 select框显示"""
