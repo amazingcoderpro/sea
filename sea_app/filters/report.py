@@ -83,7 +83,7 @@ class AccountListFilter(BaseFilterBackend):
                 today_data_set = today_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
                 break
             if datetime.today().date() - today_date >= timedelta(days=5):
-                return {"count": 0, "results": []}
+                break
             today_date = today_date + timedelta(days=-1)
         yesterday_date = today_date
         while True:
@@ -185,7 +185,7 @@ class AccountListFilter(BaseFilterBackend):
                 "account_thumbnail": account_obj.thumbnail,
                 "account_email": account_obj.email,
                 "account_description": account_obj.description,
-                "account_create_time": account_obj.create_time.strftime("%Y-%m-%d %H:%M:%S"),
+                "account_create_time": account_obj.create_time.strftime("%Y-%m-%d %H:%M:%S") if account_obj.create_time else "",
                 "account_type": account_obj.type,
                 "account_authorized": account_obj.authorized,
                 "update_person": account_obj.user.username,
@@ -223,7 +223,7 @@ class BoardListFilter(BaseFilterBackend):
                 today_data_set = today_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
                 break
             if datetime.today().date() - today_date >= timedelta(days=5):
-                return {"count": 0, "results": []}
+                break
             today_date = today_date + timedelta(days=-1)
         yesterday_date = today_date
         while True:
@@ -356,7 +356,7 @@ class PinListFilter(BaseFilterBackend):
                 today_data_set = today_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
                 break
             if datetime.today().date() - today_date >= timedelta(days=10):
-                return {"count": 0, "results": []}
+                break
             today_date = today_date + timedelta(days=-1)
         while True:
             yesterday_data_set = queryset.filter(Q(update_time__range=(today_date + timedelta(days=-1), today_date)),

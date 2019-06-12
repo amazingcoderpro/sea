@@ -6,7 +6,7 @@ import httplib2
 from django.core.cache import cache
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.utils.cache import get_cache_key
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -53,13 +53,14 @@ class DashBoardView(APIView):
         return Response(resp)
 
 
-def expire_page(path):
-    for key in cache._cache.keys():
-        key = key[key.index('v'):]
-        cache.delete(key)
-    return HttpResponseRedirect(redirect_to="http://www.baidu.com")
-    # request = HttpRequest()
-    # request.path = path
-    # key = get_cache_key(request)
-    # if cache.has_key(key):
-    #     #     cache.delete(key)
+class CleanCacheView(generics.DestroyAPIView):
+    """清除所有缓存"""
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def delete(self, request, *args, **kwargs):
+        dic = cache._cache
+        for key in list(dic.keys()):
+            key = key[key.index('v'):]
+            cache.delete(key)
+        return Response(status=status.HTTP_204_NO_CONTENT)

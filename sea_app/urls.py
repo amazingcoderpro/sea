@@ -30,7 +30,7 @@ v1_urlpatterns = [
     url(r'store/(?P<pk>[0-9]+)/$', store.StoreOperView.as_view()),
 
     # 清除缓存
-    # url(r'clean_cache/$', dashboard.expire_page)
+    url(r'clean_cache/$', dashboard.CleanCacheView.as_view())
 ]
 
 # 规则管理 `/v1/rule/`
