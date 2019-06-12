@@ -226,3 +226,12 @@ class SetPasswordsSerializer(serializers.ModelSerializer):
 #         role.user_id = self.context["request"].user.id
 #         role.save()
 #         return role
+
+class CancelAuthSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.PinterestAccount
+        depth = 1
+        fields = ("id", "token", "authorized")
+
+    # def update(self, instance, validated_data):
+    #     pass
