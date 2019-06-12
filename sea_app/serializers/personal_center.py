@@ -53,10 +53,10 @@ class SetPasswordSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.User
-        fields = ("id", "username", "password", "password2", "create_time")
+        fields = ("id", "username", "password", "password2", "create_time", "email")
         extra_kwargs = {
             'password': {'write_only': True},
-            # 'username': {'write_only': True, },
+            'email': {'read_only': True, },
         }
 
     def validate(self, attrs):
