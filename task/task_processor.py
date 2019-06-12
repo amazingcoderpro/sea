@@ -441,12 +441,11 @@ class TaskProcessor:
                     max_fetch -= 1
                     ret = papi.get_all_products(limit=250, since_id=since_id)
                     if ret["code"] == 1:
+                        time_now = datetime.datetime.now()
+                        products = ret["data"].get("products", [])
                         logger.info("get all products succeed, limit=250, since_id={}, len products={}".format(since_id,
                                                                                                                len(
                                                                                                                    products)))
-                        time_now = datetime.datetime.now()
-                        products = ret["data"].get("products", [])
-
                         for pro in products:
                             # print(products)
                             pro_uuid = str(pro.get("id", ""))
