@@ -59,13 +59,13 @@ def get_common_data(request):
     else:
         # 按选择框输入查询
         if pinterest_account_id:
-            pin_set_list = pin_set_list.filter(Q(pinterest_account_id=pinterest_account_id))
+            pin_set_list = pin_set_list.filter(pinterest_account_id=pinterest_account_id)
 
         if board_id:
             pin_set_list = pin_set_list.filter(board_id=board_id)
 
         if pin_id:
-            pin_set_list = pin_set_list.filter(Q(pin_id=pin_id))
+            pin_set_list = pin_set_list.filter(pin_id=pin_id)
 
     # 开始过滤ProductHistoryData数据
     product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)),
@@ -140,7 +140,7 @@ def daily_report(pin_set_list, product_set_list, request):
         }
 
         # 组装每日product对应pin的数据
-        product_set_list_pre = product_set_list.filter(Q(update_time__range=(day, day + datetime.timedelta(days=1))))
+        product_set_list_pre = product_set_list.filter(update_time__range=(day, day + datetime.timedelta(days=1)))
         # store_obj = product_set_list_pre.filter(Q(product_id=None)).first()
         # if store_obj:
         #     data["product_visitors"] = store_obj.product_visitors
@@ -149,7 +149,7 @@ def daily_report(pin_set_list, product_set_list, request):
         #     data["store_visitors"] = 0
         #     data["store_new_visitors"] = 0
         p_list = list(set(filter(lambda x: x, info["accounts"])))
-        product_list = product_set_list_pre.filter(Q(product_id__in=p_list))
+        product_list = product_set_list_pre.filter(product_id__in=p_list)
         has_data_p_list = []
         for item in product_list:
             # 只能叠加当天最新一次拉取的数据
