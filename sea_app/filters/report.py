@@ -67,7 +67,7 @@ class AccountListFilter(BaseFilterBackend):
         page_size = int(request.query_params.dict().get('page_size', '10'))
         page = int(request.query_params.dict().get('page', '1'))
         account_set = models.PinterestAccount.objects.filter(user=request.user)
-        if not account_set:
+        if not account_set.exists():
             return {"count": 0, "results": []}
         account_id_list = []
         for account in account_set[(page-1)*page_size:page*page_size]:
@@ -77,7 +77,7 @@ class AccountListFilter(BaseFilterBackend):
         while True:
             today_data_set = queryset.filter(Q(update_time__range=(today_date, today_date + timedelta(days=1))),
                                              Q(pinterest_account_id__in=account_id_list))
-            if today_data_set:
+            if today_data_set.exists():
                 # 取今天最新的一批数据
                 lastest_time = today_data_set.first().update_time
                 today_data_set = today_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
@@ -89,7 +89,7 @@ class AccountListFilter(BaseFilterBackend):
         while True:
             yesterday_data_set = queryset.filter(Q(update_time__range=(yesterday_date + timedelta(days=-1), yesterday_date)),
                                                  Q(pinterest_account_id__in=account_id_list))
-            if yesterday_data_set:
+            if yesterday_data_set.exists():
                 # 取昨天最新的一批数据
                 lastest_time = yesterday_data_set.first().update_time
                 yesterday_data_set = yesterday_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
@@ -207,7 +207,7 @@ class BoardListFilter(BaseFilterBackend):
         page_size = int(request.query_params.dict().get('page_size', '10'))
         page = int(request.query_params.dict().get('page', '1'))
         board_set = models.Board.objects.filter(pinterest_account_id=account_id)
-        if not board_set:
+        if not board_set.exists():
             return {"count": 0, "results": []}
         board_id_list = []
         for board in board_set[(page-1)*page_size:page*page_size]:
@@ -217,7 +217,7 @@ class BoardListFilter(BaseFilterBackend):
         while True:
             today_data_set = queryset.filter(Q(update_time__range=(today_date, today_date + timedelta(days=1))),
                                              Q(board_id__in=board_id_list))
-            if today_data_set:
+            if today_data_set.exists():
                 # 取今天最新的一批数据
                 lastest_time = today_data_set.first().update_time
                 today_data_set = today_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
@@ -229,7 +229,7 @@ class BoardListFilter(BaseFilterBackend):
         while True:
             yesterday_data_set = queryset.filter(Q(update_time__range=(yesterday_date + timedelta(days=-1), yesterday_date)),
                                                  Q(board_id__in=board_id_list))
-            if yesterday_data_set:
+            if yesterday_data_set.exists():
                 # 取昨天最新的一批数据
                 lastest_time = yesterday_data_set.first().update_time
                 yesterday_data_set = yesterday_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
@@ -341,7 +341,7 @@ class PinListFilter(BaseFilterBackend):
             pin_set = models.Pin.objects.filter(Q(note=query_str) | Q(product__sku=query_str), Q(board_id=board_id))
         else:
             pin_set = models.Pin.objects.filter(board_id=board_id)
-        if not pin_set:
+        if not pin_set.exists():
             return {"count": 0, "results": []}
         for pin in pin_set[(page-1)*page_size:page*page_size]:
             pin_id_list.append(pin.id)
@@ -350,7 +350,7 @@ class PinListFilter(BaseFilterBackend):
         while True:
             today_data_set = queryset.filter(Q(update_time__range=(today_date, today_date + timedelta(days=1))),
                                              Q(pin_id__in=pin_id_list))
-            if today_data_set:
+            if today_data_set.exists():
                 # 取今天最新的一批数据
                 lastest_time = today_data_set.first().update_time
                 today_data_set = today_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
@@ -361,7 +361,7 @@ class PinListFilter(BaseFilterBackend):
         while True:
             yesterday_data_set = queryset.filter(Q(update_time__range=(today_date + timedelta(days=-1), today_date)),
                                                  Q(pin_id__in=pin_id_list))
-            if yesterday_data_set:
+            if yesterday_data_set.exists():
                 # 取昨天最新的一批数据
                 lastest_time = yesterday_data_set.first().update_time
                 yesterday_data_set = yesterday_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
