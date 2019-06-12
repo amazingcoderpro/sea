@@ -450,7 +450,7 @@ class TaskProcessor:
                             # print(products)
                             pro_uuid = str(pro.get("id", ""))
                             pro_title = pro.get("title", "")
-                            pro_titile = pro_title.encode("utf-8")
+                            # pro_titile = pro_title.encode("utf-8")
                             handle = pro.get("handle", "")
                             pro_url = "https://{}/products/{}".format(store_url, handle)
                             pro_type = pro.get("product_type", "")
