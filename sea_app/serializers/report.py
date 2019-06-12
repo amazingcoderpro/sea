@@ -15,7 +15,7 @@ class PinterestAccountListSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.PinterestAccount
         depth = 1
-        fields = ("id", "nickname", "state")
+        fields = ("id", "account", "nickname", "state")
 
 
 class BoardListSerializer(serializers.ModelSerializer):

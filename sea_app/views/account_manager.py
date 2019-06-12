@@ -160,6 +160,16 @@ class PinterestAccountCreateView(generics.CreateAPIView):
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        url = pinterest_api.PinterestApi().get_pinterest_url(serializer.data["account"])
+        result = serializer.data
+        result["url"] = url
+        return Response(result, status=status.HTTP_201_CREATED, headers=headers)
+
 
 class PinterestAccountListView(generics.ListAPIView):
     """账号 select框显示"""
@@ -234,7 +244,7 @@ class PinManageView(generics.RetrieveUpdateDestroyAPIView):
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         access_token = pin_obj.board.pinterest_account.token
         # 通过board_name 查找board_uri
-        board_obj = models.Board.objects.get(name=data["board_name"])
+        board_obj = models.Board.objects.get(pk=data["board"])
         if not board_obj:
             return Response({"detail": "No board named is {}".format(data["board_name"])}, status=status.HTTP_400_BAD_REQUEST)
         result = PinterestApi(access_token=access_token).edit_pin(data["pin_uri"], board_obj.uuid, data["note"], data["url"])
