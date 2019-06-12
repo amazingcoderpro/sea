@@ -1,7 +1,10 @@
 from django.db import transaction
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
+from sdk.pinterest import pinterest_api
 
 from sea_app import models
+
 
 class BoardSerializer(serializers.ModelSerializer):
     class Meta:
@@ -117,9 +120,22 @@ class PinterestAccountCreateSerializer(serializers.ModelSerializer):
             # "state",
             "description",
             "create_time",
+            # "user"
         )
+        # extra_kwargs = {
+        #     'user': {'write_only': False},
+        # }
+        # validators = [
+        #     UniqueTogetherValidator(
+        #         queryset=models.PinterestAccount.objects.all(),
+        #         fields=('account', 'user')
+        #     )
+        # ]
 
     def create(self, validated_data):
+        is_account = models.PinterestAccount.objects.filter(account=validated_data["account"], user=self.context["request"].user).first()
+        if is_account:
+            raise serializers.ValidationError({"detail": "The account already exists"})
         validated_data["user"] = self.context["request"].user
         instance = super(PinterestAccountCreateSerializer, self).create(validated_data)
         instance.user = self.context["request"].user
