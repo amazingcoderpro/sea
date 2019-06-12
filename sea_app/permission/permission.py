@@ -28,3 +28,11 @@ class RulePermission(BasePermission):
             if obj.user_id == request.user.id:
                 return True
             return False
+
+
+class PublishRecordPermission(BasePermission):
+
+    def has_object_permission(self, request, view, obj):
+            if obj.rule.user_id == request.user.id:
+                return True
+            return False
