@@ -6,7 +6,7 @@ from sea_app.views import personal_center, account_manager, report, dashboard, s
 v1_urlpatterns = [
 
     # 报告
-    url(r'dashboard/(?P<pk>[1-5]+)/$', cache_page(5)(dashboard.DashBoardView.as_view())),
+    url(r'dashboard/(?P<pk>[1-5]+)/$', cache_page(5*60)(dashboard.DashBoardView.as_view())),
     url(r'daily_report/$', cache_page(5*60)(report.DailyReportView.as_view())),
     url(r'subaccount_report/(?P<type>[a-zA-Z]+)/$', cache_page(5*60)(report.SubAccountReportView.as_view())),
 
@@ -74,7 +74,7 @@ account_urlpatterns = [
     # 用户 角色管理
     # url(r'users/$', personal_center.UserView.as_view()),
     url(r'users/(?P<pk>[0-9]+)/$', personal_center.UserOperView.as_view()),
-    url(r'users/operation_record/$', cache_page(5)(personal_center.OperationRecord.as_view())),
+    url(r'users/operation_record/$', cache_page(10)(personal_center.OperationRecord.as_view())),
     # url(r'role/$', personal_center.RoleView.as_view()),
     # url(r'role/(?P<pk>[0-9]+)/$', personal_center.RoleOperView.as_view()),
 ]
