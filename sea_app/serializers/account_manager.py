@@ -119,7 +119,7 @@ class PinterestAccountCreateSerializer(serializers.ModelSerializer):
             "type",
             # "state",
             "description",
-            "create_time",
+            # "create_time"
             # "user"
         )
         # extra_kwargs = {
