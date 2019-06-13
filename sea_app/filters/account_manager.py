@@ -89,11 +89,11 @@ class ProductCountFilter(BaseFilterBackend):
     """pinterest账号列表过滤"""
 
     filter_keys = {
-        "begin_time": "update_time__gte",
-        "end_time": "update_time__lte",
-        "publish_begin_time": "product__publish_time__gte",
-        "publish_end_time": "product__publish_time__lte",
-        "product__name": "product__name__contains",
+        # "begin_time": "update_time__gte",
+        # "end_time": "update_time__lte",
+        "publish_begin_time": "publish_time__gte",
+        "publish_end_time": "publish_time__lte",
+        "product__name": "name__contains",
         "store": "store"
     }
 
