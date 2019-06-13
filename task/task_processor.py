@@ -195,13 +195,13 @@ class TaskProcessor:
                     if account_info:
                         time_now = datetime.datetime.now()
                         user_name = account_info.get("username", "")
-                        if "\\x" in str(user_name.encode("utf-8")):
-                            user_name = str(user_name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
-                                "\'", "")
+                        # if "\\x" in str(user_name.encode("utf-8")):
+                        #     user_name = str(user_name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
+                        #         "\'", "")
                         bio = account_info.get("bio", "")
-                        if "\\x" in str(bio.encode("utf-8")):
-                            bio = str(bio.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
-                                "\'", "")
+                        # if "\\x" in str(bio.encode("utf-8")):
+                        #     bio = str(bio.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
+                        #         "\'", "")
 
                         account_type = account_info.get("account_type", "")
                         account_type = 0 if account_type == "individual" else 1
@@ -259,14 +259,14 @@ class TaskProcessor:
                         for board in boards:
                             uuid = board.get("id", "")
                             name = board.get("name", "")
-                            if "\\x" in str(name.encode("utf-8")):
-                                name = str(name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
-                                    "\'", "")
+                            # if "\\x" in str(name.encode("utf-8")):
+                            #     name = str(name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
+                            #         "\'", "")
 
                             description = board.get("description", "")
-                            if "\\x" in str(description.encode("utf-8")):
-                                description = str(description.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
-                                    "\'", "")
+                            # if "\\x" in str(description.encode("utf-8")):
+                            #     description = str(description.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
+                            #         "\'", "")
                             state = 1 if board.get('privacy') == "public" else 0
                             create_time = datetime.datetime.strptime(board["created_at"], "%Y-%m-%dT%H:%M:%S")
                             add_time = time_now
@@ -329,9 +329,9 @@ class TaskProcessor:
                             board_url = pin.get("board", {}).get("url", "")
                             board_uuid = pin.get("board", {}).get("id", "")
                             board_name = pin.get("board", {}).get("name", "")
-                            if "\\x" in str(board_name.encode("utf-8")):
-                                board_name = str(board_name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
-                                    "\'", "")
+                            # if "\\x" in str(board_name.encode("utf-8")):
+                            #     board_name = str(board_name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
+                            #         "\'", "")
 
                             counts = pin.get("counts", {})
                             pin_saves = counts.get("saves", 0)
@@ -478,9 +478,9 @@ class TaskProcessor:
                     logger.info("shop info={}".format(shop))
                     shop_uuid = shop.get("id", "")
                     shop_name = shop.get("name", "")
-                    if "\\x" in str(shop_name.encode("utf-8")):
-                        shop_name = str(shop_name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
-                            "\'", "")
+                    # if "\\x" in str(shop_name.encode("utf-8")):
+                    #     shop_name = str(shop_name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
+                    #         "\'", "")
                     shop_timezone = shop.get("timezone", "")
                     shop_domain = shop.get("domain", "")
                     shop_email = shop.get("email", "")
@@ -490,9 +490,9 @@ class TaskProcessor:
                     updated_at = shop.get("updated_at", '')
                     shop_phone = shop.get("phone", "")
                     shop_city = shop.get("city", '')
-                    if "\\x" in str(shop_city.encode("utf-8")):
-                        shop_city = str(shop_city.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
-                            "\'", "")
+                    # if "\\x" in str(shop_city.encode("utf-8")):
+                    #     shop_city = str(shop_city.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
+                    #         "\'", "")
 
                     shop_currency = shop.get("currency", "USD")
                     # shop_myshopify_domain = shop.get("myshopify_domain", "")
@@ -529,8 +529,8 @@ class TaskProcessor:
                                 continue
 
                             pro_title = pro.get("title", "")
-                            if "\\x" in str(pro_title.encode("utf-8")):
-                                pro_title = str(pro_title.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace("\'", "")
+                            # if "\\x" in str(pro_title.encode("utf-8")):
+                            #     pro_title = str(pro_title.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace("\'", "")
                             handle = pro.get("handle", "")
                             pro_url = "https://{}/products/{}".format(store_url, handle)
                             pro_type = pro.get("product_type", "")
@@ -542,12 +542,12 @@ class TaskProcessor:
                                 pro_sku = variants[0].get("sku", "")
                                 pro_price = float(variants[0].get("price", "0"))
 
-                            if "\\x" in str(pro_sku.encode("utf-8")):
-                                pro_sku = str(pro_sku.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace("\'", "")
+                            # if "\\x" in str(pro_sku.encode("utf-8")):
+                            #     pro_sku = str(pro_sku.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace("\'", "")
 
                             pro_tags = pro.get("tags", "")
-                            if "\\x" in str(pro_tags.encode("utf-8")):
-                                pro_tags = str(pro_tags.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace("\'", "")
+                            # if "\\x" in str(pro_tags.encode("utf-8")):
+                            #     pro_tags = str(pro_tags.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace("\'", "")
                             img_obj = pro.get("image", {})
                             if img_obj:
                                 pro_image = img_obj.get("src", "")
@@ -577,8 +577,12 @@ class TaskProcessor:
                                      time_now, store_id, pro_publish_time, pro_uuid))
                                 pro_id = cursor.lastrowid
 
-                            conn.commit()
-                            uuid_list.append(pro_uuid)
+                            try:
+                                conn.commit()
+                                uuid_list.append(pro_uuid)
+                            except:
+                                logger.exception("update product exception.")
+
                             if not store_view_id:
                                 logger.warning("this product have no store view id, product id={}, store id={}".format(pro_id, store_id))
                                 continue
