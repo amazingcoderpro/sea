@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework_jwt.serializers import jwt_encode_handler, jwt_payload_handler
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
+import datetime
 
 from sdk.shopify import shopify_oauth_info
 from sea_app import models
@@ -22,6 +23,7 @@ from sdk.pinterest import pinterest_api
 from sea_app.views import reports
 from sea_app.utils import random_code
 from task.task_processor import TaskProcessor
+
 
 class LoginView(generics.CreateAPIView):
     """登陆"""
@@ -150,13 +152,14 @@ class PinterestAccountAuthView(APIView):
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 
-    def post(self, request, *args, **kwargs):
-        instance = models.PinterestAccount.objects.filter(id=kwargs["pk"]).first()
-        if not instance:
-            return Response({"detail": "The resource was not found"}, status=status.HTTP_400_BAD_REQUEST)
-        if instance.authorized == 1:
-            return Response({"detail": "This account is authorized"}, status=status.HTTP_400_BAD_REQUEST)
-        url = pinterest_api.PinterestApi().get_pinterest_url(instance.account)
+    def get(self, request, *args, **kwargs):
+        # instance = models.PinterestAccount.objects.filter(id=kwargs["pk"]).first()
+        # if not instance:
+        #     return Response({"detail": "The resource was not found"}, status=status.HTTP_400_BAD_REQUEST)
+        # if instance.authorized == 1:
+        #     return Response({"detail": "This account is authorized"}, status=status.HTTP_400_BAD_REQUEST)
+        # state = "%s|%d" % (instance.account, request.user.id)
+        url = pinterest_api.PinterestApi().get_pinterest_url(state=request.user.id)
         return Response({"message": url})
 
 
@@ -204,37 +207,91 @@ class ShopifyCallback(APIView):
 
 class PinterestCallback(APIView):
     """pinterest 回调接口"""
+
     def get(self, request, *args, **kwargs):
         code = request.query_params.get("code", None)
-        account_uri = request.query_params.get("state", None)
-        if not code or not account_uri:
-            return Response({"message": "auth faild"})
+        uid = request.query_params.get("state", None)
+        if not code or not uid:
+            return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
+        uid = int(uid)
         result = pinterest_api.PinterestApi().get_token(code)
         if result["code"] != 1:
             return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
         # 判断token是否为当前用户的token
         token = result["data"].get("access_token", "")
         print("current token：{}".format(token))
-        # user_info = pinterest_api.PinterestApi(access_token=token).get_user_info()
-        # print("current user info: {}".format(user_info))
-        # if user_info["code"] == 1:
-        #     if user_info["data"].get("url").lower() == account_uri.lower():
-        #         models.PinterestAccount.objects.filter(account=account_uri).update(
-        #             token=token, authorized=1)
-        #         return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=1")
-
         if token:
-            pin_account = models.PinterestAccount.objects.filter(account=account_uri)
-            if pin_account:
-                pin_account.update(token=token, authorized=1)
-                pin_account_id = pin_account.first().id
-                print("-----update pinterest id=", pin_account_id)
-                TaskProcessor().update_pinterest_data(pin_account_id)
-            else:
+            result = pinterest_api.PinterestApi(access_token=token).get_user_info()
+            if result["code"] != 1:
                 return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
+            account_info = result.get("data", {})
+            if not account_info:
+                return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
+            uuid = account_info.get("id", '')
+            nickname = account_info.get("username", "")
+            # description = account_info.get("bio", "")
+            # account_type = account_info.get("account_type", "")
+            # type = 0 if account_type == "individual" else 1
+            # create_time = account_info.get("created_at", "")
+            # if create_time:
+            #     create_at = datetime.datetime.strptime(create_time, "%Y-%m-%dT%H:%M:%S")
+            # counts = account_info.get("counts", {})
+            # pins = counts.get("pins", 0)
+            # boards = counts.get("boards", 0)
+            # followings = counts.get("following")
+            # followers = counts.get("followers")
+            is_uuid = models.PinterestAccount.objects.filter(**{"uuid":uuid,"user_id":uid}).first()
+            if is_uuid:
+                return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=3")
+            pin_account = models.PinterestAccount.objects.create(**{"user_id":uid, "account": nickname, "nickname": nickname, "uuid": uuid,"token":token,"authorized":1})
+            # print("-----update pinterest id=", pin_account.id)
+            # TaskProcessor().update_pinterest_data(pin_account.id)
         else:
             return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
         return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=1")
+    # def get(self, request, *args, **kwargs):
+        # code = request.query_params.get("code", None)
+        # state = request.query_params.get("state", None)
+        # account_uri = state.split("|")[0]
+        # uid = state.split("|")[1]
+        # if not code or not account_uri:
+        #     return Response({"message": "auth faild"})
+        # result = pinterest_api.PinterestApi().get_token(code)
+        # if result["code"] != 1:
+        #     return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
+        # # 判断token是否为当前用户的token
+        # token = result["data"].get("access_token", "")
+        # print("current token：{}".format(token))
+        # # user_info = pinterest_api.PinterestApi(access_token=token).get_user_info()
+        # # print("current user info: {}".format(user_info))
+        # # if user_info["code"] == 1:
+        # #     if user_info["data"].get("url").lower() == account_uri.lower():
+        # #         models.PinterestAccount.objects.filter(account=account_uri).update(
+        # #             token=token, authorized=1)
+        # #         return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=1")
+        #
+        # if token:
+        #     result = pinterest_api.PinterestApi(access_token=token).get_user_info()
+        #     if result["code"] != 1:
+        #         return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
+        #     account_info = result.get("data", {})
+        #     if not account_info:
+        #         return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
+        #     account_uuid = account_info.get("id", '')
+        #     is_uuid = models.PinterestAccount.objects.filter(uuid=int(account_uuid)).first()
+        #     if is_uuid:
+        #         return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=3")
+        #     pin_account = models.PinterestAccount.objects.filter(account=account_uri)
+        #     if pin_account:
+        #         pin_account.update(token=token, authorized=1)
+        #         pin_account_id = pin_account.first().id
+        #         print("-----update pinterest id=", pin_account_id)
+        #         TaskProcessor().update_pinterest_data(pin_account_id)
+        #     else:
+        #         return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
+        # else:
+        #     return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
+        # return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=1")
 
 
 class OperationRecord(generics.ListAPIView):
