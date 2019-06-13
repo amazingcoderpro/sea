@@ -557,27 +557,27 @@ class TaskProcessor:
                                 pro_image = ""
                             thumbnail = self.image_2_base64(pro_image)
 
-                            if pro_uuid in exist_products_dict.keys():
-                                pro_id = exist_products_dict[pro_uuid]
-                                logger.info("product is already exist, pro_uuid={}, pro_id={}".format(pro_uuid, pro_id))
-                                cursor.execute('''update `product` set url=%s, name=%s, price=%s, tag=%s, update_time=%s, image_url=%s, thumbnail=%s where id=%s''',
-                                               (pro_url, pro_title, pro_price, pro_tags, time_now, pro_image, thumbnail, pro_id))
-                            else:
-                                # pro_create_time = datetime.datetime.strptime(pro.get("created_at"), "%Y-%m-%dT%H:%M:%S")
-                                try:
-                                    if pro.get("published_at", ""):
-                                        time_str = pro.get("published_at", "")[0:-6]
-                                    pro_publish_time = datetime.datetime.strptime(time_str, "%Y-%m-%dT%H:%M:%S")
-                                except:
-                                    pro_publish_time = None
-
-                                cursor.execute(
-                                    "insert into `product` (`sku`, `url`, `name`, `image_url`,`thumbnail`, `price`, `tag`, `create_time`, `update_time`, `store_id`, `publish_time`, `uuid`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                                    (pro_sku, pro_url, pro_title, pro_image, thumbnail, pro_price, pro_tags, time_now,
-                                     time_now, store_id, pro_publish_time, pro_uuid))
-                                pro_id = cursor.lastrowid
-
                             try:
+                                if pro_uuid in exist_products_dict.keys():
+                                    pro_id = exist_products_dict[pro_uuid]
+                                    logger.info("product is already exist, pro_uuid={}, pro_id={}".format(pro_uuid, pro_id))
+                                    cursor.execute('''update `product` set url=%s, name=%s, price=%s, tag=%s, update_time=%s, image_url=%s, thumbnail=%s where id=%s''',
+                                                   (pro_url, pro_title, pro_price, pro_tags, time_now, pro_image, thumbnail, pro_id))
+                                else:
+                                    # pro_create_time = datetime.datetime.strptime(pro.get("created_at"), "%Y-%m-%dT%H:%M:%S")
+                                    try:
+                                        if pro.get("published_at", ""):
+                                            time_str = pro.get("published_at", "")[0:-6]
+                                        pro_publish_time = datetime.datetime.strptime(time_str, "%Y-%m-%dT%H:%M:%S")
+                                    except:
+                                        pro_publish_time = None
+
+                                    cursor.execute(
+                                        "insert into `product` (`sku`, `url`, `name`, `image_url`,`thumbnail`, `price`, `tag`, `create_time`, `update_time`, `store_id`, `publish_time`, `uuid`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                                        (pro_sku, pro_url, pro_title, pro_image, thumbnail, pro_price, pro_tags, time_now,
+                                         time_now, store_id, pro_publish_time, pro_uuid))
+                                    pro_id = cursor.lastrowid
+
                                 conn.commit()
                                 uuid_list.append(pro_uuid)
                             except:
