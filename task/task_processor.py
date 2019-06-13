@@ -402,19 +402,19 @@ class TaskProcessor:
                                         '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
                                         `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
                                         `pin_id`, `pinterest_account_id`, `product_id`, `account_followings`, 
-                                        `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                                        `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`, `account_name`) 
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
                                         (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
-                                         update_time, board_id, pin_id, account_id, product_id, 0, 0, 0, 0, "", ""))
+                                         update_time, board_id, pin_id, account_id, product_id, 0, 0, 0, 0, board_uuid, board_name, nickname))
                                 else:
                                     cursor.execute(
                                         '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
                                         `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
                                         `pin_id`, `pinterest_account_id`, `account_followings`, 
-                                        `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                                        `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`, `account_name`) 
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
                                         (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
-                                         update_time, board_id, pin_id, account_id, 0, 0, 0, 0, "", ""))
+                                         update_time, board_id, pin_id, account_id, 0, 0, 0, 0, board_uuid, board_name, nickname))
 
                                 conn.commit()
                 else:
@@ -945,7 +945,7 @@ def test():
 
 def main():
     tsp = TaskProcessor()
-    tsp.start_all(rule_interval=120, publish_pin_interval=240, pinterest_update_interval=7200*2, shopify_update_interval=7200*2, update_new=120)
+    tsp.start_all(rule_interval=120, publish_pin_interval=240, pinterest_update_interval=7200*2, shopify_update_interval=7200*3, update_new=120)
     while 1:
         time.sleep(1)
 
