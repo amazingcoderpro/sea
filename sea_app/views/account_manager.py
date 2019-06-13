@@ -172,7 +172,8 @@ class PinterestAccountCreateView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        url = pinterest_api.PinterestApi().get_pinterest_url(serializer.data["account"])
+        state = "%s|%d" % (serializer.data["account"], request.user.id)
+        url = pinterest_api.PinterestApi().get_pinterest_url(state)
         result = serializer.data
         result["url"] = url
         return Response(result, status=status.HTTP_201_CREATED, headers=headers)
