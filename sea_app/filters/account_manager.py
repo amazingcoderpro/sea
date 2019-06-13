@@ -93,7 +93,7 @@ class ProductCountFilter(BaseFilterBackend):
         # "end_time": "update_time__lte",
         "publish_begin_time": "publish_time__gte",
         "publish_end_time": "publish_time__lte",
-        "product__name": "name__contains",
+        "product__name": "name__icontains",
         "store": "store"
     }
 
