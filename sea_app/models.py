@@ -1,3 +1,6 @@
+import time
+import uuid
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -189,6 +192,7 @@ class PinterestAccount(models.Model):
 
     def delete(self, using=None, keep_parents=False):
         self.state = 2
+        self.uuid = str(uuid.uuid1()) + str(time.time())
         self.save()
         return 'success'
 
