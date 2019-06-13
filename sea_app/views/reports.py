@@ -183,7 +183,8 @@ def daily_report(pin_set_list, product_set_list, request):
                 "product_revenue": 0,
             }
         )
-    return sorted(data_list, key=lambda x: x["date"], reverse=True)
+    data_list = sorted(data_list, key=lambda x: x["date"], reverse=True)
+    return {"count": len(data_list), "results": data_list}
 
 
 def daily_report_view(request):
