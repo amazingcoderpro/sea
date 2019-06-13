@@ -104,7 +104,7 @@ class ProductHistorySerializer(serializers.ModelSerializer):
 class PublishRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.PublishRecord
-        depth = 1
+        depth = 2
         fields = "__all__"
 
 
