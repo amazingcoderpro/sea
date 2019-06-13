@@ -49,7 +49,7 @@ class PinterestApi():
             result = requests.post(url)
             if result.status_code == 200:
                 logger.info("pinterest token success = {}".format(json.loads(result.text).get("access_token")))
-                print({"code": 1, "msg": "", "data": json.loads(result.text)})
+                # print({"code": 1, "msg": "", "data": json.loads(result.text)})
                 return {"code": 1, "msg": "", "data": json.loads(result.text)}
             else:
                 logger.error("pinterest token failed = {}, status_code={}".format(json.loads(result.text).get("message", ""), result.status_code))
@@ -71,7 +71,7 @@ class PinterestApi():
             result = requests.get(url)
             if result.status_code == 200:
                 logger.info("get user: {} info is success".format(json.loads(result.text)["data"]["username"]))
-                print(json.loads(result.text).get("data", {}))
+                # print(json.loads(result.text).get("data", {}))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
                 logger.error("get user info is failed msg={}".format(json.loads(result.text).get("message", "")))
@@ -120,7 +120,7 @@ class PinterestApi():
         try:
             result = requests.get(url)
             if result.status_code == 200:
-                print(result.text)
+                # print(result.text)
                 logger.info("get user boards is success")
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
@@ -222,7 +222,7 @@ class PinterestApi():
             result = requests.post(api_request_url, json=payload)
             if result.status_code in [200, 201]:
                 logger.info("create new pin is success; board_id={}".format(board_id))
-                print(json.loads(result.text).get("data", {}))
+                # print(json.loads(result.text).get("data", {}))
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
                 logger.error("create new pin is failed, msg= {}, board_id={}".format(json.loads(result.text).get("message", ""), board_id))
@@ -245,7 +245,7 @@ class PinterestApi():
             result = requests.get(api_request_url)
             if result.status_code == 200:
                 logger.info("get user pins is success")
-                print(result.text)
+                # print(result.text)
                 return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
             else:
                 logger.error("get user pin is failed, msg= {}".format(json.loads(result.text).get("message", "")))
