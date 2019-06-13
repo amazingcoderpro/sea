@@ -905,7 +905,7 @@ def test():
 
 def main():
     tsp = TaskProcessor()
-    tsp.start_all(rule_interval=120, publish_pin_interval=240, pinterest_update_interval=7200, shopify_update_interval=7200)
+    tsp.start_all(rule_interval=120, publish_pin_interval=240, pinterest_update_interval=7200, shopify_update_interval=7200*2)
     while 1:
         time.sleep(1)
 
