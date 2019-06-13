@@ -207,9 +207,9 @@ class PinterestCallback(APIView):
     """pinterest 回调接口"""
     def get(self, request, *args, **kwargs):
         code = request.query_params.get("code", None)
-        account_uri = request.query_params.get("state", None)
-        account_uri = account_uri.split("|")[0]
-        uid = account_uri.split("|")[1]
+        state = request.query_params.get("state", None)
+        account_uri = state.split("|")[0]
+        uid = state.split("|")[1]
         if not code or not account_uri:
             return Response({"message": "auth faild"})
         result = pinterest_api.PinterestApi().get_token(code)
