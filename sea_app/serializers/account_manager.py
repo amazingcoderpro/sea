@@ -1,7 +1,10 @@
 from django.db import transaction
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
+from sdk.pinterest import pinterest_api
 
 from sea_app import models
+
 
 class BoardSerializer(serializers.ModelSerializer):
     class Meta:
@@ -101,7 +104,7 @@ class ProductHistorySerializer(serializers.ModelSerializer):
 class PublishRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.PublishRecord
-        depth = 1
+        depth = 2
         fields = "__all__"
 
 
@@ -116,8 +119,18 @@ class PinterestAccountCreateSerializer(serializers.ModelSerializer):
             "type",
             # "state",
             "description",
-            "create_time",
+            # "create_time"
+            # "user"
         )
+        # extra_kwargs = {
+        #     'user': {'write_only': False},
+        # }
+        # validators = [
+        #     UniqueTogetherValidator(
+        #         queryset=models.PinterestAccount.objects.all(),
+        #         fields=('account', 'user')
+        #     )
+        # ]
 
     def create(self, validated_data):
         validated_data["user"] = self.context["request"].user

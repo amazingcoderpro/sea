@@ -67,14 +67,14 @@ class ProductsApi:
         try:
             result = requests.get(products_url)
             if result.status_code == 200:
-                logger.info("get shopify all prodects is success")
-                print(result.text)
+                logger.info("get shopify all products is success")
+                # print(result.text)
                 return {"code": 1, "msg": "", "data": json.loads(result.text)}
             else:
-                logger.info("get shopify all prodects is failed")
+                logger.info("get shopify all products is failed")
                 return {"code": 2, "msg": json.loads(result.text).get("errors", ""), "data": ""}
         except Exception as e:
-            logger.error("get shopify all prodects is failed info={}".format(str(e)))
+            logger.error("get shopify all products is failed info={}".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
     def get_product_id(self, id):
@@ -127,7 +127,7 @@ class ProductsApi:
                         order_price = float(order_info.get("total_price"))
                         total_price += order_price
                 result_info = {"order_count": order_count, "total_price": round(total_price, 4)}
-                print(result_info)
+                # print(result_info)
                 logger.info("get shopify all order by id is success")
                 return {"code": 1, "msg": "", "data": result_info}
             else:

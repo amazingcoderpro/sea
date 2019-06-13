@@ -1,5 +1,3 @@
-import json
-
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
@@ -16,7 +14,7 @@ from sea_app.filters import report as report_filters
 from sea_app.serializers import account_manager, report
 from sea_app.filters import account_manager as account_manager_filters
 from sea_app.pageNumber.pageNumber import PNPagination
-from sea_app.permission.permission import RulePermission
+from sea_app.permission.permission import RulePermission,PublishRecordPermission
 from sdk.pinterest import pinterest_api
 
 
@@ -58,41 +56,48 @@ class ProductView(generics.ListAPIView):
 
 class SearchProductView(generics.ListAPIView):
     """获取符合条件的产品"""
-    queryset = models.ProductHistoryData.objects.all()
-    serializer_class = account_manager.ProductHistorySerializer
+    queryset = models.Product.objects.all()
+    serializer_class = account_manager.ProductSerializer
     filter_backends = (account_manager_filters.ProductCountFilter,)
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 
     def list(self, request, *args, **kwargs):
-        scan_sign = request.query_params.get("scan_sign", '')
-        scan = request.query_params.get("scan", '')
-        sale_sign = request.query_params.get("sale_sign", '')
-        sale = request.query_params.get("sale", '')
-        if not sale_sign or not sale:
-            if scan_sign not in [">", "<", ">=", "<=", "=="] or type(scan) != str or not scan.isdigit():
-                return Response({"deails": "Request parameter error"}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            if scan_sign not in [">", "<",">=","<=","=="] or sale_sign not in [">","<",">=","<=","=="]\
-                    or type(scan) != str or type(sale) != str or not sale.isdigit() or not scan.isdigit():
-                return Response({"deails": "Request parameter error"}, status=status.HTTP_400_BAD_REQUEST)
         res = []
         queryset = self.filter_queryset(self.get_queryset())
         if not queryset:
             return Response(res)
-        result = queryset.values("product").annotate(scan=Sum("product_scan"), sales=Sum("product_sales"))
-        if scan and sale:
-            for item in result:
-                scan_codition = "{} {} {}".format(item["scan"], scan_sign, scan)
-                sale_codition = "{} {} {}".format(item["sales"], sale_sign, sale)
-                if eval(scan_codition) and eval(sale_codition):
-                    res.append(item["product"])
-        else:
-            for item in result:
-                scan_codition = "{} {} {}".format(item["scan"], scan_sign, scan)
-                if eval(scan_codition):
-                    res.append(item["product"])
+        for item in queryset:
+            res.append(item.id)
         return Response(res)
+        # scan_sign = request.query_params.get("scan_sign", '')
+        # scan = request.query_params.get("scan", '')
+        # sale_sign = request.query_params.get("sale_sign", '')
+        # sale = request.query_params.get("sale", '')
+        # if not sale_sign or not sale:
+        #     if scan_sign not in [">", "<", ">=", "<=", "=="] or type(scan) != str or not scan.isdigit():
+        #         return Response({"deails": "Request parameter error"}, status=status.HTTP_400_BAD_REQUEST)
+        # else:
+        #     if scan_sign not in [">", "<",">=","<=","=="] or sale_sign not in [">","<",">=","<=","=="]\
+        #             or type(scan) != str or type(sale) != str or not sale.isdigit() or not scan.isdigit():
+        #         return Response({"deails": "Request parameter error"}, status=status.HTTP_400_BAD_REQUEST)
+        # res = []
+        # queryset = self.filter_queryset(self.get_queryset())
+        # if not queryset:
+        #     return Response(res)
+        # result = queryset.values("product").annotate(scan=Sum("product_scan"), sales=Sum("product_sales"))
+        # if scan and sale:
+        #     for item in result:
+        #         scan_codition = "{} {} {}".format(item["scan"], scan_sign, scan)
+        #         sale_codition = "{} {} {}".format(item["sales"], sale_sign, sale)
+        #         if eval(scan_codition) and eval(sale_codition):
+        #             res.append(item["product"])
+        # else:
+        #     for item in result:
+        #         scan_codition = "{} {} {}".format(item["scan"], scan_sign, scan)
+        #         if eval(scan_codition):
+        #             res.append(item["product"])
+        # return Response(res)
 
 
 class ReportView(generics.ListAPIView):
@@ -146,18 +151,12 @@ class BoardListManageView(generics.ListAPIView):
 class PinListManageView(generics.ListAPIView):
     """账号管理 -- pin 列表显示"""
     queryset = models.PinterestHistoryData.objects.all()
-    serializer_class = report.DailyReportSerializer
-    pagination_class = PNPagination
     filter_backends = (report_filters.PinListFilter,)
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
-
-        # page = self.paginate_queryset(queryset)
-        # if page is not None:
-        #     return self.get_paginated_response(page)
         return Response(queryset)
 
 
@@ -167,6 +166,17 @@ class PinterestAccountCreateView(generics.CreateAPIView):
     serializer_class = account_manager.PinterestAccountCreateSerializer
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        state = "%s|%d" % (serializer.data["account"], request.user.id)
+        url = pinterest_api.PinterestApi().get_pinterest_url(state)
+        result = serializer.data
+        result["url"] = url
+        return Response(result, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class PinterestAccountListView(generics.ListAPIView):
@@ -242,7 +252,7 @@ class PinManageView(generics.RetrieveUpdateDestroyAPIView):
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         access_token = pin_obj.board.pinterest_account.token
         # 通过board_name 查找board_uri
-        board_obj = models.Board.objects.get(name=data["board_name"])
+        board_obj = models.Board.objects.get(pk=data["board"])
         if not board_obj:
             return Response({"detail": "No board named is {}".format(data["board_name"])}, status=status.HTTP_400_BAD_REQUEST)
         result = PinterestApi(access_token=access_token).edit_pin(data["pin_uri"], board_obj.uuid, data["note"], data["url"])
@@ -311,3 +321,17 @@ class SendPinView(APIView):
                 return Response({"detail": result["msg"]})
         else:
             return Response({"detail": "This pinterest_account is not authorized"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PublishRecordDelView(APIView):
+    """发布规则删除"""
+    queryset = models.PublishRecord.objects.all()
+    permission_classes = (IsAuthenticated, PublishRecordPermission)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def post(self, request, *args, **kwargs):
+        publish_record_list = request.data.get("publish_record_list", "None")
+        if not publish_record_list or type(eval(publish_record_list)) != list:
+            return Response({"detail": "parameter error"}, status=status.HTTP_400_BAD_REQUEST)
+        obj = models.PublishRecord.objects.filter(id__in=eval(publish_record_list)).update(state=5)
+        return Response([])

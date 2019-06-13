@@ -370,7 +370,7 @@ class TaskProcessor:
             cursor.close() if cursor else 0
             conn.close() if conn else 0
 
-    def update_shopify_data(self, specific_sotre_uri=""):
+    def update_shopify_data(self, user_id=""):
         """
          获取所有店铺的所有products, 并保存至数据库
          :return:
@@ -382,8 +382,8 @@ class TaskProcessor:
             if not cursor:
                 return False
 
-            if specific_sotre_uri:
-                cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where url=%s''', (specific_sotre_uri,))
+            if user_id:
+                cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where user_id=%s''', (user_id,))
             else:
                 cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where id>=0''')
             stores = cursor.fetchall()
@@ -421,9 +421,9 @@ class TaskProcessor:
                     shop_city = shop.get("city", '')
                     shop_currency = shop.get("currency", "USD")
                     # shop_myshopify_domain = shop.get("myshopify_domain", "")
-                    cursor.execute('''update `store` set url=%s, uuid=%s, name=%s, timezone=%s, email=%s, owner_name=%s, 
+                    cursor.execute('''update `store` set uuid=%s, name=%s, timezone=%s, email=%s, owner_name=%s, 
                     owner_phone=%s, country=%s, city=%s, store_create_time=%s, store_update_time=%s, currency=%s where id=%s''',
-                                   (shop_domain, shop_uuid, shop_name, shop_timezone, shop_email, shop_owner, shop_phone,
+                                   (shop_uuid, shop_name, shop_timezone, shop_email, shop_owner, shop_phone,
                                     shop_country_name, shop_city, datetime.datetime.strptime(created_at[0:-6], "%Y-%m-%dT%H:%M:%S"),
                                     datetime.datetime.strptime(updated_at[0:-6], "%Y-%m-%dT%H:%M:%S"), shop_currency, store_id))
                     conn.commit()
@@ -435,65 +435,93 @@ class TaskProcessor:
                 gapi = GoogleApi(view_id=store_view_id, ga_source=SHOPIFY_CONFIG.get("utm_source", "pinbooster"), json_path=os.path.join(sys.path[0], "sdk//googleanalytics//client_secrets.json"))
                 # 拿到所有的ga数据
                 reports = gapi.get_report(key_word="", start_time="1daysAgo", end_time="today")
-                ret = papi.get_all_products()
-                if ret["code"] == 1:
-                    time_now = datetime.datetime.now()
-                    products = ret["data"].get("products", [])
-                    for pro in products:
-                        pro_uuid = str(pro.get("id", ""))
-                        pro_title = pro.get("title", "")
-                        pro_url = "https://{}/products/{}".format(store_url, pro_title)
-                        pro_type = pro.get("product_type", "")
-                        variants = pro.get("variants", [])
-                        pro_sku = ""
-                        pro_price = 0
-                        if variants:
-                            pro_sku = variants[0].get("sku", "")
-                            pro_price = float(variants[0].get("price", "0"))
-
-                        pro_tags = pro.get("tags", "")
-                        pro_image = pro.get("image", {}).get("src", "")
-                        thumbnail = self.image_2_base64(pro_image)
-                        if pro_uuid in exist_products_dict.keys():
-                            pro_id = exist_products_dict[pro_uuid]
-                            logger.info("product is already exist, pro_uuid={}, pro_id={}".format(pro_uuid, pro_id))
-                            cursor.execute('''update `product` set url=%s, name=%s, price=%s, tag=%s, update_time=%s, image_url=%s, thumbnail=%s where id=%s''',
-                                           (pro_url, pro_title, pro_price, pro_tags, time_now, pro_image, thumbnail, pro_id))
-                        else:
-                            # pro_create_time = datetime.datetime.strptime(pro.get("created_at"), "%Y-%m-%dT%H:%M:%S")
-                            pro_publish_time = datetime.datetime.strptime(pro.get("published_at", "")[0:-6], "%Y-%m-%dT%H:%M:%S")
-
-                            cursor.execute(
-                                "insert into `product` (`sku`, `url`, `name`, `image_url`,`thumbnail`, `price`, `tag`, `create_time`, `update_time`, `store_id`, `publish_time`, `uuid`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                                (pro_sku, pro_url, pro_title, pro_image, thumbnail, pro_price, pro_tags, time_now,
-                                 time_now, store_id, pro_publish_time, pro_uuid))
-                            pro_id = cursor.lastrowid
-
-                        conn.commit()
-                        if not store_view_id:
-                            logger.warning("this product have no store view id, product id={}, store id={}".format(pro_id, store_id))
-                            continue
-
-                        # pro_uuid = "google" # 测试
-                        # ga_data = gapi.get_report(key_word=pro_uuid, start_time="1daysAgo", end_time="today")
+                since_id = ""
+                max_fetch = 50      # 不管拉没拉完，最多拉250＊50个产品
+                while max_fetch > 0:
+                    max_fetch -= 1
+                    ret = papi.get_all_products(limit=250, since_id=since_id)
+                    if ret["code"] == 1:
                         time_now = datetime.datetime.now()
-                        if reports.get("code", 0) == 1:
-                            data = reports.get("data", {})
-                            pro_report = data.get(pro_uuid, {})
-                            pv = int(pro_report.get("page_view", 0))
-                            uv = int(pro_report.get("unique_view", 0))
-                            hits = int(pro_report.get("hits", 0))
-                            transactions = int(pro_report.get("transactions", 0))
-                            transactions_revenue = float(pro_report.get("transaction_revenue", 0))
-                            cursor.execute('''insert into `product_history_data` (`product_visitors`, `product_new_visitors`, `product_clicks`, `product_scan`, `product_sales`, `product_revenue`, `update_time`, `product_id`, `store_id`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                            ''', (uv, uv, hits, pv, transactions, transactions_revenue, time_now, pro_id, store_id))
-                        else:
-                            logger.warning("get GA data failed, store view id={}, key_words={}".format(store_view_id, pro_uuid))
+                        products = ret["data"].get("products", [])
+                        logger.info("get all products succeed, limit=250, since_id={}, len products={}".format(since_id,
+                                                                                                               len(
+                                                                                                                   products)))
+                        for pro in products:
+                            # print(products)
+                            pro_uuid = str(pro.get("id", ""))
+                            pro_title = pro.get("title", "")
+                            # pro_titile = pro_title.encode("utf-8")
+                            handle = pro.get("handle", "")
+                            pro_url = "https://{}/products/{}".format(store_url, handle)
+                            pro_type = pro.get("product_type", "")
+                            variants = pro.get("variants", [])
+                            pro_sku = ""
+                            pro_price = 0
+                            if variants:
+                                pro_sku = variants[0].get("sku", "")
+                                pro_price = float(variants[0].get("price", "0"))
 
-                        conn.commit()
-                    return True
-                else:
-                    logger.warning("get shop products failed. ret={}".format(ret))
+                            pro_tags = pro.get("tags", "")
+                            img_obj = pro.get("image", {})
+                            if img_obj:
+                                pro_image = img_obj.get("src", "")
+                            elif pro.get("images", []):
+                                pro_image = pro.get("images")[0]
+                            else:
+                                pro_image = ""
+                            thumbnail = self.image_2_base64(pro_image)
+
+                            if pro_uuid in exist_products_dict.keys():
+                                pro_id = exist_products_dict[pro_uuid]
+                                logger.info("product is already exist, pro_uuid={}, pro_id={}".format(pro_uuid, pro_id))
+                                cursor.execute('''update `product` set url=%s, name=%s, price=%s, tag=%s, update_time=%s, image_url=%s, thumbnail=%s where id=%s''',
+                                               (pro_url, pro_title, pro_price, pro_tags, time_now, pro_image, thumbnail, pro_id))
+                            else:
+                                # pro_create_time = datetime.datetime.strptime(pro.get("created_at"), "%Y-%m-%dT%H:%M:%S")
+                                try:
+                                    if pro.get("published_at", ""):
+                                        time_str = pro.get("published_at", "")[0:-6]
+                                    pro_publish_time = datetime.datetime.strptime(time_str, "%Y-%m-%dT%H:%M:%S")
+                                except:
+                                    pro_publish_time = None
+
+                                cursor.execute(
+                                    "insert into `product` (`sku`, `url`, `name`, `image_url`,`thumbnail`, `price`, `tag`, `create_time`, `update_time`, `store_id`, `publish_time`, `uuid`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                                    (pro_sku, pro_url, pro_title, pro_image, thumbnail, pro_price, pro_tags, time_now,
+                                     time_now, store_id, pro_publish_time, pro_uuid))
+                                pro_id = cursor.lastrowid
+
+                            conn.commit()
+                            if not store_view_id:
+                                logger.warning("this product have no store view id, product id={}, store id={}".format(pro_id, store_id))
+                                continue
+
+                            # pro_uuid = "google" # 测试
+                            # ga_data = gapi.get_report(key_word=pro_uuid, start_time="1daysAgo", end_time="today")
+                            time_now = datetime.datetime.now()
+                            if reports.get("code", 0) == 1:
+                                data = reports.get("data", {})
+                                pro_report = data.get(pro_uuid, {})
+                                pv = int(pro_report.get("page_view", 0))
+                                uv = int(pro_report.get("unique_view", 0))
+                                hits = int(pro_report.get("hits", 0))
+                                transactions = int(pro_report.get("transactions", 0))
+                                transactions_revenue = float(pro_report.get("transaction_revenue", 0))
+                                cursor.execute('''insert into `product_history_data` (`product_visitors`, `product_new_visitors`, `product_clicks`, `product_scan`, `product_sales`, `product_revenue`, `update_time`, `product_id`, `store_id`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                ''', (uv, uv, hits, pv, transactions, transactions_revenue, time_now, pro_id, store_id))
+                            else:
+                                logger.warning("get GA data failed, store view id={}, key_words={}".format(store_view_id, pro_uuid))
+
+                            conn.commit()
+
+                        # 拉完了
+                        if len(products) < 250:
+                            break
+                        else:
+                            since_id = products[-1]
+                    else:
+                        logger.warning("get shop products failed. ret={}".format(ret))
+                        break
 
         except Exception as e:
             logger.exception("get_products e={}".format(e))

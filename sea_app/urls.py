@@ -21,6 +21,7 @@ v1_urlpatterns = [
     url(r'account_list/(?P<aid>[0-9]+)/(?P<bid>[0-9]+)/$', cache_page(2)(account_manager.PinListManageView.as_view())),
     url(r'board_manage/(?P<pk>[0-9]+)/$', account_manager.BoardManageView.as_view()),
     url(r'pin_manage/$', account_manager.PinManageView.as_view()),
+    url(r'pin_manage/(?P<pk>[0-9]+)/$', account_manager.PinManageView.as_view()),
     url(r'account_manage/(?P<pk>[0-9]+)/$', account_manager.AccountManageView.as_view()),
     # 增加账户
     url(r'pinterest_account/$', account_manager.PinterestAccountCreateView.as_view()),
@@ -30,7 +31,7 @@ v1_urlpatterns = [
     url(r'store/(?P<pk>[0-9]+)/$', store.StoreOperView.as_view()),
 
     # 清除缓存
-    # url(r'clean_cache/$', dashboard.expire_page)
+    # url(r'clean_cache/$', dashboard.CleanCacheView.as_view())
 ]
 
 # 规则管理 `/v1/rule/`
@@ -45,7 +46,9 @@ rule_urlpatterns = [
 
     # 修改规则状态
     url(r'state/(?P<pk>[0-9]+)/$', account_manager.RuleStatusView.as_view()),
-    # url(r'state/batch/$', account_manager.RuleStatusView.as_view()),
+    #url(r'state/batch/$', account_manager.RuleStatusView.as_view()),
+    # 发布列表删除和批量删除
+    url(r'publish_record/delete/$', account_manager.PublishRecordDelView.as_view()),
 
     # 发布记录和发布列表
     url(r'report/$', account_manager.ReportView.as_view()),
@@ -64,7 +67,7 @@ account_urlpatterns = [
     # 注册 登陆
     url(r'^login/$', personal_center.LoginView.as_view()),
     url(r'^register/$', personal_center.RegisterView.as_view()),
-    # shopfy注册设置密码
+    # shopfy注册设置密码-->注册
     url(r'^set_password/(?P<pk>[0-9]+)/$', personal_center.SetPasswordView.as_view()),
     # 登陆状态下设置密码
     url(r'^set_passwords/(?P<pk>[0-9]+)/$', personal_center.SetPasswordsView.as_view()),
@@ -72,7 +75,7 @@ account_urlpatterns = [
     # 用户 角色管理
     # url(r'users/$', personal_center.UserView.as_view()),
     url(r'users/(?P<pk>[0-9]+)/$', personal_center.UserOperView.as_view()),
-    url(r'users/operation_record/$', cache_page(5)(personal_center.OperationRecord.as_view())),
+    url(r'users/operation_record/$', cache_page(10)(personal_center.OperationRecord.as_view())),
     # url(r'role/$', personal_center.RoleView.as_view()),
     # url(r'role/(?P<pk>[0-9]+)/$', personal_center.RoleOperView.as_view()),
 ]
@@ -82,15 +85,16 @@ auth_urlpatterns = [
 
     # 店铺和账户授权
     url(r'store/(?P<pk>[0-9]+)/$', personal_center.StoreAuthView.as_view()),
-    url(r'pinterest_account/(?P<pk>[0-9]+)/$', personal_center.PinterestAccountAuthView.as_view()),
+    url(r'pinterest_account/$', personal_center.PinterestAccountAuthView.as_view()),
+    url(r'pinterest_account/cancel_auth/(?P<pk>[0-9]+)/$', personal_center.PinterestAccountCancelAuthView.as_view()),
     url(r'shopify/callback/$', personal_center.ShopifyCallback.as_view()),
     url(r'shopify/ask_permission/$', personal_center.ShopifyAuthView.as_view()),
     url(r'pinterest/callback/$', personal_center.PinterestCallback.as_view()),
 ]
 
 urlpatterns = [
-    url(r'^v1/', include(v1_urlpatterns)),
     url(r'^v1/rule/', include(rule_urlpatterns)),
     url(r'^v1/account/', include(account_urlpatterns)),
     url(r'^v1/auth/', include(auth_urlpatterns)),
+    url(r'^v1/', include(v1_urlpatterns)),
 ]

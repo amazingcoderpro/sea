@@ -1,3 +1,6 @@
+import time
+import uuid
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -176,19 +179,20 @@ class PinterestAccount(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     followings = models.IntegerField(default=0, verbose_name="账户关注量")
     followers = models.IntegerField(default=0, verbose_name="账户粉丝")
-    uuid = models.CharField(blank=True, null=True, max_length=64, verbose_name="账户的uuid")
+    uuid = models.CharField(unique=True, max_length=64, verbose_name="账户的uuid")
     thumbnail = models.TextField(verbose_name="缩略图", default=None, blank=True, null=True)
 
     objects = PinterestAccountManager()
 
     class Meta:
         # managed = False
-        unique_together = ("email", "user")
+        unique_together = ("uuid", "user")
         db_table = 'pinterest_account'
         ordering = ["-id"]
 
     def delete(self, using=None, keep_parents=False):
         self.state = 2
+        self.uuid = str(uuid.uuid1()) + str(time.time())
         self.save()
         return 'success'
 
