@@ -40,5 +40,5 @@ class StoreSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super(StoreSerializer, self).to_representation(instance)
-        data["url_format"] = instance.url + SHOPIFY_CONFIG["utm_format"]
+        data["url_format"] = "https://" + instance.url + SHOPIFY_CONFIG["utm_format"]
         return data
