@@ -56,41 +56,48 @@ class ProductView(generics.ListAPIView):
 
 class SearchProductView(generics.ListAPIView):
     """获取符合条件的产品"""
-    queryset = models.ProductHistoryData.objects.all()
-    serializer_class = account_manager.ProductHistorySerializer
+    queryset = models.Product.objects.all()
+    serializer_class = account_manager.ProductSerializer
     filter_backends = (account_manager_filters.ProductCountFilter,)
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 
     def list(self, request, *args, **kwargs):
-        scan_sign = request.query_params.get("scan_sign", '')
-        scan = request.query_params.get("scan", '')
-        sale_sign = request.query_params.get("sale_sign", '')
-        sale = request.query_params.get("sale", '')
-        if not sale_sign or not sale:
-            if scan_sign not in [">", "<", ">=", "<=", "=="] or type(scan) != str or not scan.isdigit():
-                return Response({"deails": "Request parameter error"}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            if scan_sign not in [">", "<",">=","<=","=="] or sale_sign not in [">","<",">=","<=","=="]\
-                    or type(scan) != str or type(sale) != str or not sale.isdigit() or not scan.isdigit():
-                return Response({"deails": "Request parameter error"}, status=status.HTTP_400_BAD_REQUEST)
         res = []
         queryset = self.filter_queryset(self.get_queryset())
         if not queryset:
             return Response(res)
-        result = queryset.values("product").annotate(scan=Sum("product_scan"), sales=Sum("product_sales"))
-        if scan and sale:
-            for item in result:
-                scan_codition = "{} {} {}".format(item["scan"], scan_sign, scan)
-                sale_codition = "{} {} {}".format(item["sales"], sale_sign, sale)
-                if eval(scan_codition) and eval(sale_codition):
-                    res.append(item["product"])
-        else:
-            for item in result:
-                scan_codition = "{} {} {}".format(item["scan"], scan_sign, scan)
-                if eval(scan_codition):
-                    res.append(item["product"])
+        for item in queryset:
+            res.append(item.id)
         return Response(res)
+        # scan_sign = request.query_params.get("scan_sign", '')
+        # scan = request.query_params.get("scan", '')
+        # sale_sign = request.query_params.get("sale_sign", '')
+        # sale = request.query_params.get("sale", '')
+        # if not sale_sign or not sale:
+        #     if scan_sign not in [">", "<", ">=", "<=", "=="] or type(scan) != str or not scan.isdigit():
+        #         return Response({"deails": "Request parameter error"}, status=status.HTTP_400_BAD_REQUEST)
+        # else:
+        #     if scan_sign not in [">", "<",">=","<=","=="] or sale_sign not in [">","<",">=","<=","=="]\
+        #             or type(scan) != str or type(sale) != str or not sale.isdigit() or not scan.isdigit():
+        #         return Response({"deails": "Request parameter error"}, status=status.HTTP_400_BAD_REQUEST)
+        # res = []
+        # queryset = self.filter_queryset(self.get_queryset())
+        # if not queryset:
+        #     return Response(res)
+        # result = queryset.values("product").annotate(scan=Sum("product_scan"), sales=Sum("product_sales"))
+        # if scan and sale:
+        #     for item in result:
+        #         scan_codition = "{} {} {}".format(item["scan"], scan_sign, scan)
+        #         sale_codition = "{} {} {}".format(item["sales"], sale_sign, sale)
+        #         if eval(scan_codition) and eval(sale_codition):
+        #             res.append(item["product"])
+        # else:
+        #     for item in result:
+        #         scan_codition = "{} {} {}".format(item["scan"], scan_sign, scan)
+        #         if eval(scan_codition):
+        #             res.append(item["product"])
+        # return Response(res)
 
 
 class ReportView(generics.ListAPIView):
@@ -165,7 +172,8 @@ class PinterestAccountCreateView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        url = pinterest_api.PinterestApi().get_pinterest_url(serializer.data["account"])
+        state = "%s|%d" % (serializer.data["account"], request.user.id)
+        url = pinterest_api.PinterestApi().get_pinterest_url(state)
         result = serializer.data
         result["url"] = url
         return Response(result, status=status.HTTP_201_CREATED, headers=headers)

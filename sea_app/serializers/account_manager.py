@@ -133,9 +133,6 @@ class PinterestAccountCreateSerializer(serializers.ModelSerializer):
         # ]
 
     def create(self, validated_data):
-        is_account = models.PinterestAccount.objects.filter(account=validated_data["account"], user=self.context["request"].user).first()
-        if is_account:
-            raise serializers.ValidationError({"detail": "The account already exists"})
         validated_data["user"] = self.context["request"].user
         instance = super(PinterestAccountCreateSerializer, self).create(validated_data)
         instance.user = self.context["request"].user
