@@ -7,10 +7,10 @@
 ```
 	INSERT INTO `user` (`id`, `last_login`, `is_superuser`, `first_name`, `last_name`, `is_staff`, `is_active`, `date_joined`, `username`, `email`, `password`, `code`, `create_time`, `update_time`)
 VALUES
-	(1, NULL, 0, 'admin', 'admin', 0, 1, '2019-06-01 00:00:00.852191', 'admin', 'victor.fang@orderplus.com', 'pbkdf2_sha256$120000$M0cY6Z6wcYr9$iwqYBe/MJfOLkpx2/2mMWtt2f1X7GBSt7D0EKRdjdV8=', NULL, '2019-06-01 00:00:00.899300', '2019-06-01 00:00:00.899300'),
+	(1, NULL, 0, 'admin', 'admin', 0, 0, '2019-06-01 00:00:00.852191', 'admin', 'victor.fang@orderplus.com', 'pbkdf2_sha256$120000$M0cY6Z6wcYr9$iwqYBe/MJfOLkpx2/2mMWtt2f1X7GBSt7D0EKRdjdV8=', NULL, '2019-06-01 00:00:00.899300', '2019-06-01 00:00:00.899300'),
 	(2, NULL, 0, 'test001', 'test001', 0, 1, '2019-05-29 06:55:41.852191', 'test001', 'victor.fang@orderplus.com', 'pbkdf2_sha256$120000$Fp9sbcrgfWrJ$OlH4Z49b15v5MMwTMd/m3w/I0BZWynyALmTD2ydlTa8=', NULL, '2019-06-01 00:00:00.899300', '2019-06-01 00:00:00.899300'),
-	(3, NULL, 0, 'test002', 'test002', 0, 1, '2019-05-29 06:55:41.852191', 'test002', 'victor.fang@orderplus.com', 'pbkdf2_sha256$120000$Fp9sbcrgfWrJ$OlH4Z49b15v5MMwTMd/m3w/I0BZWynyALmTD2ydlTa8=', NULL, '2019-06-01 00:00:00.899300', '2019-06-01 00:00:00.899300'),
-	(4, NULL, 0, 'test002', 'test002', 0, 1, '2019-05-29 06:55:41.852191', 'test003', 'victor.fang@orderplus.com', 'pbkdf2_sha256$120000$Fp9sbcrgfWrJ$OlH4Z49b15v5MMwTMd/m3w/I0BZWynyALmTD2ydlTa8=', NULL, '2019-06-01 00:00:00.899300', '2019-06-01 00:00:00.899300');
+	(3, NULL, 0, 'test002', 'test002', 0, 0, '2019-05-29 06:55:41.852191', 'test002', 'victor.fang@orderplus.com', 'pbkdf2_sha256$120000$Fp9sbcrgfWrJ$OlH4Z49b15v5MMwTMd/m3w/I0BZWynyALmTD2ydlTa8=', NULL, '2019-06-01 00:00:00.899300', '2019-06-01 00:00:00.899300'),
+	(4, NULL, 0, 'test002', 'test002', 0, 0, '2019-05-29 06:55:41.852191', 'test003', 'victor.fang@orderplus.com', 'pbkdf2_sha256$120000$Fp9sbcrgfWrJ$OlH4Z49b15v5MMwTMd/m3w/I0BZWynyALmTD2ydlTa8=', NULL, '2019-06-01 00:00:00.899300', '2019-06-01 00:00:00.899300');
 
 
 INSERT INTO `platform` (`id`, `name`, `url`, `create_time`, `update_time`)
@@ -44,6 +44,17 @@ VALUES
 	(2, 'shaowei580@gmail.com', '', 'shaowei580@gmail.com', 1, 0, 'shaowei', '2019-06-04 16:00:00.000000', 'AiP-ymRCgT7SSGBguKHjT-SPcSNOFaTxExO9J4JF2gxXLuC2Ugj5ADAAAlZaReXFJ1qgudIAAAAA', 0, 0, 0, 1, '2019-06-04 08:18:18.955160', '2019-06-04 08:18:19.015593', 0, 0, NULL, 1),
 	(3, 'twobercancan@gmail.com', '', 'twobercancan@gmail.com', 0, 0, '我的测试账号', '2019-06-03 16:00:00.000000', 'AgQB_G73xNSSzpVeGQ_tSUSEmrN2FaTxDryiQudF2gxXLuC2Ugp2ADAAAk1KReXFV78AwisAAAAA', 0, 0, 0, 1, '2019-06-04 08:20:02.559245', '2019-06-04 08:20:02.619872', 0, 0, NULL, 1),
 	(4, 'wcadaydayup@gmail.com', '', 'wcadaydayup@gmail.com', 0, 0, '121313', '2019-05-31 16:00:00.000000', 'AjgtAa8EoSLMjLVynCwNQDyS8NflFaTxE1fD18NF2gxXLuC2UgqqwDAAAkqYRd3mmh2gvB0AAAAA', 0, 0, 0, 1, '2019-06-04 08:20:18.669652', '2019-06-04 08:20:18.723059', 0, 0, NULL, 1);
+
+```
+
+## 4. 测试店铺授权
+
+```
+https://tiptopfree.myshopify.com/admin/oauth/authorize?client_id=7fced15ff9d1a461f10979c3eae2eca8&scope=read_content,write_content,read_themes,write_themes,read_products,write_products,read_product_listings,read_customers,write_customers,read_orders,write_orders,read_shipping,write_draft_orders,read_inventory,write_inventory,read_shopify_payments_payouts,read_draft_orders,read_locations,read_script_tags,write_script_tags,read_fulfillments,write_shipping,read_analytics,read_checkouts,write_resource_feedbacks,write_checkouts,read_reports,write_reports,read_price_rules,write_price_rules,read_marketing_events,write_marketing_events,read_resource_feedbacks,read_shopify_payments_disputes,write_fulfillments&redirect_uri=https%3A//pinbooster.seamarketings.com/api/v1/auth/shopify/callback/&state=chicgostyle&grant_options[]=
+
+Tiptopfree Shopify后台:登录网址：https://tiptopfree.myshopify.com/admin
+登录邮箱：alicia.wang@orderplus.com
+登录密码：%￥^&561
 
 ```
 

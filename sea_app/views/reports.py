@@ -214,7 +214,7 @@ def subaccount_report_view(request, type):
         pin_set_list = pin_set_list.filter(
             update_time__range=(lastest_time + datetime.timedelta(hours=-1), lastest_time))
     else:
-        pin_set_list = []
+        pin_set_list = pin_set_list_result
 
     if type == 'pins':
         # pins report
