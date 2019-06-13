@@ -240,7 +240,7 @@ class PinterestCallback(APIView):
             # boards = counts.get("boards", 0)
             # followings = counts.get("following")
             # followers = counts.get("followers")
-            is_uuid = models.PinterestAccount.objects.filter(uuid=uuid, user_id=uid).first()
+            is_uuid = models.PinterestAccount.objects.filter(**{"uuid":uuid,"user_id":uid}).first()
             if is_uuid:
                 return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=3")
             pin_account = models.PinterestAccount.objects.create(**{"user_id":uid, "account": nickname, "nickname": nickname, "uuid": uuid,"token":token,"authorized":1})
