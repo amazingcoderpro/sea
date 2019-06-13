@@ -243,7 +243,7 @@ class PinterestCallback(APIView):
             is_uuid = models.PinterestAccount.objects.filter(uuid=int(uuid), user_id=uid).first()
             if is_uuid:
                 return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=3")
-            pin_account = models.PinterestAccount.objects.create(**{"account": nickname, "nickname": nickname, "uuid": uuid,"token":token,"authorized":1})
+            pin_account = models.PinterestAccount.objects.create(**{"user_id":uid, "account": nickname, "nickname": nickname, "uuid": uuid,"token":token,"authorized":1})
             print("-----update pinterest id=", pin_account.id)
             TaskProcessor().update_pinterest_data(pin_account.id)
         else:
