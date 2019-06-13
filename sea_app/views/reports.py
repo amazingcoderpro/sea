@@ -196,11 +196,11 @@ def daily_report_view(request):
 def subaccount_report_view(request, type):
     """子账号视图函数"""
     pin_set_list, product_set_list = get_common_data(request)
-    if not pin_set_list.exists():
-        return []
+    # if not pin_set_list.exists():
+    #     return []
     # 取PinterestHistoryData最新一天的数据, ProductHistoryData时间范围内所有数据
     start_time, end_time = get_request_datetime(request)
-
+    pin_set_list_result = []
     while end_time >= start_time:
         pin_set_list_result = pin_set_list.filter(
             update_time__range=(end_time + datetime.timedelta(days=-1), end_time))
@@ -208,11 +208,12 @@ def subaccount_report_view(request, type):
             break
         end_time += datetime.timedelta(days=-1)
     # 取有数据当天的最晚的一批数据
-    if not pin_set_list_result.exists():
-        return []
-    lastest_time = pin_set_list_result.first().update_time
-    pin_set_list = pin_set_list.filter(
-        update_time__range=(lastest_time + datetime.timedelta(hours=-1), lastest_time))
+    if pin_set_list_result.exists():
+        lastest_time = pin_set_list_result.first().update_time
+        pin_set_list = pin_set_list.filter(
+            update_time__range=(lastest_time + datetime.timedelta(hours=-1), lastest_time))
+    else:
+        pin_set_list = []
 
     if type == 'pins':
         # pins report
@@ -222,29 +223,32 @@ def subaccount_report_view(request, type):
         data_list = board_report(pin_set_list, product_set_list)
     elif type == 'subaccount':
         # subaccount report
-        data_list = subaccount_report(pin_set_list, product_set_list)
+        data_list = subaccount_report(pin_set_list, product_set_list, request)
     else:
         # 请求有误
         data_list = "An error occurred in the request and data could not be retrieved"
     return data_list
 
 
-def subaccount_report(pin_set_list, product_set_list):
+def subaccount_report(pin_set_list, product_set_list, request):
     # subaccount report
     data_list = []
     group_dict = {}
+    account_id_list = [account.id for account in models.PinterestAccount.objects.filter(user_id=request.user)]
     set_list = pin_set_list.filter(~Q(pinterest_account_id=None))
     # 取时间范围内最新subaccount数据及subaccount下所有board数和pin信息总数
     for item in set_list:
         subaccount_id = item.pinterest_account_id
         if subaccount_id not in group_dict:
+            if subaccount_id in account_id_list:
+                account_id_list.remove(subaccount_id)
             group_dict[subaccount_id] = {
                 "account_name": item.account_name,
-                "boards": [] if not item.board_id else [item.board_id],  # board数
+                "boards": item.pinterest_account.boards,  # board数
                 "account_followings": item.account_followings,
                 "account_followers": item.account_followers,
                 "account_views": item.account_views,
-                "pins": [] if not item.pin_id else [item.pin_id],  # pin数
+                "pins": item.pinterest_account.pins,  # pin数
                 "pin_saves": item.pin_saves,
                 # "pin_likes": item.pin_likes,
                 "pin_comments": item.pin_comments,
@@ -252,8 +256,8 @@ def subaccount_report(pin_set_list, product_set_list):
                 "products": [] if not item.product_id else [item.product_id],  # product
             }
         else:
-            group_dict[subaccount_id]["boards"].append(item.board_id)  # board数
-            group_dict[subaccount_id]["pins"].append(item.pin_id)  # pin数
+            # group_dict[subaccount_id]["boards"].append(item.board_id)  # board数
+            # group_dict[subaccount_id]["pins"].append(item.pin_id)  # pin数
             group_dict[subaccount_id]["pin_saves"] += item.pin_saves
             # group_dict[subaccount_id]["pin_likes"] += item.pin_likes
             group_dict[subaccount_id]["pin_comments"] += item.pin_comments
@@ -267,8 +271,8 @@ def subaccount_report(pin_set_list, product_set_list):
             "account_followings": info["account_followings"],
             "account_followers": info["account_followers"],
             "account_views": info["account_views"],
-            "boards": len(set(filter(lambda x: x, info["boards"]))),
-            "pins": len(set(filter(lambda x: x, info["pins"]))),
+            "boards": info["boards"],
+            "pins": info["pins"],
             "pin_saves": info["pin_saves"],
             # "pin_likes": info["pin_likes"],
             "pin_comments": info["pin_comments"],
@@ -291,6 +295,23 @@ def subaccount_report(pin_set_list, product_set_list):
             data["product_sales"] += item.product_sales
             data["product_revenue"] += item.product_revenue
         data_list.append(data)
+    for account in models.PinterestAccount.objects.filter(id__in=account_id_list):
+        data_list.append({
+            "subaccount_id": account.id,
+            "account_name": account.nickname,
+            "account_followings": 0,
+            "account_followers": 0,
+            "account_views": account.views,
+            "boards": account.boards,
+            "pins": account.pins,
+            "pin_saves": 0,
+            "pin_comments": 0,
+            "product_visitors": 0,
+            "product_new_visitors": 0,
+            "product_clicks": 0,
+            "product_sales": 0,
+            "product_revenue": 0
+        })
     return data_list
 
 
