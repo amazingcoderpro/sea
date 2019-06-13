@@ -9,6 +9,7 @@ from rest_framework_jwt.serializers import jwt_encode_handler, jwt_payload_handl
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 import datetime
+from sea import settings
 
 from sdk.shopify import shopify_oauth_info
 from sea_app import models
@@ -23,6 +24,7 @@ from sdk.pinterest import pinterest_api
 from sea_app.views import reports
 from sea_app.utils import random_code
 from task.task_processor import TaskProcessor
+
 
 
 class LoginView(generics.CreateAPIView):
@@ -55,7 +57,7 @@ class LoginView(generics.CreateAPIView):
                 store_instance = models.Store.objects.filter(user_id=user.id).first()
                 res["store"] = store.StoreSerializer(instance=store_instance, many=False).data
                 payload = jwt_payload_handler(user)
-                res["token"] = "jwt {}".format(jwt_encode_handler(payload))
+                res["token"] = "{} {}".format(settings.JWT_AUTH_HEADER_PREFIX, jwt_encode_handler(payload))
                 return Response(res, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

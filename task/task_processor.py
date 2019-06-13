@@ -56,6 +56,7 @@ class TaskProcessor:
         self.shopify_job = None
         self.rule_job = None
         self.publish_pin_job = None
+        self.update_new_job = None
 
     def start_job_analyze_rule_job(self, interval=120):
         # 规则解析任务　
@@ -81,8 +82,38 @@ class TaskProcessor:
         self.update_shopify_data()
         self.shopify_job = self.bk_scheduler.add_job(self.update_shopify_data, 'interval', seconds=interval)
 
-    def start_all(self, rule_interval=120, publish_pin_interval=240, pinterest_update_interval=7200, shopify_update_interval=7200):
+    def start_job_update_new(self, interval=120):
+        def update_new():
+            try:
+                conn = DBUtil().get_instance()
+                cursor = conn.cursor() if conn else None
+                if not cursor:
+                    return False
+
+                last_update = datetime.datetime.now()-datetime.timedelta(seconds=interval)
+
+                cursor.execute('''select id from `pinterest_account` where add_time>=%s and state=0 and authorized=1''', (last_update, ))
+                accounts = cursor.fetchall()
+                for id in accounts:
+                    self.update_pinterest_data(id[0])
+
+                cursor.execute('''select username from `user` where create_time>=%s and is_active=1''', (last_update, ))
+                users = cursor.fetchall()
+                for username in users:
+                    self.update_shopify_data(username[0])
+            except Exception as e:
+                logger.exception("update new exception e={}".format(e))
+                return False
+            finally:
+                cursor.close() if cursor else 0
+                conn.close() if conn else 0
+
+        # update_new()
+        self.update_new_job = self.bk_scheduler.add_job(update_new, 'interval', seconds=interval, max_instances=50)
+
+    def start_all(self, rule_interval=120, publish_pin_interval=240, pinterest_update_interval=7200, shopify_update_interval=7200, update_new=120):
         logger.info("TaskProcessor start all work.")
+        self.start_job_update_new(update_new)
         self.start_job_analyze_rule_job(rule_interval)
         self.start_job_publish_pin_job(publish_pin_interval)
         self.start_job_update_pinterest_data(pinterest_update_interval)
@@ -164,13 +195,13 @@ class TaskProcessor:
                     if account_info:
                         time_now = datetime.datetime.now()
                         user_name = account_info.get("username", "")
-                        if "\\x" in str(user_name.encode("utf-8")):
-                            user_name = str(user_name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
-                                "\'", "")
+                        # if "\\x" in str(user_name.encode("utf-8")):
+                        #     user_name = str(user_name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
+                        #         "\'", "")
                         bio = account_info.get("bio", "")
-                        if "\\x" in str(bio.encode("utf-8")):
-                            bio = str(bio.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
-                                "\'", "")
+                        # if "\\x" in str(bio.encode("utf-8")):
+                        #     bio = str(bio.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
+                        #         "\'", "")
 
                         account_type = account_info.get("account_type", "")
                         account_type = 0 if account_type == "individual" else 1
@@ -228,14 +259,14 @@ class TaskProcessor:
                         for board in boards:
                             uuid = board.get("id", "")
                             name = board.get("name", "")
-                            if "\\x" in str(name.encode("utf-8")):
-                                name = str(name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
-                                    "\'", "")
+                            # if "\\x" in str(name.encode("utf-8")):
+                            #     name = str(name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
+                            #         "\'", "")
 
                             description = board.get("description", "")
-                            if "\\x" in str(description.encode("utf-8")):
-                                description = str(description.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
-                                    "\'", "")
+                            # if "\\x" in str(description.encode("utf-8")):
+                            #     description = str(description.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
+                            #         "\'", "")
                             state = 1 if board.get('privacy') == "public" else 0
                             create_time = datetime.datetime.strptime(board["created_at"], "%Y-%m-%dT%H:%M:%S")
                             add_time = time_now
@@ -298,9 +329,9 @@ class TaskProcessor:
                             board_url = pin.get("board", {}).get("url", "")
                             board_uuid = pin.get("board", {}).get("id", "")
                             board_name = pin.get("board", {}).get("name", "")
-                            if "\\x" in str(board_name.encode("utf-8")):
-                                board_name = str(board_name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
-                                    "\'", "")
+                            # if "\\x" in str(board_name.encode("utf-8")):
+                            #     board_name = str(board_name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
+                            #         "\'", "")
 
                             counts = pin.get("counts", {})
                             pin_saves = counts.get("saves", 0)
@@ -397,7 +428,7 @@ class TaskProcessor:
             cursor.close() if cursor else 0
             conn.close() if conn else 0
 
-    def update_shopify_data(self, user_id=""):
+    def update_shopify_data(self, url=""):
         """
          获取所有店铺的所有products, 并保存至数据库
          :return:
@@ -409,8 +440,8 @@ class TaskProcessor:
             if not cursor:
                 return False
 
-            if user_id:
-                cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where user_id=%s''', (user_id,))
+            if url:
+                cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where url=%s''', (url,))
             else:
                 cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where id>=0''')
             stores = cursor.fetchall()
@@ -447,9 +478,9 @@ class TaskProcessor:
                     logger.info("shop info={}".format(shop))
                     shop_uuid = shop.get("id", "")
                     shop_name = shop.get("name", "")
-                    if "\\x" in str(shop_name.encode("utf-8")):
-                        shop_name = str(shop_name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
-                            "\'", "")
+                    # if "\\x" in str(shop_name.encode("utf-8")):
+                    #     shop_name = str(shop_name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
+                    #         "\'", "")
                     shop_timezone = shop.get("timezone", "")
                     shop_domain = shop.get("domain", "")
                     shop_email = shop.get("email", "")
@@ -459,9 +490,9 @@ class TaskProcessor:
                     updated_at = shop.get("updated_at", '')
                     shop_phone = shop.get("phone", "")
                     shop_city = shop.get("city", '')
-                    if "\\x" in str(shop_city.encode("utf-8")):
-                        shop_city = str(shop_city.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
-                            "\'", "")
+                    # if "\\x" in str(shop_city.encode("utf-8")):
+                    #     shop_city = str(shop_city.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
+                    #         "\'", "")
 
                     shop_currency = shop.get("currency", "USD")
                     # shop_myshopify_domain = shop.get("myshopify_domain", "")
@@ -483,6 +514,7 @@ class TaskProcessor:
                 max_fetch = 50      # 不管拉没拉完，最多拉250＊50个产品
                 while max_fetch > 0:
                     max_fetch -= 1
+                    uuid_list = []
                     ret = papi.get_all_products(limit=250, since_id=since_id)
                     if ret["code"] == 1:
                         time_now = datetime.datetime.now()
@@ -493,9 +525,12 @@ class TaskProcessor:
                         for pro in products:
                             # print(products)
                             pro_uuid = str(pro.get("id", ""))
+                            if pro_uuid in uuid_list:
+                                continue
+
                             pro_title = pro.get("title", "")
-                            if "\\x" in str(pro_title.encode("utf-8")):
-                                pro_title = str(pro_title.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace("\'", "")
+                            # if "\\x" in str(pro_title.encode("utf-8")):
+                            #     pro_title = str(pro_title.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace("\'", "")
                             handle = pro.get("handle", "")
                             pro_url = "https://{}/products/{}".format(store_url, handle)
                             pro_type = pro.get("product_type", "")
@@ -507,12 +542,12 @@ class TaskProcessor:
                                 pro_sku = variants[0].get("sku", "")
                                 pro_price = float(variants[0].get("price", "0"))
 
-                            if "\\x" in str(pro_sku.encode("utf-8")):
-                                pro_sku = str(pro_sku.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace("\'", "")
+                            # if "\\x" in str(pro_sku.encode("utf-8")):
+                            #     pro_sku = str(pro_sku.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace("\'", "")
 
                             pro_tags = pro.get("tags", "")
-                            if "\\x" in str(pro_tags.encode("utf-8")):
-                                pro_tags = str(pro_tags.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace("\'", "")
+                            # if "\\x" in str(pro_tags.encode("utf-8")):
+                            #     pro_tags = str(pro_tags.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace("\'", "")
                             img_obj = pro.get("image", {})
                             if img_obj:
                                 pro_image = img_obj.get("src", "")
@@ -542,7 +577,12 @@ class TaskProcessor:
                                      time_now, store_id, pro_publish_time, pro_uuid))
                                 pro_id = cursor.lastrowid
 
-                            conn.commit()
+                            try:
+                                conn.commit()
+                                uuid_list.append(pro_uuid)
+                            except:
+                                logger.exception("update product exception.")
+
                             if not store_view_id:
                                 logger.warning("this product have no store view id, product id={}, store id={}".format(pro_id, store_id))
                                 continue
@@ -897,7 +937,7 @@ def test():
     tsp = TaskProcessor()
     # thu = tsp.image_2_base64(image_src="https://i.pinimg.com/60x60_RS/df/5c/53/df5c53facea5fd63d5796334b43f036d.jpg", format="jpeg")
 
-    tsp.start_all(rule_interval=60, publish_pin_interval=120, pinterest_update_interval=3800, shopify_update_interval=3800)
+    tsp.start_all(rule_interval=60, publish_pin_interval=120, pinterest_update_interval=3800, shopify_update_interval=3800, update_new=300)
 
     while 1:
         time.sleep(1)
@@ -905,7 +945,7 @@ def test():
 
 def main():
     tsp = TaskProcessor()
-    tsp.start_all(rule_interval=120, publish_pin_interval=240, pinterest_update_interval=7200, shopify_update_interval=7200*2)
+    tsp.start_all(rule_interval=120, publish_pin_interval=240, pinterest_update_interval=7200*2, shopify_update_interval=7200*2, update_new=120)
     while 1:
         time.sleep(1)
 
