@@ -688,6 +688,7 @@ class TaskProcessor:
         :return: list
         """
         try:
+            target_records = []
             conn = DBUtil().get_instance()
             cursor = conn.cursor() if conn else None
             if not cursor:
@@ -715,7 +716,6 @@ class TaskProcessor:
             if not records:
                 return []
 
-            target_records = []
             # 遍历每一个record, 收集发布所需的所有参数
             for record in records:
                 record_id, execute_time, board_id, product_id, rule_id = record
