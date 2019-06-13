@@ -244,7 +244,7 @@ def subaccount_report(pin_set_list, product_set_list, request):
             if subaccount_id in account_id_list:
                 account_id_list.remove(subaccount_id)
             group_dict[subaccount_id] = {
-                "account_name": item.account_name,
+                "account_name": item.pinterest_account.nickname,
                 "boards": item.pinterest_account.boards,  # board数
                 "account_followings": item.account_followings,
                 "account_followers": item.account_followers,
