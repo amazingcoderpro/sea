@@ -23,6 +23,20 @@ class ProductsApi:
         self.version_url = "/admin/api/2019-04/"
         self.headers = {'Content-Type': 'application/json'}
 
+    def get_custom_collections(self):
+        shop_url = f"https://{self.client_id}:{self.access_token}@{self.shop_uri}{self.version_url}smart_collections.json?limit=250"
+        try:
+            result = requests.get(shop_url)
+            if result.status_code == 200:
+                logger.info("get shopify info is success")
+                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+            else:
+                logger.info("get shopify info is failed")
+                return {"code": 2, "msg": json.loads(result.text).get("errors", ""), "data": ""}
+        except Exception as e:
+            logger.error("get shopify info is failed info={}".format(str(e)))
+            return {"code": -1, "msg": str(e), "data": ""}
+
     def get_shop_info(self):
         """
         获取用户信息
@@ -133,7 +147,8 @@ if __name__ == '__main__':
     id = "3583116148816"
     shop_uri = "tiptopfree.myshopify.com"
     products_api = ProductsApi(access_token=access_token, shop_uri=shop_uri)
-    products_api.get_all_products(limit="250", since_id="1833170796589")
+    products_api.get_custom_collections()
+    # products_api.get_all_products(limit="250", since_id="1833170796589")
     # products_api.get_order(create_start_time="2019-05-22T0:0:0-04:00", create_end_time="2019-05-28T0:0:0-04:00", key_word="google", financial_status="paid")
     # products_api.get_shop_info()
     # products_api.get_product_id()

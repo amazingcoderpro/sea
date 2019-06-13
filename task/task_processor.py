@@ -164,7 +164,14 @@ class TaskProcessor:
                     if account_info:
                         time_now = datetime.datetime.now()
                         user_name = account_info.get("username", "")
+                        if "\\x" in str(user_name.encode("utf-8")):
+                            user_name = str(user_name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
+                                "\'", "")
                         bio = account_info.get("bio", "")
+                        if "\\x" in str(bio.encode("utf-8")):
+                            bio = str(bio.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
+                                "\'", "")
+
                         account_type = account_info.get("account_type", "")
                         account_type = 0 if account_type == "individual" else 1
                         account_url = account_info.get("url", "")
@@ -184,6 +191,16 @@ class TaskProcessor:
                         cursor.execute('''update `pinterest_account` set nickname=%s, description=%s, type=%s, create_time=%s, boards=%s, pins=%s, followings=%s, followers=%s, uuid=%s, update_time=%s, thumbnail=%s where id=%s''',
                                        (user_name, bio, account_type, create_at, boards, pins, account_followings, account_followers, account_uuid, time_now, account_thumbnail, account_id))
                         conn.commit()
+
+                        # 更新历史数据表
+                        cursor.execute(
+                            '''insert into `pinterest_history_data` (`board_uuid`, `board_name`, `board_followers`, 
+                            `board_id`, `pinterest_account_id`, `update_time`, `account_followings`, 
+                            `account_followers`, `account_views`, `pin_likes`, `pin_comments`, `pin_saves`, `account_name`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                            (None, "", 0, None, account_id, time_now, account_followings, account_followers, 0, 0, 0, 0, user_name))
+
+                        conn.commit()
+
                     else:
                         logger.warning("get pinterest account info empty! account={}, token={}".format(account_uuid, token))
                 else:
@@ -211,7 +228,14 @@ class TaskProcessor:
                         for board in boards:
                             uuid = board.get("id", "")
                             name = board.get("name", "")
+                            if "\\x" in str(name.encode("utf-8")):
+                                name = str(name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
+                                    "\'", "")
+
                             description = board.get("description", "")
+                            if "\\x" in str(description.encode("utf-8")):
+                                description = str(description.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
+                                    "\'", "")
                             state = 1 if board.get('privacy') == "public" else 0
                             create_time = datetime.datetime.strptime(board["created_at"], "%Y-%m-%dT%H:%M:%S")
                             add_time = time_now
@@ -274,6 +298,9 @@ class TaskProcessor:
                             board_url = pin.get("board", {}).get("url", "")
                             board_uuid = pin.get("board", {}).get("id", "")
                             board_name = pin.get("board", {}).get("name", "")
+                            if "\\x" in str(board_name.encode("utf-8")):
+                                board_name = str(board_name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
+                                    "\'", "")
 
                             counts = pin.get("counts", {})
                             pin_saves = counts.get("saves", 0)
@@ -402,14 +429,27 @@ class TaskProcessor:
                     logger.warning("store url or token is invalid, store id={}".format(store_id))
                     continue
 
+                cursor.execute('''select username from `user` where id=%s''', (user_id, ))
+                user = cursor.fetchone()
+                store_uri = ""
+                if user:
+                    store_uri = user[0]
+
+                if "shopify" not in store_uri:
+                    logger.error("store uri={}, not illegal")
+                    continue
+
                 # 更新店铺信息
-                papi = ProductsApi(store_token, store_url)
+                papi = ProductsApi(store_token, store_uri)
                 ret = papi.get_shop_info()
                 if ret["code"] == 1:
                     shop = ret["data"].get("shop", {})
                     logger.info("shop info={}".format(shop))
                     shop_uuid = shop.get("id", "")
                     shop_name = shop.get("name", "")
+                    if "\\x" in str(shop_name.encode("utf-8")):
+                        shop_name = str(shop_name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
+                            "\'", "")
                     shop_timezone = shop.get("timezone", "")
                     shop_domain = shop.get("domain", "")
                     shop_email = shop.get("email", "")
@@ -419,6 +459,10 @@ class TaskProcessor:
                     updated_at = shop.get("updated_at", '')
                     shop_phone = shop.get("phone", "")
                     shop_city = shop.get("city", '')
+                    if "\\x" in str(shop_city.encode("utf-8")):
+                        shop_city = str(shop_city.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
+                            "\'", "")
+
                     shop_currency = shop.get("currency", "USD")
                     # shop_myshopify_domain = shop.get("myshopify_domain", "")
                     cursor.execute('''update `store` set uuid=%s, name=%s, timezone=%s, email=%s, owner_name=%s, 
@@ -450,18 +494,25 @@ class TaskProcessor:
                             # print(products)
                             pro_uuid = str(pro.get("id", ""))
                             pro_title = pro.get("title", "")
-                            # pro_titile = pro_title.encode("utf-8")
+                            if "\\x" in str(pro_title.encode("utf-8")):
+                                pro_title = str(pro_title.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace("\'", "")
                             handle = pro.get("handle", "")
                             pro_url = "https://{}/products/{}".format(store_url, handle)
                             pro_type = pro.get("product_type", "")
                             variants = pro.get("variants", [])
                             pro_sku = ""
+
                             pro_price = 0
                             if variants:
                                 pro_sku = variants[0].get("sku", "")
                                 pro_price = float(variants[0].get("price", "0"))
 
+                            if "\\x" in str(pro_sku.encode("utf-8")):
+                                pro_sku = str(pro_sku.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace("\'", "")
+
                             pro_tags = pro.get("tags", "")
+                            if "\\x" in str(pro_tags.encode("utf-8")):
+                                pro_tags = str(pro_tags.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace("\'", "")
                             img_obj = pro.get("image", {})
                             if img_obj:
                                 pro_image = img_obj.get("src", "")
@@ -518,7 +569,9 @@ class TaskProcessor:
                         if len(products) < 250:
                             break
                         else:
-                            since_id = products[-1]
+                            since_id = products[-1].get("id", "")
+                            if not since_id:
+                                break
                     else:
                         logger.warning("get shop products failed. ret={}".format(ret))
                         break
@@ -585,15 +638,33 @@ class TaskProcessor:
                     rule_start_time += datetime.timedelta(days=1)
 
                 time_now = datetime.datetime.now()
-                for idx, exe_time in enumerate(execute_time_list):
-                    # 如果发布时间小于当前时间, 不发布
-                    if exe_time < time_now:
-                        continue
-                    product_id = product_list[idx % len(product_list)]
+                times = len(execute_time_list)
+
+                # product 不能重复发，所以用product list做外层循环,
+                for idx, product_id in enumerate(product_list):
+                    #会存在执行周期内发不完的情况
+                    if idx < times:
+                        exe_time = execute_time_list[idx]
+                        # 如果发布时间小于当前时间, 不发布
+                        if exe_time < time_now:
+                            continue
+                    else:
+                        break
+
                     cursor.execute('''
                     insert into `publish_record` (`execute_time`, `board_id`, `product_id`, `rule_id`, `create_time`, `update_time`, `state`) values (%s, %s, %s, %s, %s, %s, %s)''',
                                    (exe_time, board_id, product_id, rule_id, time_now, time_now, 0))
                     conn.commit()
+
+                # for idx, exe_time in enumerate(execute_time_list):
+                #     # 如果发布时间小于当前时间, 不发布
+                #     if exe_time < time_now:
+                #         continue
+                #     product_id = product_list[idx % len(product_list)]
+                #     cursor.execute('''
+                #     insert into `publish_record` (`execute_time`, `board_id`, `product_id`, `rule_id`, `create_time`, `update_time`, `state`) values (%s, %s, %s, %s, %s, %s, %s)''',
+                #                    (exe_time, board_id, product_id, rule_id, time_now, time_now, 0))
+                #     conn.commit()
 
                 cursor.execute('''update `rule` set state=0, update_time=%s where id=%s and state=-1
                 ''', (time_now, rule_id))
@@ -617,6 +688,7 @@ class TaskProcessor:
         :return: list
         """
         try:
+            target_records = []
             conn = DBUtil().get_instance()
             cursor = conn.cursor() if conn else None
             if not cursor:
@@ -644,7 +716,6 @@ class TaskProcessor:
             if not records:
                 return []
 
-            target_records = []
             # 遍历每一个record, 收集发布所需的所有参数
             for record in records:
                 record_id, execute_time, board_id, product_id, rule_id = record
@@ -727,7 +798,7 @@ class TaskProcessor:
                     pin_uuid = data["id"]
                     url = data["url"]
                     # site_url = data["original_link"]
-                    thumbnail = self.image_2_base64(record["img_url"])
+                    thumbnail = self.image_2_base64(record["product_img_url"])
                     cursor.execute('''insert into `pin` (`uuid`, `url`, `description`, `origin_link`, `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                     ''', (pin_uuid, url, product_name, link_with_utm, thumbnail, time_now, time_now, board_id, product_id))
                     pin_id = cursor.lastrowid
@@ -834,7 +905,7 @@ def test():
 
 def main():
     tsp = TaskProcessor()
-    tsp.start_all(rule_interval=120, publish_pin_interval=240, pinterest_update_interval=7200, shopify_update_interval=7200)
+    tsp.start_all(rule_interval=120, publish_pin_interval=240, pinterest_update_interval=7200, shopify_update_interval=7200*2)
     while 1:
         time.sleep(1)
 

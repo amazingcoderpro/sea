@@ -42,8 +42,8 @@ class LoginView(generics.CreateAPIView):
                     if obj.code == code:
                         obj.is_active = 1
                         obj.save()
-                        print("------active ", username)
-                        TaskProcessor().update_shopify_data(obj.id)
+                        # print("------active ", username)
+                        # TaskProcessor().update_shopify_data(obj.id)
                 else:
                     return Response({"detail": "The account is not activated"}, status=status.HTTP_400_BAD_REQUEST)
             user = auth.authenticate(username=username, password=password)
@@ -240,12 +240,12 @@ class PinterestCallback(APIView):
             # boards = counts.get("boards", 0)
             # followings = counts.get("following")
             # followers = counts.get("followers")
-            is_uuid = models.PinterestAccount.objects.filter(uuid=int(uuid), user_id=uid).first()
+            is_uuid = models.PinterestAccount.objects.filter(**{"uuid":uuid,"user_id":uid}).first()
             if is_uuid:
                 return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=3")
             pin_account = models.PinterestAccount.objects.create(**{"user_id":uid, "account": nickname, "nickname": nickname, "uuid": uuid,"token":token,"authorized":1})
-            print("-----update pinterest id=", pin_account.id)
-            TaskProcessor().update_pinterest_data(pin_account.id)
+            # print("-----update pinterest id=", pin_account.id)
+            # TaskProcessor().update_pinterest_data(pin_account.id)
         else:
             return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
         return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=1")

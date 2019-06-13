@@ -52,7 +52,7 @@ class PinterestApi():
                 print({"code": 1, "msg": "", "data": json.loads(result.text)})
                 return {"code": 1, "msg": "", "data": json.loads(result.text)}
             else:
-                logger.error("pinterest token failed = {}".format(json.loads(result.text).get("message", "")))
+                logger.error("pinterest token failed = {}, status_code={}".format(json.loads(result.text).get("message", ""), result.status_code))
                 return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
         except Exception as e:
             logger.exception("pinterest token failed = {}".format(str(e)))
@@ -356,13 +356,13 @@ class PinterestApi():
 
 if __name__ == '__main__':
     # access_token = "ArVPxolYdQAXgzr0-FFoRGAF682xFaDsz-o3I1FF0n-lswCyYAp2ADAAAk1KRdOSuUEgxv0AAAAA"
-    access_token = "AgT0UM7dvyVjeAVPRykFkzWY-OLcFaSf3-9Z4WhF0n-lswCyYAp2ADAAAk1KRdOSuUEgxv0AAAAA"
+    access_token = "Ap4wPOAfVMTxaZ5i2pi5E3DgiXGvFadp9Ny7znVF2gxXLuC2UglrgDAAAmRAReryd_-AwZcAAAAA"
     code = "ae306cbb710e1613"
     all_pinterest_api = PinterestApi(access_token=access_token)
     # all_pinterest_api.get_user_pins(access_token=access_token)
-    # all_pinterest_api.get_pinterest_url(state="123")
+    all_pinterest_api.get_pinterest_url(state="123")
     # all_pinterest_api.get_token(code=code)
-    all_pinterest_api.get_user_info()
+    # all_pinterest_api.get_user_info()
     # all_pinterest_api.create_pin(board_id="753790125070474023", note="时间是最好的礼物", image_url="https://cdn.shopify.com/s/files/1/0225/2131/5408/products/Selection_019.png?v=1557998280", link="www.baidu.com")
     # all_pinterest_api.get_pinterest_url(state="shaowei580@gmail.com")
     # all_pinterest_api.delete_pin(pin_id="55451266411112")
