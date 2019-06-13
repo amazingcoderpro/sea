@@ -1,24 +1,23 @@
 from django.conf.urls import url, include
-from django.views.decorators.cache import cache_page, cache_control
 
 from sea_app.views import personal_center, account_manager, report, dashboard, store
 
 v1_urlpatterns = [
 
     # 报告
-    url(r'dashboard/(?P<pk>[1-5]+)/$', cache_page(5*60)(dashboard.DashBoardView.as_view())),
-    url(r'daily_report/$', cache_page(5*60)(report.DailyReportView.as_view())),
-    url(r'subaccount_report/(?P<type>[a-zA-Z]+)/$', cache_page(5*60)(report.SubAccountReportView.as_view())),
+    url(r'dashboard/(?P<pk>[1-5]+)/$', dashboard.DashBoardView.as_view()),
+    url(r'daily_report/$', report.DailyReportView.as_view()),
+    url(r'subaccount_report/(?P<type>[a-zA-Z]+)/$', report.SubAccountReportView.as_view()),
 
     # 选择列表
-    url(r'select/account/$', cache_page(5*60)(account_manager.PinterestAccountListView.as_view())),
-    url(r'select/board/$', cache_page(5*60)(account_manager.BoardListView.as_view())),
-    url(r'select/pin/$', cache_page(5*60)(account_manager.PinListView.as_view())),
+    url(r'select/account/$', account_manager.PinterestAccountListView.as_view()),
+    url(r'select/board/$', account_manager.BoardListView.as_view()),
+    url(r'select/pin/$', account_manager.PinListView.as_view()),
 
     # 账户管理
-    url(r'account_list/$', cache_page(2)(account_manager.AccountListManageView.as_view())),
-    url(r'account_list/(?P<aid>[0-9]+)/$', cache_page(2)(account_manager.BoardListManageView.as_view())),
-    url(r'account_list/(?P<aid>[0-9]+)/(?P<bid>[0-9]+)/$', cache_page(2)(account_manager.PinListManageView.as_view())),
+    url(r'account_list/$', account_manager.AccountListManageView.as_view()),
+    url(r'account_list/(?P<aid>[0-9]+)/$', account_manager.BoardListManageView.as_view()),
+    url(r'account_list/(?P<aid>[0-9]+)/(?P<bid>[0-9]+)/$', account_manager.PinListManageView.as_view()),
     url(r'board_manage/(?P<pk>[0-9]+)/$', account_manager.BoardManageView.as_view()),
     url(r'pin_manage/$', account_manager.PinManageView.as_view()),
     url(r'pin_manage/(?P<pk>[0-9]+)/$', account_manager.PinManageView.as_view()),
@@ -75,7 +74,7 @@ account_urlpatterns = [
     # 用户 角色管理
     # url(r'users/$', personal_center.UserView.as_view()),
     url(r'users/(?P<pk>[0-9]+)/$', personal_center.UserOperView.as_view()),
-    url(r'users/operation_record/$', cache_page(10)(personal_center.OperationRecord.as_view())),
+    url(r'users/operation_record/$', personal_center.OperationRecord.as_view()),
     # url(r'role/$', personal_center.RoleView.as_view()),
     # url(r'role/(?P<pk>[0-9]+)/$', personal_center.RoleOperView.as_view()),
 ]
