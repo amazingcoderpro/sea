@@ -131,7 +131,7 @@ class ProductCategory(models.Model):
 
 class Product(models.Model):
     """产品表"""
-    sku = models.CharField(max_length=64, verbose_name="产品标识符")
+    sku = models.CharField(db_index=True, max_length=255, verbose_name="产品标识符")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
     uuid = models.CharField(max_length=64, verbose_name="产品唯一标识", unique=True)
     name = models.CharField(db_index=True, max_length=255, verbose_name="产品名称")
@@ -144,7 +144,7 @@ class Product(models.Model):
     publish_time = models.DateTimeField(blank=True, null=True, verbose_name="发布时间")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    url_with_utm = models.CharField(blank=True, null=True, max_length=255, verbose_name=u"产品的带utm构建的url")
+    url_with_utm = models.CharField(db_index=True, blank=True, null=True, max_length=255, verbose_name=u"产品的带utm构建的url")
 
     class Meta:
         # managed = False
@@ -300,7 +300,7 @@ class Rule(models.Model):
     tag = models.CharField(max_length=64, blank=True, null=True, verbose_name="规则标签")
     board = models.ForeignKey(Board, on_delete=models.DO_NOTHING)
     state_choices = ((-1, '新建'), (0, '待执行'), (1, '运行中'), (2, '暂停中'), (3, '已完成'), (4, '已过期'), (5, '已删除'))
-    state = models.SmallIntegerField(choices=state_choices, default=-1, verbose_name="规则状态, (-1, '新建'), (0, '待执行'), (1, '运行中'), (2, '暂停中'), (3, '已完成'), (4, '已过期'), (5, '已删除')")
+    state = models.SmallIntegerField(db_index=True, choices=state_choices, default=-1, verbose_name="规则状态")
     start_time = models.DateTimeField(verbose_name="发布开始时间")
     end_time = models.DateTimeField(verbose_name="发布结束时间")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
@@ -337,7 +337,7 @@ class PublishRecord(models.Model):
     rule = models.ForeignKey(Rule, on_delete=models.DO_NOTHING)
     pin = models.ForeignKey(Pin, on_delete=models.DO_NOTHING, blank=True, null=True)
     state_choices = ((0, '待发布'), (1, '已发布'), (2, '暂停中'), (3, '发布失败'), (4, "已取消"), (5, "已删除"))
-    state = models.SmallIntegerField(choices=state_choices, default=0, verbose_name="发布状态")
+    state = models.SmallIntegerField(db_index=True, choices=state_choices, default=0, verbose_name="发布状态")
     remark = models.TextField(blank=True, null=True, verbose_name="备注")
     execute_time = models.DateTimeField(verbose_name="执行时间")
     finished_time = models.DateTimeField(null=True, verbose_name="完成时间")
