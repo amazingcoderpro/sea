@@ -255,24 +255,16 @@ class TaskProcessor:
                         cursor.execute(
                             '''update `pinterest_account` set boards=%s, update_time=%s where id=%s''', (len(boards), time_now, account_id))
                         conn.commit()
-
+                        board_uuids = []
                         for board in boards:
                             uuid = board.get("id", "")
                             name = board.get("name", "")
-                            # if "\\x" in str(name.encode("utf-8")):
-                            #     name = str(name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
-                            #         "\'", "")
-
                             description = board.get("description", "")
-                            # if "\\x" in str(description.encode("utf-8")):
-                            #     description = str(description.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
-                            #         "\'", "")
                             state = 1 if board.get('privacy') == "public" else 0
                             create_time = datetime.datetime.strptime(board["created_at"], "%Y-%m-%dT%H:%M:%S")
                             add_time = time_now
                             update_time = time_now
                             url = board.get("url", "")
-
                             counts = board.get("counts", {})
                             board_pins = counts.get("pins", 0)
                             board_collaborators = counts.get("collaborators", 0)
@@ -288,12 +280,18 @@ class TaskProcessor:
                                     (name, description, state, update_time, board_pins, board_followers,
                                      board_collaborators, board_id))
                             else:
-                                cursor.execute('''insert into `board` (`uuid`, `name`, `create_time`, `description`, `state`, 
-                                `add_time`, `update_time`, `pinterest_account_id`, `url`, `pins`, `followers`, `collaborators`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
-                                               (uuid, name, create_time, description, state, add_time, update_time,
-                                                account_id, url, board_pins, board_followers, board_collaborators))
-                                board_id = cursor.lastrowid
+                                if uuid in board_uuids:
+                                    # 测试发现，pinterest可能会给出重复数据,如果这一把已经更新过，则不再更新
+                                    logger.info("pin uuid duplicate!")
+                                    continue
+
+                            cursor.execute('''insert into `board` (`uuid`, `name`, `create_time`, `description`, `state`, 
+                            `add_time`, `update_time`, `pinterest_account_id`, `url`, `pins`, `followers`, `collaborators`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
+                                           (uuid, name, create_time, description, state, add_time, update_time,
+                                            account_id, url, board_pins, board_followers, board_collaborators))
+                            board_id = cursor.lastrowid
                             conn.commit()
+                            board_uuids.append(uuid)
 
                             cursor.execute(
                                 '''insert into `pinterest_history_data` (`board_uuid`, `board_name`, `board_followers`, 
