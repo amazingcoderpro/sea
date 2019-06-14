@@ -225,6 +225,7 @@ class Pin(models.Model):
     url = models.URLField(max_length=255, blank=True, null=True, verbose_name="Pin URL")
     note = models.TextField(verbose_name="Pin 描述")
     origin_link = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
+    image_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品大图URL")
     thumbnail = models.TextField(verbose_name="缩略图", blank=True, null=True, default=None)
     publish_time = models.DateTimeField(auto_now_add=True, verbose_name="发布时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
@@ -232,7 +233,7 @@ class Pin(models.Model):
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
     saves = models.IntegerField(default=0, verbose_name=u"转发量")
     comments = models.IntegerField(default=0, verbose_name=u"评论量")
-    likes = models.IntegerField(default=0, verbose_name=u"点赞数, pinteres平台已经没有了,暂时保留")
+    likes = models.IntegerField(default=0, verbose_name=u"点赞数, pinterest平台已经没有了,暂时保留")
 
     class Meta:
         # managed = False
