@@ -21,7 +21,7 @@ from config import SHOPIFY_CONFIG
 
 
 class DBUtil:
-    def __init__(self, host="47.112.113.252", port=3306, db="sea", user="sea", password="sea@orderplus.com"):
+    def __init__(self, host="127.0.0.1", port=3306, db="sea", user="sea", password="sea@orderplus.com"):
         self.conn_pool = {}
         self.host = host
         self.port = port
