@@ -55,7 +55,7 @@ class LoginView(generics.CreateAPIView):
                 res = {}
                 res["user"] = personal_center.LoginSerializer(instance=user, many=False).data
                 store_instance = models.Store.objects.filter(user_id=user.id).first()
-                res["store"] = store.StoreSerializer(instance=store_instance, many=False).data
+                # res["store"] = store.StoreSerializer(instance=store_instance, many=False).data
                 payload = jwt_payload_handler(user)
                 res["token"] = "{} {}".format(settings.JWT_AUTH_HEADER_PREFIX, jwt_encode_handler(payload))
                 return Response(res, status=status.HTTP_200_OK)
