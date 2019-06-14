@@ -80,7 +80,7 @@ class TaskProcessor:
         # 定时更新shopify数据
         logger.info("start_job_update_shopify_data")
         self.update_shopify_data()
-        # self.shopify_job = self.bk_scheduler.add_job(self.update_shopify_data, 'interval', seconds=interval)
+        self.shopify_job = self.bk_scheduler.add_job(self.update_shopify_data, 'interval', seconds=interval)
 
     def start_job_update_new(self, interval=120):
         def update_new():

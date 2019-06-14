@@ -225,7 +225,7 @@ class Pin(models.Model):
     url = models.URLField(max_length=255, blank=True, null=True, verbose_name="Pin URL")
     note = models.TextField(verbose_name="Pin 描述")
     origin_link = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
-    image_link = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品大图URL")
+    image_url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品大图URL")
     thumbnail = models.TextField(verbose_name="缩略图", blank=True, null=True, default=None)
     publish_time = models.DateTimeField(auto_now_add=True, verbose_name="发布时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
