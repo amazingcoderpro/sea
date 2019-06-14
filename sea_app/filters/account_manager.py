@@ -67,7 +67,7 @@ class RuleFilter(BaseFilterBackend):
     }
 
     def filter_queryset(self, request, queryset, view):
-        filte_kwargs = {"state__in": [-1, 0, 2, 3, 4], "user_id": request.user.id}
+        filte_kwargs = {"state__in": [-1, 0, 1, 2, 3, 4], "user_id": request.user.id}
 
         account_id = request.query_params.get("account_id", '')
         if account_id:
