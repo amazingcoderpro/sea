@@ -21,7 +21,7 @@ from config import SHOPIFY_CONFIG
 
 
 class DBUtil:
-    def __init__(self, host="127.0.0.1", port=3306, db="sea", user="sea", password="sea@orderplus.com"):
+    def __init__(self, host="47.52.221.217", port=3306, db="sea", user="sea", password="sea@orderplus.com"):
         self.conn_pool = {}
         self.host = host
         self.port = port
@@ -169,7 +169,7 @@ class TaskProcessor:
             exist_boards_dict = {}
             if exist_boards:
                 for exb in exist_boards:
-                    exist_boards_dict[exb[1]] = "{}/{}".format(exb[0], exb[2])
+                    exist_boards_dict["{}--{}".format(exb[1], exb[2])] = exb[0]
 
             cursor.execute('''
                     select id, uuid, board_id from `pin` where id>=0''')
@@ -177,7 +177,7 @@ class TaskProcessor:
             exist_pins_dict = {}
             if exist_pins:
                 for exp in exist_pins:
-                    exist_pins_dict[exp[1]] = "{}/{}".format(exp[0], exp[2])
+                    exist_pins_dict["{}--{}".format(exp[1], exp[2])] = exp[0]
 
             for account in accounts:
                 account_id, token, account_uuid, nickname = account
@@ -270,8 +270,15 @@ class TaskProcessor:
                             board_collaborators = counts.get("collaborators", 0)
                             board_followers = counts.get("followers", 0)
                             # 如果board　uuid 已经存在，且属于同一个账号，　则进行更新即可
-                            if uuid in exist_boards_dict.keys() and account_id == int(exist_boards_dict[uuid].split("/")[1]):
-                                board_id = int(exist_boards_dict[uuid].split("/")[0])
+                            board_unique_key = "{}--{}".format(uuid, account_id)
+
+                            if board_unique_key in board_uuids:
+                                # 测试发现，pinterest可能会给出重复数据,如果这一把已经更新过，则不再更新
+                                logger.info("board uuid duplicate!")
+                                continue
+
+                            if board_unique_key in exist_boards_dict.keys():
+                                board_id = int(exist_boards_dict[board_unique_key])
                                 logger.info(
                                     "board is exist, board uuid={}, account={}, board id={}".format(uuid, account_id,
                                                                                                     board_id))
@@ -279,20 +286,16 @@ class TaskProcessor:
                                     '''update `board` set name=%s, description=%s, state=%s, update_time=%s, pins=%s, followers=%s, collaborators=%s where id=%s''',
                                     (name, description, state, update_time, board_pins, board_followers,
                                      board_collaborators, board_id))
+                                conn.commit()
                             else:
-                                if uuid in board_uuids:
-                                    # 测试发现，pinterest可能会给出重复数据,如果这一把已经更新过，则不再更新
-                                    logger.info("board uuid duplicate!")
-                                    continue
+                                cursor.execute('''insert into `board` (`uuid`, `name`, `create_time`, `description`, `state`, 
+                                `add_time`, `update_time`, `pinterest_account_id`, `url`, `pins`, `followers`, `collaborators`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
+                                               (uuid, name, create_time, description, state, add_time, update_time,
+                                                account_id, url, board_pins, board_followers, board_collaborators))
+                                board_id = cursor.lastrowid
+                                conn.commit()
 
-                            cursor.execute('''insert into `board` (`uuid`, `name`, `create_time`, `description`, `state`, 
-                            `add_time`, `update_time`, `pinterest_account_id`, `url`, `pins`, `followers`, `collaborators`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
-                                           (uuid, name, create_time, description, state, add_time, update_time,
-                                            account_id, url, board_pins, board_followers, board_collaborators))
-                            board_id = cursor.lastrowid
-                            conn.commit()
-                            board_uuids.append(uuid)
-
+                            board_uuids.append(board_unique_key)
                             cursor.execute(
                                 '''insert into `pinterest_history_data` (`board_uuid`, `board_name`, `board_followers`, 
                                 `board_id`, `pinterest_account_id`, `update_time`, `account_followings`, 
@@ -354,8 +357,26 @@ class TaskProcessor:
                                 board_id = board[0]
 
                             # 如果pin　uuid 已经存在,且属于同一个board，则进行更新即可
-                            if uuid in exist_pins_dict.keys() and board_id == int(exist_pins_dict[uuid].split("/")[1]):
-                                pin_id = int(exist_pins_dict[uuid].split("/")[0])
+                            pin_unique_key = "{}--{}".format(uuid, board_id)
+                            product_id = -1
+                            # 通过pin背后的链接，找到他对应的产品
+                            if len(original_link.split("utm_term=")) == 2:
+                                product_uuid = original_link.split("utm_term=")[1]
+                                cursor.execute("select id from `product` where uuid=%s", product_uuid)
+                            else:
+                                cursor.execute("select id from `product` where url_with_utm=%s", original_link)
+
+                            product = cursor.fetchone()
+                            if product:
+                                product_id = product[0]
+
+                            if pin_unique_key in pin_uuids:
+                                # 测试发现，pinterest可能会给出重复数据,如果这一把已经更新过，则不再更新
+                                logger.info("pin uuid duplicate!")
+                                continue
+
+                            if pin_unique_key in exist_pins_dict.keys():
+                                pin_id = int(exist_pins_dict[pin_unique_key])
                                 logger.info(
                                     "pin is already exist, update uui={}, board id={}, pin id={}".format(uuid, board_id,
                                                                                                      pin_id))
@@ -364,18 +385,6 @@ class TaskProcessor:
                                     (note, update_time, pin_saves, pin_comments, pin_likes, pin_id))
                                 conn.commit()
                             else:
-                                if uuid in pin_uuids:
-                                    # 测试发现，pinterest可能会给出重复数据,如果这一把已经更新过，则不再更新
-                                    logger.info("pin uuid duplicate!")
-                                    continue
-
-                                # 通过pin背后的链接，找到他对应的产品
-                                cursor.execute("select id from `product` where url_with_utm=%s", original_link)
-                                product = cursor.fetchone()
-                                product_id = -1
-                                if product:
-                                    product_id = product[0]
-
                                 if product_id >= 0:
                                     cursor.execute('''insert into `pin` (`uuid`, `url`, `note`, `origin_link`, 
                                         `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`, `saves`, 
@@ -392,29 +401,29 @@ class TaskProcessor:
 
                                 # 先合入，因为下面的历史表中有外键关联
                                 conn.commit()
-                                pin_uuids.append(uuid)
 
-                                # 　更新历史数据表
-                                if product_id >= 0:
-                                    cursor.execute(
-                                        '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
-                                        `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
-                                        `pin_id`, `pinterest_account_id`, `product_id`, `account_followings`, 
-                                        `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`, `account_name`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                                        (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
-                                         update_time, board_id, pin_id, account_id, product_id, 0, 0, 0, 0, board_uuid, board_name, nickname))
-                                else:
-                                    cursor.execute(
-                                        '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
-                                        `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
-                                        `pin_id`, `pinterest_account_id`, `account_followings`, 
-                                        `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`, `account_name`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                                        (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
-                                         update_time, board_id, pin_id, account_id, 0, 0, 0, 0, board_uuid, board_name, nickname))
+                            pin_uuids.append(pin_unique_key)
+                            # 　更新历史数据表
+                            if product_id >= 0:
+                                cursor.execute(
+                                    '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
+                                    `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
+                                    `pin_id`, `pinterest_account_id`, `product_id`, `account_followings`, 
+                                    `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`, `account_name`) 
+                                    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                                    (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
+                                     update_time, board_id, pin_id, account_id, product_id, 0, 0, 0, 0, board_uuid, board_name, nickname))
+                            else:
+                                cursor.execute(
+                                    '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
+                                    `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
+                                    `pin_id`, `pinterest_account_id`, `account_followings`, 
+                                    `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`, `account_name`) 
+                                    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                                    (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
+                                     update_time, board_id, pin_id, account_id, 0, 0, 0, 0, board_uuid, board_name, nickname))
 
-                                conn.commit()
+                            conn.commit()
                 else:
                     logger.error(
                         "update pins get_user_pins error, account={} token={}, ret={}".format(account_uuid, token, ret))
@@ -862,7 +871,7 @@ class TaskProcessor:
                     # rule (-1, '新建'), (0, '待执行'), (1, '运行中'), (2, '暂停中'), (3, '已完成'), (4, '已过期'), (5, '已删除')
                     # record ((0, '待发布'), (1, '已发布'), (2, '暂停中'), (3, '发布失败'), (4, "已取消"), (5, "已删除"))
                     record_state = 1
-                    remark = "success"
+                    remark = ""#Succeed
                     update_time = finished_time = time_now
 
                     # 发布成功后，更新record表
