@@ -441,7 +441,7 @@ class TaskProcessor:
             if url:
                 cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where url=%s''', (url,))
             else:
-                cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where id>=6''')
+                cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where id>=0''')
             stores = cursor.fetchall()
 
             # 取中已经存在的所有products, 只需更新即可
