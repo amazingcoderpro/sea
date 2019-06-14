@@ -381,15 +381,15 @@ class TaskProcessor:
                                 if product_id >= 0:
                                     cursor.execute('''insert into `pin` (`uuid`, `url`, `note`, `origin_link`, 
                                         `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`, `saves`, 
-                                        `comments`, `likes`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
+                                        `comments`, `likes`, `image_url`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
                                                    (uuid, url, note, original_link, pin_thumbnail, create_time, update_time,
-                                                    board_id, product_id, pin_saves, pin_comments, pin_likes))
+                                                    board_id, product_id, pin_saves, pin_comments, pin_likes, image_path))
                                 else:
                                     cursor.execute('''insert into `pin` (`uuid`, `url`, `note`, `origin_link`, 
                                         `thumbnail`, `publish_time`, `update_time`, `board_id`, `saves`, 
-                                        `comments`, `likes`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
+                                        `comments`, `likes`, `image_url`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
                                                    (uuid, url, note, original_link, pin_thumbnail, create_time, update_time,
-                                                    board_id, pin_saves, pin_comments, pin_likes))
+                                                    board_id, pin_saves, pin_comments, pin_likes, image_path))
                                 pin_id = cursor.lastrowid
 
                                 # 先合入，因为下面的历史表中有外键关联
@@ -443,7 +443,7 @@ class TaskProcessor:
             if url:
                 cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where url=%s''', (url,))
             else:
-                cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where id>=0''')
+                cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where id>=6''')
             stores = cursor.fetchall()
 
             # 取中已经存在的所有products, 只需更新即可
@@ -496,9 +496,9 @@ class TaskProcessor:
 
                     shop_currency = shop.get("currency", "USD")
                     # shop_myshopify_domain = shop.get("myshopify_domain", "")
-                    cursor.execute('''update `store` set uuid=%s, name=%s, timezone=%s, email=%s, owner_name=%s, 
+                    cursor.execute('''update `store` set uuid=%s, name=%s, url=%s, timezone=%s, email=%s, owner_name=%s, 
                     owner_phone=%s, country=%s, city=%s, store_create_time=%s, store_update_time=%s, currency=%s where id=%s''',
-                                   (shop_uuid, shop_name, shop_timezone, shop_email, shop_owner, shop_phone,
+                                   (shop_uuid, shop_name, shop_domain, shop_timezone, shop_email, shop_owner, shop_phone,
                                     shop_country_name, shop_city, datetime.datetime.strptime(created_at[0:-6], "%Y-%m-%dT%H:%M:%S"),
                                     datetime.datetime.strptime(updated_at[0:-6], "%Y-%m-%dT%H:%M:%S"), shop_currency, store_id))
                     conn.commit()
@@ -532,6 +532,8 @@ class TaskProcessor:
                             # if "\\x" in str(pro_title.encode("utf-8")):
                             #     pro_title = str(pro_title.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace("\'", "")
                             handle = pro.get("handle", "")
+                            # if "dresses" in handle:
+                            #     print(handle)
                             pro_url = "https://{}/products/{}".format(store_url, handle)
                             pro_type = pro.get("product_type", "")
                             variants = pro.get("variants", [])
@@ -556,22 +558,22 @@ class TaskProcessor:
                             else:
                                 pro_image = ""
                             thumbnail = self.image_2_base64(pro_image)
+                            try:
+                                if pro.get("published_at", ""):
+                                    time_str = pro.get("published_at", "")[0:-6]
+                                    pro_publish_time = datetime.datetime.strptime(time_str, "%Y-%m-%dT%H:%M:%S")
+                                else:
+                                    pro_publish_time = None
+                            except:
+                                pro_publish_time = None
 
                             try:
                                 if pro_uuid in exist_products_dict.keys():
                                     pro_id = exist_products_dict[pro_uuid]
                                     logger.info("product is already exist, pro_uuid={}, pro_id={}".format(pro_uuid, pro_id))
-                                    cursor.execute('''update `product` set url=%s, name=%s, price=%s, tag=%s, update_time=%s, image_url=%s, thumbnail=%s where id=%s''',
-                                                   (pro_url, pro_title, pro_price, pro_tags, time_now, pro_image, thumbnail, pro_id))
+                                    cursor.execute('''update `product` set sku=%s, url=%s, name=%s, price=%s, tag=%s, update_time=%s, image_url=%s, thumbnail=%s, publish_time=%s where id=%s''',
+                                                   (pro_sku, pro_url, pro_title, pro_price, pro_tags, time_now, pro_image, thumbnail, pro_publish_time, pro_id))
                                 else:
-                                    # pro_create_time = datetime.datetime.strptime(pro.get("created_at"), "%Y-%m-%dT%H:%M:%S")
-                                    try:
-                                        if pro.get("published_at", ""):
-                                            time_str = pro.get("published_at", "")[0:-6]
-                                        pro_publish_time = datetime.datetime.strptime(time_str, "%Y-%m-%dT%H:%M:%S")
-                                    except:
-                                        pro_publish_time = None
-
                                     cursor.execute(
                                         "insert into `product` (`sku`, `url`, `name`, `image_url`,`thumbnail`, `price`, `tag`, `create_time`, `update_time`, `store_id`, `publish_time`, `uuid`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                                         (pro_sku, pro_url, pro_title, pro_image, thumbnail, pro_price, pro_tags, time_now,
@@ -652,11 +654,12 @@ class TaskProcessor:
                 analyzed_rule_ids.append(rule_id)
                 product_list = eval(product_list)
                 # 调整至零点
-                rule_start_time = datetime.datetime.combine(rule_start_time, datetime.time.min)
-                rule_end_time = datetime.datetime.combine(rule_end_time, datetime.time.max)
+                # 前端已经精确到了时分秒
+                # rule_start_time = datetime.datetime.combine(rule_start_time, datetime.time.min)
+                # rule_end_time = datetime.datetime.combine(rule_end_time, datetime.time.max)
 
                 cursor.execute('''
-                        select weekday,start_time, end_time, interval_time from `rule_schedule` where rule_id=%s
+                        select weekday, start_time, end_time, interval_time from `rule_schedule` where rule_id=%s
                         ''', rule_id)
                 schedules = cursor.fetchall()
                 schedule_list = []
@@ -678,23 +681,38 @@ class TaskProcessor:
                     rule_start_time += datetime.timedelta(days=1)
 
                 time_now = datetime.datetime.now()
-                times = len(execute_time_list)
+                # times = len(execute_time_list)
 
-                # product 不能重复发，所以用product list做外层循环,
-                for idx, product_id in enumerate(product_list):
-                    #会存在执行周期内发不完的情况
-                    if idx < times:
-                        exe_time = execute_time_list[idx]
-                        # 如果发布时间小于当前时间, 不发布
-                        if exe_time < time_now:
-                            continue
-                    else:
+                while product_list and execute_time_list:
+                    if execute_time_list[-1] < time_now:
                         break
 
+                    if execute_time_list[0] < time_now:
+                        execute_time_list.pop(0)
+                        continue
+
+                    product_id = product_list.pop(0)
+                    exe_time = execute_time_list.pop(0)
                     cursor.execute('''
-                    insert into `publish_record` (`execute_time`, `board_id`, `product_id`, `rule_id`, `create_time`, `update_time`, `state`) values (%s, %s, %s, %s, %s, %s, %s)''',
+                            insert into `publish_record` (`execute_time`, `board_id`, `product_id`, `rule_id`, `create_time`, `update_time`, `state`) values (%s, %s, %s, %s, %s, %s, %s)''',
                                    (exe_time, board_id, product_id, rule_id, time_now, time_now, 0))
                     conn.commit()
+
+                # product 不能重复发，所以用product list做外层循环,
+                # for idx, product_id in enumerate(product_list):
+                #     #会存在执行周期内发不完的情况
+                #     if idx < times:
+                #         exe_time = execute_time_list[idx]
+                #         # 如果发布时间小于当前时间, 不发布
+                #         if exe_time < time_now:
+                #             continue
+                #     else:
+                #         break
+                #
+                #     cursor.execute('''
+                #     insert into `publish_record` (`execute_time`, `board_id`, `product_id`, `rule_id`, `create_time`, `update_time`, `state`) values (%s, %s, %s, %s, %s, %s, %s)''',
+                #                    (exe_time, board_id, product_id, rule_id, time_now, time_now, 0))
+                #     conn.commit()
 
                 # for idx, exe_time in enumerate(execute_time_list):
                 #     # 如果发布时间小于当前时间, 不发布
@@ -838,9 +856,9 @@ class TaskProcessor:
                     pin_uuid = data["id"]
                     url = data["url"]
                     # site_url = data["original_link"]
-                    thumbnail = self.image_2_base64(record["product_img_url"])
-                    cursor.execute('''insert into `pin` (`uuid`, `url`, `description`, `origin_link`, `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    ''', (pin_uuid, url, product_name, link_with_utm, thumbnail, time_now, time_now, board_id, product_id))
+                    thumbnail = self.image_2_base64(record.get("product_img_url", ""))
+                    cursor.execute('''insert into `pin` (`uuid`, `url`, `note`, `origin_link`, `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`, `saves`, `comments`, `likes`, `image_url`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ''', (pin_uuid, url, product_name, link_with_utm, thumbnail, time_now, time_now, board_id, product_id, 0, 0, 0, record.get("product_img_url", "")))
                     pin_id = cursor.lastrowid
                     conn.commit()
                     # rule (-1, '新建'), (0, '待执行'), (1, '运行中'), (2, '暂停中'), (3, '已完成'), (4, '已过期'), (5, '已删除')
