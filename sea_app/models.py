@@ -131,7 +131,7 @@ class ProductCategory(models.Model):
 
 class Product(models.Model):
     """产品表"""
-    sku = models.CharField(max_length=64, verbose_name="产品标识符")
+    sku = models.CharField(db_index=True, max_length=255, verbose_name="产品标识符")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
     uuid = models.CharField(max_length=64, verbose_name="产品唯一标识", unique=True)
     name = models.CharField(db_index=True, max_length=255, verbose_name="产品名称")
