@@ -199,7 +199,7 @@ class PinterestAccount(models.Model):
 
 class Board(models.Model):
     """Pin Board表"""
-    uuid = models.CharField(max_length=64, verbose_name="Board唯一标识码")
+    uuid = models.CharField(db_index=True, max_length=64, verbose_name="Board唯一标识码")
     name = models.CharField(max_length=64, verbose_name="Board名称")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="Board URL")
     create_time = models.DateTimeField(verbose_name="Board创建时间")
@@ -221,7 +221,7 @@ class Board(models.Model):
 
 class Pin(models.Model):
     """Pin 表"""
-    uuid = models.CharField(max_length=64, verbose_name="Pin唯一标识码")
+    uuid = models.CharField(db_index=True, max_length=64, verbose_name="Pin唯一标识码")
     url = models.URLField(max_length=255, blank=True, null=True, verbose_name="Pin URL")
     note = models.TextField(verbose_name="Pin 描述")
     origin_link = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
