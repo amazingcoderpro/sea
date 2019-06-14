@@ -19,9 +19,9 @@ from sdk.shopify.get_shopify_products import ProductsApi
 from sdk.googleanalytics.google_oauth_info import GoogleApi
 from config import SHOPIFY_CONFIG
 
-
+# 47.52.221.217
 class DBUtil:
-    def __init__(self, host="47.52.221.217", port=3306, db="sea", user="sea", password="sea@orderplus.com"):
+    def __init__(self, host="127.0.0.1", port=3306, db="sea", user="sea", password="sea@orderplus.com"):
         self.conn_pool = {}
         self.host = host
         self.port = port
