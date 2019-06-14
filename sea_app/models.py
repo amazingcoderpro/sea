@@ -134,7 +134,7 @@ class Product(models.Model):
     sku = models.CharField(max_length=64, verbose_name="产品标识符")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品URL")
     uuid = models.CharField(max_length=64, verbose_name="产品唯一标识", unique=True)
-    name = models.CharField(max_length=255, verbose_name="产品名称")
+    name = models.CharField(db_index=True, max_length=255, verbose_name="产品名称")
     image_url = models.CharField(max_length=255, verbose_name="图片URL")
     thumbnail = models.TextField(verbose_name="缩略图", blank=True, null=True, default=None)
     price = models.CharField(max_length=255, verbose_name="产品价格")
