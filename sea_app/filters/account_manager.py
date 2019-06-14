@@ -94,17 +94,18 @@ class ProductCountFilter(BaseFilterBackend):
         "publish_begin_time": "publish_time__gte",
         "publish_end_time": "publish_time__lte",
         "product__name": "name__icontains",
-        "store": "store"
+        # "store": "store"
     }
 
     def filter_queryset(self, request, queryset, view):
-        filte_kwargs = {}
+        filte_kwargs = {"store":models.Store.objects.filter(user=request.user).first()}
         for filter_key in self.filter_keys.keys():
             val = request.query_params.get(filter_key, '')
             if val is not '':
                 filte_kwargs[self.filter_keys[filter_key]] = val
         if not filte_kwargs:
             return []
+        print("###", filte_kwargs)
         queryset = queryset.filter(**filte_kwargs)
         return queryset
 

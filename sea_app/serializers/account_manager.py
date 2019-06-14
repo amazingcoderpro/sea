@@ -42,7 +42,7 @@ class RuleSerializer(serializers.ModelSerializer):
     schedule_rule = RuleScheduleSerializer(many=True, read_only=True)
     scan_sign_name = serializers.CharField(source="get_scan_sign_display", read_only=True)
     sale_sign_name = serializers.CharField(source="get_sale_sign_display", read_only=True)
-    baord_name = serializers.CharField(source="board.uuid", read_only=True)
+    board_name = serializers.CharField(source="board.name", read_only=True)
     account_name = serializers.CharField(source="board.pinterest_account.account", read_only=True)
 
     class Meta:
@@ -64,7 +64,7 @@ class RuleSerializer(serializers.ModelSerializer):
                   "start_time",
                   "end_time",
                   "state",
-                  "baord_name",
+                  "board_name",
                   "account_name"
         )
 

@@ -26,7 +26,7 @@ v1_urlpatterns = [
     url(r'pinterest_account/$', account_manager.PinterestAccountCreateView.as_view()),
 
     # 店铺管理
-    # url(r'store/$', store.StoreView.as_view()),
+    url(r'store/$', store.StoreView.as_view()),
     url(r'store/(?P<pk>[0-9]+)/$', store.StoreOperView.as_view()),
 
     # 清除缓存

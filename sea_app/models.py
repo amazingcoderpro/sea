@@ -296,7 +296,7 @@ class Rule(models.Model):
     sale_sign_choices = ((0, '='), (1, '>'), (2, '<'))
     sale_sign = models.SmallIntegerField(choices=sale_sign_choices, default=0, verbose_name="销量符号")
     sale = models.CharField(max_length=255, blank=True, null=True, default=0, verbose_name="产品销量")
-    product_list = models.CharField(max_length=255, default="", verbose_name="产品列表")
+    product_list = models.TextField(default="", verbose_name="产品列表")
     tag = models.CharField(max_length=64, blank=True, null=True, verbose_name="规则标签")
     board = models.ForeignKey(Board, on_delete=models.DO_NOTHING)
     state_choices = ((-1, '新建'), (0, '待执行'), (1, '运行中'), (2, '暂停中'), (3, '已完成'), (4, '已过期'), (5, '已删除'))

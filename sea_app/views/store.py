@@ -10,20 +10,18 @@ from sea_app.pageNumber.pageNumber import PNPagination
 from sea_app.permission import permission
 
 
-class StoreView(generics.ListCreateAPIView):
-    """店铺 增 列表展示"""
+class StoreView(generics.ListAPIView):
+    """店铺 展示展示"""
     queryset = models.Store.objects.all()
     serializer_class = store.StoreSerializer
-    pagination_class = PNPagination
-    filter_backends = (store_filter.StoreFilter, DjangoFilterBackend)
+    filter_backends = (store_filter.StoreFilter,)
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
-    filterset_fields = ("name", "email")
 
 
-class StoreOperView(generics.RetrieveUpdateDestroyAPIView):
-    """店铺 删 该 查"""
+class StoreOperView(generics.UpdateAPIView):
+    """店铺 改"""
     queryset = models.Store.objects.all()
     serializer_class = store.StoreSerializer
-    permission_classes = (IsAuthenticated,permission.RulePermission)
+    permission_classes = (IsAuthenticated, permission.RulePermission)
     authentication_classes = (JSONWebTokenAuthentication,)
