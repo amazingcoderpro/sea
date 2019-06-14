@@ -144,7 +144,7 @@ class Product(models.Model):
     publish_time = models.DateTimeField(blank=True, null=True, verbose_name="发布时间")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    url_with_utm = models.CharField(blank=True, null=True, max_length=255, verbose_name=u"产品的带utm构建的url")
+    url_with_utm = models.CharField(db_index=True, blank=True, null=True, max_length=255, verbose_name=u"产品的带utm构建的url")
 
     class Meta:
         # managed = False
