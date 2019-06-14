@@ -21,7 +21,7 @@ from config import SHOPIFY_CONFIG
 
 
 class DBUtil:
-    def __init__(self, host="47.112.113.252", port=3306, db="sea", user="sea", password="sea@orderplus.com"):
+    def __init__(self, host="127.0.0.1", port=3306, db="sea", user="sea", password="sea@orderplus.com"):
         self.conn_pool = {}
         self.host = host
         self.port = port
@@ -441,7 +441,7 @@ class TaskProcessor:
             if url:
                 cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where url=%s''', (url,))
             else:
-                cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where id>=6''')
+                cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where id>=0''')
             stores = cursor.fetchall()
 
             # 取中已经存在的所有products, 只需更新即可
