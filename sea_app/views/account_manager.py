@@ -320,7 +320,6 @@ class SendPinView(APIView):
             else:
                 obj = models.PublishRecord.objects.filter(id=kwargs["pk"]).first()
                 obj.state = 1
-                obj.remark = "Succeed"
                 obj.finished_time = datetime.datetime.now()
                 obj.pin_id = result["data"]["id"]
                 obj.save()
