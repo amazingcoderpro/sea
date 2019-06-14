@@ -417,6 +417,7 @@ class PinListFilter(BaseFilterBackend):
                     group_dict[today.pin_id].update({
                         "pin_uri": today.pin.uuid,
                         "pin_thumbnail": today.pin.thumbnail,
+                        "pin_image": today.pin.image_url,
                         "pin_note": today.pin.note,
                         "pin_url": today.pin.url,
                         "product_sku": today.pin.product.sku if today.pin.product else "",
@@ -433,6 +434,7 @@ class PinListFilter(BaseFilterBackend):
             group_dict[pin_obj.id] = {
                 "pin_uri": pin_obj.uuid,
                 "pin_thumbnail": pin_obj.thumbnail,
+                "pin_image": pin_obj.image_url,
                 "pin_note": pin_obj.note,
                 "pin_url": pin_obj.url,
                 "product_sku": pin_obj.product.sku if pin_obj.product else "",
