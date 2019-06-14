@@ -251,13 +251,13 @@ class BoardListFilter(BaseFilterBackend):
             if yesterday_b_info:
                 yesterday_pins = yesterday_b_info.get("pins", 0)
                 yesterday_saves = yesterday_b_info.get("saves", 0)
-                # yesterday_likes = yesterday_b_info.get("likes", 0)
+                yesterday_followers = yesterday_b_info.get("board_followers", 0)
                 yesterday_comment = yesterday_b_info.get("comments", 0)
             else:
-                yesterday_pins = yesterday_saves = yesterday_comment = 0
+                yesterday_pins = yesterday_saves = yesterday_comment = yesterday_followers = 0
             b_info["pins_increment"] = b_info["pins"] - yesterday_pins
             b_info["saves_increment"] = b_info["saves"] - yesterday_saves
-            # b_info["likes_increment"] = b_info["likes"] - yesterday_likes
+            b_info["followers_increment"] = b_info["board_followers"] - yesterday_followers
             b_info["comments_increment"] = b_info["comments"] - yesterday_comment
             b_info["board_id"] = b_id
             # 获取board发布数据
@@ -289,6 +289,7 @@ class BoardListFilter(BaseFilterBackend):
                 group_dict[today.board_id] = {
                     "pins": today.board.pins,  # pin数
                     "saves": today.pin_saves,
+                    "board_followers": today.board_followers,
                     # "likes": today.pin_likes,
                     "comments": today.pin_comments,
                 }
@@ -304,7 +305,7 @@ class BoardListFilter(BaseFilterBackend):
             else:
                 # group_dict[today.board_id]["pins"].append(today.pin_id)
                 group_dict[today.board_id]["saves"] += today.pin_saves
-                # group_dict[today.board_id]["likes"] += today.pin_likes
+                group_dict[today.board_id]["board_followers"] += today.board_followers
                 group_dict[today.board_id]["comments"] += today.pin_comments
         if not board_id_list:
             return group_dict
@@ -317,6 +318,7 @@ class BoardListFilter(BaseFilterBackend):
                     "board_state": board_obj.state,
                     "pins": board_obj.pins,  # pin数
                     "saves": 0,
+                    "board_followers": 0,
                     # "likes": 0,
                     "comments": 0,
                     "finished": board_obj.publishrecord_set.filter(state=1).count(),
