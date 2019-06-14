@@ -118,7 +118,7 @@ class ReportFilter(BaseFilterBackend):
     }
 
     def filter_queryset(self, request, queryset, view):
-        filte_kwargs = {"rule__user_id":request.user.id}
+        filte_kwargs = {"rule__user_id": request.user.id}
         for filter_key in self.filter_keys.keys():
             val = request.query_params.get(filter_key, '')
             if val != '':
@@ -128,5 +128,10 @@ class ReportFilter(BaseFilterBackend):
                 filte_kwargs[self.filter_keys[filter_key]] = val
         if not filte_kwargs:
             return []
-        queryset = queryset.filter(**filte_kwargs)
+
+        record_manager = request.query_params.get("record_manager", '')
+        if record_manager:
+            queryset = queryset.filter(**filte_kwargs).order_by("execute_time")
+        else:
+            queryset = queryset.filter(**filte_kwargs).order_by("finished_time")
         return queryset
