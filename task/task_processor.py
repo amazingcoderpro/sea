@@ -282,7 +282,7 @@ class TaskProcessor:
                             else:
                                 if uuid in board_uuids:
                                     # 测试发现，pinterest可能会给出重复数据,如果这一把已经更新过，则不再更新
-                                    logger.info("pin uuid duplicate!")
+                                    logger.info("board uuid duplicate!")
                                     continue
 
                             cursor.execute('''insert into `board` (`uuid`, `name`, `create_time`, `description`, `state`, 
