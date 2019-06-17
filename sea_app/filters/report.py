@@ -343,6 +343,7 @@ class PinListFilter(BaseFilterBackend):
             pin_set = models.Pin.objects.filter(Q(note=query_str) | Q(product__sku=query_str), Q(board_id=board_id))
         else:
             pin_set = models.Pin.objects.filter(board_id=board_id)
+        pin_set = pin_set.filter(~Q(uuid=None), ~Q(url=None))
         if not pin_set.exists():
             return {"count": 0, "results": []}
         for pin in pin_set[(page-1)*page_size:page*page_size]:
@@ -351,22 +352,22 @@ class PinListFilter(BaseFilterBackend):
         today_date = datetime.today().date()
         while True:
             today_data_set = queryset.filter(Q(update_time__range=(today_date, today_date + timedelta(days=1))),
-                                             Q(pin_id__in=pin_id_list))
+                                             Q(pin_id__in=pin_id_list), ~Q(tag=0))
             if today_data_set.exists():
                 # 取今天最新的一批数据
-                lastest_time = today_data_set.first().update_time
-                today_data_set = today_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
+                lastest_tag = today_data_set.order_by('-tag').first().tag
+                today_data_set = today_data_set.filter(tag=lastest_tag)
                 break
             if datetime.today().date() - today_date >= timedelta(days=10):
                 break
             today_date = today_date + timedelta(days=-1)
         while True:
             yesterday_data_set = queryset.filter(Q(update_time__range=(today_date + timedelta(days=-1), today_date)),
-                                                 Q(pin_id__in=pin_id_list))
+                                                 Q(pin_id__in=pin_id_list), ~Q(tag=0))
             if yesterday_data_set.exists():
                 # 取昨天最新的一批数据
-                lastest_time = yesterday_data_set.first().update_time
-                yesterday_data_set = yesterday_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
+                lastest_tag = yesterday_data_set.order_by('-tag').first().tag
+                yesterday_data_set = yesterday_data_set.filter(tag=lastest_tag)
                 break
             if datetime.today().date() - today_date >= timedelta(days=20):
                 break
