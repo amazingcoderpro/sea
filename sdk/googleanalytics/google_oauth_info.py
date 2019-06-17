@@ -43,7 +43,8 @@ class GoogleApi():
                                 ],
                                 "metrics": [
                                     {"expression": "ga:pageviews"},  # pv
-                                    {"expression": "ga:uniquePageviews"},  # uv
+                                    {"expression": "ga:Users"},      # uv
+                                    {"expression": "ga:newUsers"},
                                     {"expression": "ga:transactions"},  # 交易数量
                                     {"expression": "ga:transactionRevenue"},  # 销售总金额
                                     {"expression": "ga:hits"},  # 点击量
@@ -75,15 +76,16 @@ class GoogleApi():
                         values = dateRangeValues[0].get('values', [])
                         if values:
                             if temp_key_word not in results:
-                                results[temp_key_word] = {"page_view": int(values[0]), "unique_view": int(values[1]),
-                                                  "transactions": int(values[2]), "transaction_revenue": float(values[3]),
-                                                  "hits": int(values[4])}
+                                results[temp_key_word] = {"page_view": int(values[0]), "unique_view": int(values[1]),"new_unique_view": int(values[2]),
+                                                  "transactions": int(values[3]), "transaction_revenue": float(values[4]),
+                                                  "hits": int(values[5])}
                             else:
                                 results[temp_key_word]["page_view"] += int(values[0])
                                 results[temp_key_word]["unique_view"] += int(values[1])
-                                results[temp_key_word]["transactions"] += int(values[2])
-                                results[temp_key_word]["transaction_revenue"] += float(values[3])
-                                results[temp_key_word]["hits"] += int(values[4])
+                                results[temp_key_word]["new_unique_view"] += int(values[2])
+                                results[temp_key_word]["transactions"] += int(values[3])
+                                results[temp_key_word]["transaction_revenue"] += float(values[4])
+                                results[temp_key_word]["hits"] += int(values[5])
                 # print(results)
                 return {"code": 1, "data": results, "msg": ""}
         except Exception as e:
@@ -93,7 +95,8 @@ class GoogleApi():
 
 if __name__ == '__main__':
     google_data = GoogleApi(view_id="195406097")
-    google_data.get_report(key_word="23232323233", start_time="1daysAgo", end_time="today")
+    google_data.get_report(key_word="", start_time="7daysAgo", end_time="today")
+    print(1)
 
 
 
