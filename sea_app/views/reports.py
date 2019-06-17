@@ -488,14 +488,23 @@ def site_count(pin_set_list, product_set_list, oneday=datetime.datetime.now().da
     pin_num = get_num(pin_set, "pin_id")
     pin_saves = count_num(pin_set, "pin_saves")
 
+    lastest_product_data = product_set_list.filter(
+        Q(update_time__range=(oneday, oneday + datetime.timedelta(days=1)))).first()
+    # 获取当天最晚一批产品数据的更新时间
+    if not lastest_product_data:
+        return {"site_num": site_num, "subaccount_num": subaccount_num, "board_num": board_num, "pin_num": pin_num,
+                "visitor_num": 0, "click_num": 0, "sales_num": 0, "revenue_num": 0,
+                "board_followers": board_followers, "pin_saves": pin_saves}
+    product_queryset = product_set_list.filter(
+        Q(update_time__range=(
+            lastest_product_data.update_time + datetime.timedelta(hours=-1), lastest_product_data.update_time)))
     # 获取product_id_list
     product_id_list = []
     for pin in pin_set:
-        if pin.product_id not in product_id_list:
+        if pin.product_id and pin.product_id not in product_id_list:
             product_id_list.append(pin.product_id)
-
     # 获取sales总数
-    product_set = product_set_list.filter(product_id__in=product_id_list)
+    product_set = product_queryset.filter(product_id__in=product_id_list)
     sales_num = count_num(product_set, "product_sales")
     # 获取click总数
     click_num = count_num(product_set, "product_clicks")
@@ -552,6 +561,7 @@ def account_overview_table(overview_list):
                 "subaccount_num": data["subaccount_num"],
                 "board_num": data["board_num"],
                 "pin_num": data["pin_num"],
+                "pin_saves": data["pin_saves"],
                 "visitor_num": data["visitor_num"],
                 "click_num": data["click_num"],
                 "sales_num": data["sales_num"],
@@ -564,6 +574,7 @@ def account_overview_table(overview_list):
                 total_data["subaccount_num"] = data["subaccount_num"]
                 total_data["board_num"] = data["board_num"]
                 total_data["pin_num"] = data["pin_num"]
+                total_data["pin_saves"] = data["pin_saves"]
             total_data["visitor_num"] += data["visitor_num"]
             total_data["click_num"] += data["click_num"]
             total_data["sales_num"] += data["sales_num"]
