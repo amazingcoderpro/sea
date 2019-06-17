@@ -144,24 +144,17 @@ def daily_report_view(request):
 def subaccount_report_view(request, type):
     """子账号视图函数"""
     pin_set_list, product_set_list = get_common_data(request)
-    # if not pin_set_list.exists():
-    #     return []
     # 取PinterestHistoryData最新一天的数据, ProductHistoryData时间范围内所有数据
     start_time, end_time = get_request_datetime(request)
     pin_set_list_result = []
     while end_time >= start_time:
-        pin_set_list_result = pin_set_list.filter(
-            update_time__range=(end_time + datetime.timedelta(days=-1), end_time))
+        pin_set_list_result = pin_set_list.filter(~Q(tag=0), Q(update_time__range=(end_time + datetime.timedelta(days=-1), end_time)))
         if pin_set_list_result.exists():
+            pin_set_list_result = pin_set_list_result.filter(tag=pin_set_list_result.order_by('-tag').first().tag)
             break
         end_time += datetime.timedelta(days=-1)
     # 取有数据当天的最晚的一批数据
-    if pin_set_list_result.exists():
-        lastest_time = pin_set_list_result.first().update_time
-        pin_set_list = pin_set_list.filter(
-            update_time__range=(lastest_time + datetime.timedelta(hours=-1), lastest_time))
-    else:
-        pin_set_list = pin_set_list_result
+    pin_set_list = pin_set_list_result
 
     if type == 'pins':
         # pins report
