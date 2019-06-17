@@ -261,7 +261,7 @@ class PinterestHistoryData(models.Model):
     pin_saves = models.IntegerField(default=0, verbose_name="转发量")
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
     update_time = models.DateTimeField(auto_now=True, db_index=True, verbose_name="数据更新时间")
-    tag = models.IntegerField(default=0, verbose_name="同一次拉取数据的tag")
+    tag = models.IntegerField(db_index=True, default=0, verbose_name="同一次拉取数据的tag")
 
     class Meta:
         # managed = False
@@ -280,7 +280,7 @@ class ProductHistoryData(models.Model):
     product_sales = models.IntegerField(default=0, verbose_name="订单数")
     product_revenue = models.FloatField(default=0.00, verbose_name="销售额")
     update_time = models.DateTimeField(auto_now=True, db_index=True, verbose_name="数据更新时间")
-    tag = models.IntegerField(default=0, verbose_name="同一次拉取数据的tag")
+    tag = models.IntegerField(db_index=True, default=0, verbose_name="同一次拉取数据的tag")
 
     class Meta:
         #managed = False
