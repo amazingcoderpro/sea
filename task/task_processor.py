@@ -80,7 +80,8 @@ class TaskProcessor:
         # 定时更新shopify数据
         logger.info("start_job_update_shopify_data")
         self.update_shopify_data()
-        self.shopify_job = self.bk_scheduler.add_job(self.update_shopify_data, 'interval', seconds=interval)
+        # self.shopify_job = self.bk_scheduler.add_job(self.update_shopify_data, 'interval', seconds=interval)
+        self.shopify_job = self.bk_scheduler.add_job(self.update_shopify_data, 'cron', day_of_week="*", hour=1, minute=30)
 
     def start_job_update_new(self, interval=120):
         def update_new():
@@ -179,6 +180,11 @@ class TaskProcessor:
                 for exp in exist_pins:
                     exist_pins_dict["{}--{}".format(exp[1], exp[2])] = exp[0]
 
+            cursor.execute('''select tag from `pinterest_history_data` where id>0''')
+            tags = cursor.fetchall()
+            tag_list = [tag[0] if tag[0] else 0 for tag in tags]
+            tag_max = max(tag_list)
+
             for account in accounts:
                 account_id, token, account_uuid, nickname = account
                 if not token:
@@ -227,8 +233,8 @@ class TaskProcessor:
                         cursor.execute(
                             '''insert into `pinterest_history_data` (`board_uuid`, `board_name`, `board_followers`, 
                             `board_id`, `pinterest_account_id`, `update_time`, `account_followings`, 
-                            `account_followers`, `account_views`, `pin_likes`, `pin_comments`, `pin_saves`, `account_name`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                            (None, "", 0, None, account_id, time_now, account_followings, account_followers, 0, 0, 0, 0, user_name))
+                            `account_followers`, `account_views`, `pin_likes`, `pin_comments`, `pin_saves`, `account_name`, `tag`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                            (None, "", 0, None, account_id, time_now, account_followings, account_followers, 0, 0, 0, 0, user_name, tag_max+1))
 
                         conn.commit()
 
@@ -299,8 +305,8 @@ class TaskProcessor:
                             cursor.execute(
                                 '''insert into `pinterest_history_data` (`board_uuid`, `board_name`, `board_followers`, 
                                 `board_id`, `pinterest_account_id`, `update_time`, `account_followings`, 
-                                `account_followers`, `account_views`, `pin_likes`, `pin_comments`, `pin_saves`, `account_name`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                                (uuid, name, board_followers, board_id, account_id, time_now, 0, 0, 0, 0, 0, 0, nickname))
+                                `account_followers`, `account_views`, `pin_likes`, `pin_comments`, `pin_saves`, `account_name`, `tag`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                                (uuid, name, board_followers, board_id, account_id, time_now, 0, 0, 0, 0, 0, 0, nickname, tag_max+1))
 
                             conn.commit()
                 else:
@@ -363,12 +369,12 @@ class TaskProcessor:
                             if len(original_link.split("utm_term=")) == 2:
                                 product_uuid = original_link.split("utm_term=")[1]
                                 cursor.execute("select id from `product` where uuid=%s", product_uuid)
-                            else:
-                                cursor.execute("select id from `product` where url_with_utm=%s", original_link)
+                                product = cursor.fetchone()
+                                if product:
+                                    product_id = product[0]
 
-                            product = cursor.fetchone()
-                            if product:
-                                product_id = product[0]
+                            # else:
+                            #     cursor.execute("select id from `product` where url_with_utm=%s", original_link)
 
                             if pin_unique_key in pin_uuids:
                                 # 测试发现，pinterest可能会给出重复数据,如果这一把已经更新过，则不再更新
@@ -409,19 +415,19 @@ class TaskProcessor:
                                     '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
                                     `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
                                     `pin_id`, `pinterest_account_id`, `product_id`, `account_followings`, 
-                                    `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`, `account_name`) 
-                                    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                                    `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`, `account_name`, `tag`) 
+                                    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
                                     (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
-                                     update_time, board_id, pin_id, account_id, product_id, 0, 0, 0, 0, board_uuid, board_name, nickname))
+                                     update_time, board_id, pin_id, account_id, product_id, 0, 0, 0, 0, board_uuid, board_name, nickname, tag_max+1))
                             else:
                                 cursor.execute(
                                     '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
                                     `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
                                     `pin_id`, `pinterest_account_id`, `account_followings`, 
-                                    `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`, `account_name`) 
-                                    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                                    `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`, `account_name`, `tag`) 
+                                    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
                                     (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
-                                     update_time, board_id, pin_id, account_id, 0, 0, 0, 0, board_uuid, board_name, nickname))
+                                     update_time, board_id, pin_id, account_id, 0, 0, 0, 0, board_uuid, board_name, nickname, tag_max+1))
 
                             conn.commit()
                 else:
@@ -450,7 +456,10 @@ class TaskProcessor:
             if url:
                 cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where url=%s''', (url,))
             else:
-                cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where id>=0''')
+                cursor.execute("""select id from `user` where is_active=1""")
+                users = cursor.fetchall()
+                users_list = [user[0] for user in users]
+                cursor.execute('''select id, name, url, token, user_id, store_view_id from `store` where user_id in %s''', (users_list, ))
             stores = cursor.fetchall()
 
             # 取中已经存在的所有products, 只需更新即可
@@ -459,6 +468,11 @@ class TaskProcessor:
             exist_products_dict = {}
             for exp in exist_products:
                 exist_products_dict[exp[1]] = exp[0]
+
+            cursor.execute('''select tag from `product_history_data` where id>0''')
+            tags = cursor.fetchall()
+            tag_list = [tag[0] if tag[0] else 0 for tag in tags]
+            tag_max = max(tag_list)
 
             # 遍历数据库中的所有store
             for store in stores:
@@ -604,11 +618,18 @@ class TaskProcessor:
                                 pro_report = data.get(pro_uuid, {})
                                 pv = int(pro_report.get("page_view", 0))
                                 uv = int(pro_report.get("unique_view", 0))
+                                nuv = int(pro_report.get("new_unique_view", 0))
                                 hits = int(pro_report.get("hits", 0))
                                 transactions = int(pro_report.get("transactions", 0))
                                 transactions_revenue = float(pro_report.get("transaction_revenue", 0))
-                                cursor.execute('''insert into `product_history_data` (`product_visitors`, `product_new_visitors`, `product_clicks`, `product_scan`, `product_sales`, `product_revenue`, `update_time`, `product_id`, `store_id`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                                ''', (uv, uv, hits, pv, transactions, transactions_revenue, time_now, pro_id, store_id))
+                                # cursor.execute('''select product_visitors from `product_history_data` where product_id=%s and tag=%s''', (pro_id, tag_max))
+                                # visitors = cursor.fetchone()
+                                # total_visitors = uv
+                                # if visitors:
+                                #     total_visitors += visitors[0]
+
+                                cursor.execute('''insert into `product_history_data` (`product_visitors`, `product_new_visitors`, `product_clicks`, `product_scan`, `product_sales`, `product_revenue`, `update_time`, `product_id`, `store_id`, `tag`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                ''', (uv, nuv, hits, pv, transactions, transactions_revenue, time_now, pro_id, store_id, tag_max+1))
                             else:
                                 logger.warning("get GA data failed, store view id={}, key_words={}".format(store_view_id, pro_uuid))
 
@@ -662,7 +683,7 @@ class TaskProcessor:
                 product_list = eval(product_list)
                 # 调整至零点
                 # 前端已经精确到了时分秒
-                # rule_start_time = datetime.datetime.combine(rule_start_time, datetime.time.min)
+                rule_start_time_0 = datetime.datetime.combine(rule_start_time, datetime.time.min)
                 # rule_end_time = datetime.datetime.combine(rule_end_time, datetime.time.max)
 
                 cursor.execute('''
@@ -674,32 +695,39 @@ class TaskProcessor:
                     schedule_list.append({"weekday": sch[0], "beg": sch[1], "end": sch[2], "interval": sch[3]})
 
                 execute_time_list = []
-                while rule_start_time <= rule_end_time:
+                is_first = True
+                while rule_start_time_0 <= rule_end_time:
                     for schedule in schedule_list:
-                        if rule_start_time.weekday() == schedule["weekday"]:
-                            beg = rule_start_time + schedule["beg"]
-                            end = rule_start_time + schedule["end"]
+                        if rule_start_time_0.weekday() == schedule["weekday"]:
+                            beg = rule_start_time_0 + schedule["beg"]
+                            if is_first and rule_start_time > beg:
+                                beg = rule_start_time
+
+                            end = rule_start_time_0 + schedule["end"]
                             while beg <= end:
                                 execute_time_list.append(beg)
                                 limit_interval = int(schedule["interval"])
-                                limit_interval = 1800 if limit_interval<1800 else limit_interval
+                                limit_interval = 1800 if limit_interval < 1800 else limit_interval
                                 beg += datetime.timedelta(seconds=limit_interval)
 
-                    rule_start_time += datetime.timedelta(days=1)
+                    is_first = False
+                    rule_start_time_0 += datetime.timedelta(days=1)
 
                 time_now = datetime.datetime.now()
                 # times = len(execute_time_list)
 
+                records = []
                 while product_list and execute_time_list:
                     if execute_time_list[-1] < time_now:
                         break
 
-                    if execute_time_list[0] < time_now:
+                    if execute_time_list[0] < time_now or execute_time_list[0] > rule_end_time:
                         execute_time_list.pop(0)
                         continue
 
                     product_id = product_list.pop(0)
                     exe_time = execute_time_list.pop(0)
+                    records.append(exe_time)
                     cursor.execute('''
                             insert into `publish_record` (`execute_time`, `board_id`, `product_id`, `rule_id`, `create_time`, `update_time`, `state`) values (%s, %s, %s, %s, %s, %s, %s)''',
                                    (exe_time, board_id, product_id, rule_id, time_now, time_now, 0))
@@ -879,18 +907,21 @@ class TaskProcessor:
                         '''update `publish_record` set state=%s, remark=%s, finished_time=%s, pin_id=%s, update_time=%s where id=%s''',
                         (record_state, remark, finished_time, pin_id, update_time, record["id"]))
                     conn.commit()
-                    # 将格式化后的url更新到产品数库表中
-                    cursor.execute('''update `product` set url_with_utm=%s where id=%s''', (link_with_utm, product_id))
-                    conn.commit()
-
+                    # # 将格式化后的url更新到产品数库表中
+                    # cursor.execute('''update `product` set url_with_utm=%s where id=%s''', (link_with_utm, product_id))
+                    # conn.commit()
                 else:
                     # 发布失败
+                    cursor.execute('''insert into `pin` (`note`, `origin_link`, `thumbnail`, `update_time`, `board_id`, `product_id`, `saves`, `comments`, `likes`, `image_url`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ''', (product_name, link_with_utm, thumbnail, time_now, board_id, product_id, 0, 0, 0, record.get("product_img_url", "")))
+                    pin_id = cursor.lastrowid
+
                     record_state = 3
                     remark = ret.get("msg", "")
                     update_time = finished_time = time_now
                     cursor.execute('''
-                            update `publish_record` set state=%s, remark=%s, finished_time=%s, update_time=%s where id=%s
-                            ''', (record_state, remark, finished_time, update_time, record["id"]))
+                            update `publish_record` set state=%s, remark=%s, finished_time=%s, pin_id=%s, update_time=%s where id=%s
+                            ''', (record_state, remark, finished_time, pin_id, update_time, record["id"]))
                     conn.commit()
 
                 # 再更新rule表,如果rule还是待运行状态(0)，则修改为正在运行状态(1)
