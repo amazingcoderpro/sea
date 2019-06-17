@@ -26,7 +26,6 @@ from sea_app.utils import random_code
 from task.task_processor import TaskProcessor
 
 
-
 class LoginView(generics.CreateAPIView):
     """登陆"""
     queryset = models.User.objects.all()
@@ -44,8 +43,8 @@ class LoginView(generics.CreateAPIView):
                     if obj.code == code:
                         obj.is_active = 1
                         obj.save()
-                        # print("------active ", username)
-                        # TaskProcessor().update_shopify_data(obj.id)
+                    else:
+                        return Response({"detail": "The account is not activated, Please check the last email。"}, status=status.HTTP_400_BAD_REQUEST)
                 else:
                     return Response({"detail": "The account is not activated"}, status=status.HTTP_400_BAD_REQUEST)
             user = auth.authenticate(username=username, password=password)

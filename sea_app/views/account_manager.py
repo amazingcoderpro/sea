@@ -16,6 +16,7 @@ from sea_app.filters import account_manager as account_manager_filters
 from sea_app.pageNumber.pageNumber import PNPagination
 from sea_app.permission.permission import RulePermission,PublishRecordPermission
 from sdk.pinterest import pinterest_api
+import datetime
 
 
 class PinterestAccountView(generics.ListAPIView):
@@ -317,7 +318,11 @@ class SendPinView(APIView):
                 return Response({"detail": result["msg"]},
                                 status=status.HTTP_400_BAD_REQUEST)
             else:
-                models.PublishRecord.objects.filter(id=kwargs["pk"]).update(state=1)
+                obj = models.PublishRecord.objects.filter(id=kwargs["pk"]).first()
+                obj.state = 1
+                obj.finished_time = datetime.datetime.now()
+                obj.pin_id = result["data"]["id"]
+                obj.save()
                 return Response({"detail": result["msg"]})
         else:
             return Response({"detail": "This pinterest_account is not authorized"}, status=status.HTTP_400_BAD_REQUEST)
