@@ -318,11 +318,17 @@ class SendPinView(APIView):
                 return Response({"detail": result["msg"]},
                                 status=status.HTTP_400_BAD_REQUEST)
             else:
+                # print(result["data"]["id"])
                 obj = models.PublishRecord.objects.filter(id=kwargs["pk"]).first()
                 obj.state = 1
+                obj.remark = ""
                 obj.finished_time = datetime.datetime.now()
-                obj.pin_id = result["data"]["id"]
                 obj.save()
+                pin_obj = models.Pin.objects.filter(id=obj.pin_id).first()
+                pin_obj.uuid = result["data"]["id"]
+                pin_obj.url = result["data"]["url"]
+                pin_obj.publish_time = datetime.datetime.now()
+                pin_obj.save()
                 return Response({"detail": result["msg"]})
         else:
             return Response({"detail": "This pinterest_account is not authorized"}, status=status.HTTP_400_BAD_REQUEST)
