@@ -76,11 +76,11 @@ class AccountListFilter(BaseFilterBackend):
         today_date = datetime.today().date()
         while True:
             today_data_set = queryset.filter(Q(update_time__range=(today_date, today_date + timedelta(days=1))),
-                                             Q(pinterest_account_id__in=account_id_list))
+                                             Q(pinterest_account_id__in=account_id_list), ~Q(tag=0))
             if today_data_set.exists():
                 # 取今天最新的一批数据
-                lastest_time = today_data_set.first().update_time
-                today_data_set = today_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
+                lastest_tag = today_data_set.order_by('-tag').first().tag
+                today_data_set = today_data_set.filter(tag=lastest_tag)
                 break
             if datetime.today().date() - today_date >= timedelta(days=5):
                 break
@@ -88,11 +88,11 @@ class AccountListFilter(BaseFilterBackend):
         yesterday_date = today_date
         while True:
             yesterday_data_set = queryset.filter(Q(update_time__range=(yesterday_date + timedelta(days=-1), yesterday_date)),
-                                                 Q(pinterest_account_id__in=account_id_list))
+                                                 Q(pinterest_account_id__in=account_id_list), ~Q(tag=0))
             if yesterday_data_set.exists():
                 # 取昨天最新的一批数据
-                lastest_time = yesterday_data_set.first().update_time
-                yesterday_data_set = yesterday_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
+                lastest_tag = yesterday_data_set.order_by('-tag').first().tag
+                yesterday_data_set = yesterday_data_set.filter(tag=lastest_tag)
                 break
             if datetime.today().date() - yesterday_date >= timedelta(days=10):
                 break
@@ -216,11 +216,11 @@ class BoardListFilter(BaseFilterBackend):
         today_date = datetime.today().date()
         while True:
             today_data_set = queryset.filter(Q(update_time__range=(today_date, today_date + timedelta(days=1))),
-                                             Q(board_id__in=board_id_list))
+                                             Q(board_id__in=board_id_list), ~Q(tag=0))
             if today_data_set.exists():
                 # 取今天最新的一批数据
-                lastest_time = today_data_set.first().update_time
-                today_data_set = today_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
+                lastest_tag = today_data_set.order_by('-tag').first().tag
+                today_data_set = today_data_set.filter(tag=lastest_tag)
                 break
             if datetime.today().date() - today_date >= timedelta(days=5):
                 break
@@ -228,11 +228,11 @@ class BoardListFilter(BaseFilterBackend):
         yesterday_date = today_date
         while True:
             yesterday_data_set = queryset.filter(Q(update_time__range=(yesterday_date + timedelta(days=-1), yesterday_date)),
-                                                 Q(board_id__in=board_id_list))
+                                                 Q(board_id__in=board_id_list), ~Q(tag=0))
             if yesterday_data_set.exists():
                 # 取昨天最新的一批数据
-                lastest_time = yesterday_data_set.first().update_time
-                yesterday_data_set = yesterday_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
+                lastest_tag = yesterday_data_set.order_by('-tag').first().tag
+                yesterday_data_set = yesterday_data_set.filter(tag=lastest_tag)
                 break
             if datetime.today().date() - yesterday_date >= timedelta(days=10):
                 break
