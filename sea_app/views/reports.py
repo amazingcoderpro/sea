@@ -78,112 +78,58 @@ def daily_report(pin_set_list, product_set_list, request):
     time_list = time_range_list(start_time, end_time)
     # 组装每日最新pin数据
     data_list = []
-    group_dict = {}
-    for item in pin_set_list:
-        date = item.update_time.date()
-        if date not in group_dict:
-            time_list.remove(date)
-            latest_time = item.update_time
-            group_dict[date] = {
-                "accounts": [item.pinterest_account_id, ],  # account数
-                "account_followings": item.account_followings,
-                "account_followers": item.account_followers,
-                "account_views": item.account_views,
-                "boards": [] if not item.board_id else [item.board_id],  # board数
-                "board_followers": item.board_followers,
-                "pins": [] if not item.pin_id else [item.pin_id],  # pin数
-                "pin_saves": item.pin_saves,
-                "pin_likes": item.pin_likes,
-                "pin_comments": item.pin_comments,
-                "product_clicks": 0,
-                "product_sales": 0,
-                "product_revenue": 0,
-                "product_visitors": 0,
-                "product_new_visitors": 0,
-                "products": [] if not item.product_id else [item.product_id],  # product
-            }
-        else:
-            # 需要区分是当天最新的其它数据，还是当天其他时间的数据,每次数据时间间隔要大于60分钟
-            if (latest_time - item.update_time) > datetime.timedelta(minutes=60):
-                continue
-            group_dict[date]["accounts"].append(item.pinterest_account_id)
-            group_dict[date]["account_followings"] += item.account_followings
-            group_dict[date]["account_followers"] += item.account_followers
-            group_dict[date]["boards"].append(item.board_id)
-            group_dict[date]["board_followers"] += item.board_followers
-            group_dict[date]["pins"].append(item.pin_id)
-            group_dict[date]["pin_saves"] += item.pin_saves
-            group_dict[date]["pin_likes"] += item.pin_likes
-            group_dict[date]["pin_comments"] += item.pin_comments
-            group_dict[date]["account_views"] += item.account_views
-            # group_dict[date]["pin_clicks"] += item.pin_clicks
-            group_dict[date]["products"].append(item.product_id)
-    for day, info in group_dict.items():
-        data = {
-            "date": day.strftime("%Y-%m-%d"),
-            "accounts": len(set(filter(lambda x: x, info["accounts"]))),  # account数
-            "account_followings": info["account_followings"],
-            "account_followers": info["account_followers"],
-            "account_views": info["account_views"],
-            "boards": len(set(filter(lambda x: x, info["boards"]))),
-            "board_followers": info["board_followers"],
-            "pins": len(set(filter(lambda x: x, info["pins"]))),
-            "pin_saves": info["pin_saves"],
-            "pin_likes": info["pin_likes"],
-            "pin_comments": info["pin_comments"],
-            "product_clicks": info["product_clicks"],
-            "product_visitors": info["product_visitors"],
-            "product_new_visitors": info["product_new_visitors"],
-            "product_sales": info["product_sales"],
-            "product_revenue": info["product_revenue"],
-            # "product_list": info["products"],
-        }
+    for date in time_list:
+        # 获取当天的pin数据
+        pin_queryset= pin_set_list.filter(Q(update_time__range=(date, date+datetime.timedelta(days=1)-datetime.timedelta(seconds=1))),
+                                          ~Q(tag=0))
+        if not pin_queryset.exists():
+            data_list.append({"date": date.strftime("%Y-%m-%d"), "accounts": 0, "account_followings": 0, "account_followers": 0,
+                    "account_views": 0, "boards": 0, "board_followers": 0, "pins": 0, "pin_saves": 0, "pin_likes": 0,
+                    "pin_comments": 0, "product_clicks": 0, "product_visitors": 0, "product_new_visitors": 0,
+                    "product_sales": 0, "product_revenue": 0})
+            continue
+        pin_queryset = pin_queryset.filter(tag=pin_queryset.order_by('-tag').first().tag)
+        # 初始化数据
+        group_dict = {"date":date.strftime("%Y-%m-%d"), "accounts": [], "account_followings": 0, "account_followers": 0,
+                    "account_views": 0, "boards": [], "board_followers": 0, "pins": [], "pin_saves": 0, "pin_likes": 0,
+                    "pin_comments": 0, "product_clicks": 0, "product_visitors": 0, "product_new_visitors": 0,
+                    "product_sales": 0, "product_revenue": 0, "products": []}
+        for item in pin_queryset:
+            group_dict["accounts"].append(item.pinterest_account_id)
+            group_dict["account_followings"] += item.account_followings
+            group_dict["account_followers"] += item.account_followers
+            group_dict["boards"].append(item.board_id)
+            group_dict["board_followers"] += item.board_followers
+            group_dict["pins"].append(item.pin_id)
+            group_dict["pin_saves"] += item.pin_saves
+            group_dict["pin_likes"] += item.pin_likes
+            group_dict["pin_comments"] += item.pin_comments
+            group_dict["account_views"] += item.account_views
+            group_dict["products"].append(item.product_id)
 
         # 组装每日product对应pin的数据
-        product_set_list_pre = product_set_list.filter(update_time__range=(day, day + datetime.timedelta(days=1)))
-        # store_obj = product_set_list_pre.filter(Q(product_id=None)).first()
-        # if store_obj:
-        #     data["product_visitors"] = store_obj.product_visitors
-        #     data["product_new_visitors"] = store_obj.product_new_visitors
-        # else:
-        #     data["store_visitors"] = 0
-        #     data["store_new_visitors"] = 0
-        p_list = list(set(filter(lambda x: x, info["products"])))
-        product_list = product_set_list_pre.filter(product_id__in=p_list)
-        has_data_p_list = []
-        for item in product_list:
-            # 只能叠加当天最新一次拉取的数据
-            if item.product_id in has_data_p_list:
-                continue
-            # 每一个产品只加一次
-            has_data_p_list.append(item.product_id)
-            data["product_sales"] += item.product_sales
-            data["product_revenue"] += item.product_revenue
-            data["product_visitors"] = item.product_visitors
-            data["product_new_visitors"] = item.product_new_visitors
+        product_set_list_pre = product_set_list.filter(
+            Q(update_time__range=(date, date + datetime.timedelta(days=1)-datetime.timedelta(seconds=1))), ~Q(tag=0))
+        if product_set_list_pre.exists():
+            product_set_list_pre = product_set_list_pre.filter(tag=product_set_list_pre.order_by('-tag').first().tag)
+            p_list = list(set(filter(lambda x: x, group_dict["products"])))
+            product_list = product_set_list_pre.filter(product_id__in=p_list)
 
-        data_list.append(data)
-    for day in time_list:
-        data_list.append(
-            {
-                "date": day.strftime("%Y-%m-%d"),
-                "accounts": 0,
-                "account_followings": 0,
-                "account_followers": 0,
-                "account_views": 0,
-                "boards": 0,
-                "board_followers": 0,
-                "pins": 0,
-                "pin_saves": 0,
-                "pin_likes": 0,
-                "pin_comments": 0,
-                "product_clicks": 0,
-                "product_visitors": 0,
-                "product_new_visitors": 0,
-                "product_sales": 0,
-                "product_revenue": 0,
-            }
-        )
+            for item in product_list:
+                # 只能叠加当天最新一次拉取的数据
+                # 每一个产品只加一次
+                group_dict["product_sales"] += item.product_sales
+                group_dict["product_revenue"] += item.product_revenue
+                group_dict["product_visitors"] = item.product_visitors
+                group_dict["product_new_visitors"] = item.product_new_visitors
+
+        # 组装最后数据
+        group_dict["accounts"] = len(set(filter(lambda x: x, group_dict["accounts"])))
+        group_dict["boards"] = len(set(filter(lambda x: x, group_dict["boards"])))
+        group_dict["pins"] = len(set(filter(lambda x: x, group_dict["pins"])))
+        group_dict.pop("products")
+        data_list.append(group_dict)
+
     data_list = sorted(data_list, key=lambda x: x["date"], reverse=True)
     return {"count": len(data_list), "results": data_list}
 
