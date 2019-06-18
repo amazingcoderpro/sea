@@ -385,8 +385,7 @@ def pins_report(pin_set_list, product_set_list):
         # for item in store_set_list:
         #     data["store_visitors"] += item.store_visitors
         #     data["store_new_visitors"] += item.store_new_visitors
-        product_id_list = list(set([i for i in info["products"] if i]))
-        product_obj_list = product_set_list.filter(product_id=product_id_list)
+        product_obj_list = product_set_list.filter(product_id=info["product_id"])
         has_data_p_list = []
         for product_obj in product_obj_list:
             if (product_obj.update_time.date(), product_obj.product_id) in has_data_p_list:
