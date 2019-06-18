@@ -309,7 +309,7 @@ class Rule(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
 
     # 增加以下字段用于规则克隆
-    pinterest_account = models.ForeignKey(PinterestAccount, on_delete=models.DO_NOTHING)
+    pinterest_account = models.ForeignKey(PinterestAccount, on_delete=models.DO_NOTHING, blank=True, null=True)
     product_key = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品搜索关键字")
     product_start = models.DateTimeField(verbose_name="产品发布时间起点")
     product_end = models.DateTimeField(verbose_name="产品发布时间终点")
@@ -350,7 +350,7 @@ class PublishRecord(models.Model):
     finished_time = models.DateTimeField(null=True, verbose_name="完成时间")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    pinterest_account = models.ForeignKey(PinterestAccount, on_delete=models.DO_NOTHING)
+    pinterest_account = models.ForeignKey(PinterestAccount, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
         # managed = False
