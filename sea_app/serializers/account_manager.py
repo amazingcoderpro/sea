@@ -156,3 +156,10 @@ class RuleStatusSerializer(serializers.ModelSerializer):
         if validated_data["state"] in [2, 5]:
             models.PublishRecord.objects.filter(**{"rule": rule_instance, "state__in": [-1, 0, 2, 4, 5]}).update(state=validated_data["state"])
         return instance
+
+
+class GetUserByAccountSerializer(serializers.ModelSerializer):
+    user_email = serializers.CharField(source="user.email", read_only=True)
+    class Meta:
+        model = models.PinterestAccount
+        fields = ("account", "user_email")

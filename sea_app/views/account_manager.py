@@ -346,3 +346,11 @@ class PublishRecordDelView(APIView):
             return Response({"detail": "parameter error"}, status=status.HTTP_400_BAD_REQUEST)
         obj = models.PublishRecord.objects.filter(id__in=eval(publish_record_list)).update(state=5)
         return Response([])
+
+
+class GetUserByAccounturiView(generics.ListAPIView):
+    queryset = models.PinterestAccount.objects.all()
+    serializer_class = account_manager.GetUserByAccountSerializer
+    filter_backends = (account_manager_filters.GetUserByAccountFilter,)
+    permission_classes = (IsAuthenticated, PublishRecordPermission)
+    authentication_classes = (JSONWebTokenAuthentication,)
