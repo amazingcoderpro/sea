@@ -346,3 +346,9 @@ class PublishRecordDelView(APIView):
             return Response({"detail": "parameter error"}, status=status.HTTP_400_BAD_REQUEST)
         obj = models.PublishRecord.objects.filter(id__in=eval(publish_record_list)).update(state=5)
         return Response([])
+
+
+class GetUserByAccounturiView(generics.ListAPIView):
+    queryset = models.User.objects.all()
+    serializer_class = account_manager.GetUserSerializer
+    filter_backends = (account_manager_filters.GetUserFilter,)
