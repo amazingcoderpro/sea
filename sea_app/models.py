@@ -181,6 +181,7 @@ class PinterestAccount(models.Model):
     followers = models.IntegerField(default=0, verbose_name="账户粉丝")
     uuid = models.CharField(max_length=64, verbose_name="账户的uuid")
     thumbnail = models.TextField(verbose_name="缩略图", default=None, blank=True, null=True)
+    publish_interval = models.IntegerField(default=60, verbose_name=u"发布pin的最小间隔")
 
     objects = PinterestAccountManager()
 
@@ -297,7 +298,7 @@ class Rule(models.Model):
     sale_sign = models.SmallIntegerField(choices=sale_sign_choices, default=0, verbose_name="销量符号")
     sale = models.CharField(max_length=255, blank=True, null=True, default=0, verbose_name="产品销量")
     product_list = models.TextField(default="", verbose_name="产品列表")
-    tag = models.CharField(max_length=64, blank=True, null=True, verbose_name="规则标签")
+    tag = models.CharField(max_length=255, blank=True, null=True, verbose_name="规则标签")
     board = models.ForeignKey(Board, on_delete=models.DO_NOTHING)
     state_choices = ((-1, '新建'), (0, '待执行'), (1, '运行中'), (2, '暂停中'), (3, '已完成'), (4, '已过期'), (5, '已删除'))
     state = models.SmallIntegerField(db_index=True, choices=state_choices, default=-1, verbose_name="规则状态")
@@ -306,6 +307,12 @@ class Rule(models.Model):
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+
+    # 增加以下字段用于规则克隆
+    pinterest_account = models.ForeignKey(PinterestAccount, on_delete=models.DO_NOTHING)
+    product_key = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品搜索关键字")
+    product_start = models.DateTimeField(verbose_name="产品发布时间起点")
+    product_end = models.DateTimeField(verbose_name="产品发布时间终点")
 
     class Meta:
         # managed = False
@@ -343,6 +350,7 @@ class PublishRecord(models.Model):
     finished_time = models.DateTimeField(null=True, verbose_name="完成时间")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+    pinterest_account = models.ForeignKey(PinterestAccount, on_delete=models.DO_NOTHING)
 
     class Meta:
         # managed = False
