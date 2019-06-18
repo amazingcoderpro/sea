@@ -118,10 +118,11 @@ def daily_report(pin_set_list, product_set_list, request):
             for item in product_list:
                 # 只能叠加当天最新一次拉取的数据
                 # 每一个产品只加一次
+                group_dict["product_clicks"] += item.product_clicks
                 group_dict["product_sales"] += item.product_sales
                 group_dict["product_revenue"] += item.product_revenue
-                group_dict["product_visitors"] = item.product_visitors
-                group_dict["product_new_visitors"] = item.product_new_visitors
+                group_dict["product_visitors"] += item.product_visitors
+                group_dict["product_new_visitors"] += item.product_new_visitors
 
         # 组装最后数据
         group_dict["accounts"] = len(set(filter(lambda x: x, group_dict["accounts"])))
@@ -226,7 +227,8 @@ def subaccount_report(pin_set_list, product_set_list, request):
             "product_revenue": 0
         }
         # 组装product对应pin的数据,并且还需要是最新的product数据
-        product_set_list = product_set_list.filter(product_id__in=info["products"])
+        product_id_list = list(set([i for i in info["products"] if i]))
+        product_set_list = product_set_list.filter(product_id__in=product_id_list)
         has_data_p_list = []
         for item in product_set_list:
             if (item.update_time.date(), item.product_id) in has_data_p_list:
@@ -234,6 +236,7 @@ def subaccount_report(pin_set_list, product_set_list, request):
             has_data_p_list.append((item.update_time.date(), item.product_id))
             data["product_visitors"] += item.product_visitors
             data["product_new_visitors"] += item.product_new_visitors
+            data["product_clicks"] += item.product_clicks
             data["product_sales"] += item.product_sales
             data["product_revenue"] += item.product_revenue
         data_list.append(data)
@@ -379,6 +382,7 @@ def pins_report(pin_set_list, product_set_list):
             has_data_p_list.append((product_obj.update_time.date(), product_obj.product_id))
             data["product_visitors"] += product_obj.product_visitors
             data["product_new_visitors"] += product_obj.product_new_visitors
+            data["product_clicks"] += product_obj.product_clicks
             data["product_sales"] += product_obj.product_sales
             data["product_revenue"] += product_obj.product_revenue
 
