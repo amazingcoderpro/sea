@@ -1,3 +1,5 @@
+import datetime
+
 from rest_framework.filters import BaseFilterBackend
 from django.db.models import Q
 
@@ -114,26 +116,48 @@ class ReportFilter(BaseFilterBackend):
     filter_keys = {
         # "rule__state": "rule__state__in",
         "state": "state__in",
-        "product__sku": "product__sku__icontains"
     }
 
     def filter_queryset(self, request, queryset, view):
-        filte_kwargs = {"rule__user_id": request.user.id,}
-        for filter_key in self.filter_keys.keys():
-            val = request.query_params.get(filter_key, '')
-            if val != '':
-                if filter_key == "product__sku":
-                    filte_kwargs[self.filter_keys[filter_key]] = val
-                    continue
-                if type(eval(val)) == list:
-                    filte_kwargs[self.filter_keys[filter_key]] = eval(val)
-                    continue
-                filte_kwargs[self.filter_keys[filter_key]] = val
-        if not filte_kwargs:
-            return []
+        # filte_kwargs = {"rule__user_id": request.user.id,}
+        # for filter_key in self.filter_keys.keys():
+        #     val = request.query_params.get(filter_key, '')
+        #     if val != '':
+        #         if filter_key == "product__sku":
+        #             filte_kwargs[self.filter_keys[filter_key]] = val
+        #             continue
+        #         if type(eval(val)) == list:
+        #             filte_kwargs[self.filter_keys[filter_key]] = eval(val)
+        #             continue
+        #         filte_kwargs[self.filter_keys[filter_key]] = val
+        # if not filte_kwargs:
+        #     return []
+        # 获取请求参数
+        user_id = request.user.id
+        state = request.query_params.get("state", '')
+        query_key = request.query_params.get("query_key", '')
+        start_time = request.query_params.get("publish_time_start", '')
+        end_time = request.query_params.get("publish_time_end", '')
+        if start_time and isinstance(start_time, str):
+            try:
+                start_time = datetime.datetime(*map(int, start_time.split('-')))
+            except:
+                start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+        if end_time and isinstance(end_time, str):
+            try:
+                end_time = datetime.datetime(*map(int, end_time.split('-')))
+            except:
+                end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
+
+        queryset = queryset.filter(Q(rule__user_id=user_id),
+                                   Q(product__sku__icontains=query_key)|Q(board__name__icontains=query_key)|Q(board__pinterest_account__nickname__icontains=query_key))
+        if state:
+            queryset = queryset.filter(state__in=eval(state))
+        if start_time and end_time:
+            queryset = queryset.filter(execute_time__range=(start_time,end_time))
         record_manager = request.query_params.get("record_manager", '')
         if record_manager:
-            queryset = queryset.filter(**filte_kwargs).order_by("execute_time")
+            queryset = queryset.order_by("execute_time")
         else:
-            queryset = queryset.filter(**filte_kwargs).order_by("finished_time")
+            queryset = queryset.order_by("finished_time")
         return queryset

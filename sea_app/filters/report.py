@@ -340,7 +340,7 @@ class PinListFilter(BaseFilterBackend):
         pin_id_list = []
         query_str = request.query_params.dict().get("query_str")
         if query_str:
-            pin_set = models.Pin.objects.filter(Q(note=query_str) | Q(product__sku=query_str), Q(board_id=board_id))
+            pin_set = models.Pin.objects.filter(Q(note__icontains=query_str) | Q(product__sku__icontains=query_str), Q(board_id=board_id))
         else:
             pin_set = models.Pin.objects.filter(board_id=board_id)
         pin_set = pin_set.filter(~Q(uuid=None), ~Q(url=None))
