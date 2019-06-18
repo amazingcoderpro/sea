@@ -967,11 +967,8 @@ class TaskProcessor:
                             update `publish_record` set execute_time=%s, remark=%s, update_time=%s where id=%s
                             ''', (delay_to, remark, update_time, record["id"]))
                     conn.commit()
-                    logger.info("{}, record={}".format(remark, record[id]))
+                    logger.info("{}, record={}".format(remark, record["id"]))
                     continue
-
-
-
 
                 logger.info("publish pin board name={}, product name={}".format(record["board_name"], product_name))
                 ret = pin_api.create_pin(board_id=record["board_uuid"], note=product_name, image_url=record["product_img_url"], link=link_with_utm)
