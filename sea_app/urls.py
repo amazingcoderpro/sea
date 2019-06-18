@@ -16,7 +16,7 @@ v1_urlpatterns = [
 
     # 账户管理
     url(r'account_list/$', account_manager.AccountListManageView.as_view()),
-    url(r'get_user/$', account_manager.GetUserByAccounturiView.as_view()),
+    url(r'get_user_email/$', account_manager.GetUserByAccounturiView.as_view()),
     url(r'account_list/(?P<aid>[0-9]+)/$', account_manager.BoardListManageView.as_view()),
     url(r'account_list/(?P<aid>[0-9]+)/(?P<bid>[0-9]+)/$', account_manager.PinListManageView.as_view()),
     url(r'board_manage/(?P<pk>[0-9]+)/$', account_manager.BoardManageView.as_view()),
