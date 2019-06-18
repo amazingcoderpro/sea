@@ -311,8 +311,8 @@ class Rule(models.Model):
     # 增加以下字段用于规则克隆
     pinterest_account = models.ForeignKey(PinterestAccount, on_delete=models.DO_NOTHING, blank=True, null=True)
     product_key = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品搜索关键字")
-    product_start = models.DateTimeField(verbose_name="产品发布时间起点")
-    product_end = models.DateTimeField(verbose_name="产品发布时间终点")
+    product_start = models.DateTimeField(verbose_name="产品发布时间起点", blank=True, null=True)
+    product_end = models.DateTimeField(verbose_name="产品发布时间终点", blank=True, null=True,)
 
     class Meta:
         # managed = False
