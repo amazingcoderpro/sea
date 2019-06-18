@@ -145,7 +145,7 @@ def daily_report_view(request):
 def subaccount_report_view(request, type):
     """子账号视图函数"""
     pin_set_list, product_set_list = get_common_data(request)
-    # 取PinterestHistoryData最新一天的数据, ProductHistoryData时间范围内所有数据
+    # 取PinterestHistoryData最新一天的数据,
     start_time, end_time = get_request_datetime(request)
     pin_set_list_result = []
     while end_time >= start_time:
@@ -156,6 +156,16 @@ def subaccount_report_view(request, type):
         end_time += datetime.timedelta(days=-1)
     # 取有数据当天的最晚的一批数据
     pin_set_list = pin_set_list_result
+    #ProductHistoryData最新的一批数据
+    product_set_list_result = []
+    while end_time >= start_time:
+        product_set_list_result = product_set_list.filter(~Q(tag=0), Q(
+            update_time__range=(end_time + datetime.timedelta(days=-1), end_time)))
+        if product_set_list_result.exists():
+            product_set_list_result = product_set_list_result.filter(tag=product_set_list_result.order_by('-tag').first().tag)
+            break
+        end_time += datetime.timedelta(days=-1)
+    product_set_list = product_set_list_result
 
     if type == 'pins':
         # pins report
@@ -228,9 +238,9 @@ def subaccount_report(pin_set_list, product_set_list, request):
         }
         # 组装product对应pin的数据,并且还需要是最新的product数据
         product_id_list = list(set([i for i in info["products"] if i]))
-        product_set_list = product_set_list.filter(product_id__in=product_id_list)
+        product_set = product_set_list.filter(product_id__in=product_id_list)
         has_data_p_list = []
-        for item in product_set_list:
+        for item in product_set:
             if (item.update_time.date(), item.product_id) in has_data_p_list:
                 continue
             has_data_p_list.append((item.update_time.date(), item.product_id))
@@ -308,9 +318,9 @@ def board_report(pin_set_list, product_set_list):
         }
         # 组装product对应pin的数据
         product_id_list = list(set([i for i in info["products"] if i]))
-        product_set_list = product_set_list.filter(product_id__in=product_id_list)
+        product_set = product_set_list.filter(product_id__in=product_id_list)
         has_data_p_list = []
-        for item in product_set_list:
+        for item in product_set:
             if (item.update_time.date(), item.product_id) in has_data_p_list:
                 continue
             has_data_p_list.append((item.update_time.date(), item.product_id))
