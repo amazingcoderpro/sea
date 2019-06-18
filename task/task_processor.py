@@ -315,124 +315,138 @@ class TaskProcessor:
                                                                                                   ret))
 
                 # 获取该账号下的所有pins, 并刷新数据库
-                ret = p_api.get_user_pins()
-                if ret["code"] == 1:
-                    pins = ret["data"]
-                    if pins:
-                        time_now = datetime.datetime.now()
-                        cursor.execute(
-                            '''update `pinterest_account` set pins=%s, update_time=%s where id=%s''', (len(pins), time_now, account_id))
-                        conn.commit()
-                        pin_uuids = []
-                        for pin in pins:
-                            uuid = pin.get("id", "")
-                            create_time = datetime.datetime.strptime(pin["created_at"], "%Y-%m-%dT%H:%M:%S")
-                            update_time = time_now
-                            url = pin.get("url", "")
-                            media_type = pin.get("media", {}).get("type", 'image')
-                            note = pin.get("note", "")
-                            link = pin.get("link", "")
-                            original_link = pin.get("original_link", "")
-                            board_url = pin.get("board", {}).get("url", "")
-                            board_uuid = pin.get("board", {}).get("id", "")
-                            board_name = pin.get("board", {}).get("name", "")
-                            # if "\\x" in str(board_name.encode("utf-8")):
-                            #     board_name = str(board_name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
-                            #         "\'", "")
+                limit = 100   # 最大只能100
+                cursor_str = ""
+                pin_uuids = []
+                while limit > 0:
+                    ret = p_api.get_user_pins(cursor=cursor_str, limit=limit)
+                    if ret["code"] == 1:
+                        pins = ret.get("data", [])
+                        cursor_str = ret.get("page", {}).get("cursor", "")
+                        if not cursor:
+                            cursor_str = ''
 
-                            counts = pin.get("counts", {})
-                            pin_saves = counts.get("saves", 0)
-                            pin_comments = counts.get("comments", 0)
+                        # 还没拉完
+                        if len(pins) < limit:
+                            limit = 0
 
-                            image = pin.get("image", {}).get("original", {})
-                            image_path = image.get("url", "")
-                            image_width, image_height = image.get("width", 200), image.get("height", 200)
-                            metadata = pin.get("metadata", {})
-
-                            pin_thumbnail = self.image_2_base64(image_path)
-                            pin_likes = 0
-                            pin_views = 0
-                            pin_clicks = 0
-
-                            board_id = -1
-                            # 通过uuid找到对应的board
-                            cursor.execute("select id from `board` where uuid=%s and pinterest_account_id=%s", (board_uuid,
-                                           account_id))
-                            board = cursor.fetchone()
-                            if board:
-                                board_id = board[0]
-
-                            # 如果pin　uuid 已经存在,且属于同一个board，则进行更新即可
-                            pin_unique_key = "{}--{}".format(uuid, board_id)
-                            product_id = -1
-                            # 通过pin背后的链接，找到他对应的产品
-                            if len(original_link.split("utm_term=")) == 2:
-                                product_uuid = original_link.split("utm_term=")[1]
-                                cursor.execute("select id from `product` where uuid=%s", product_uuid)
-                                product = cursor.fetchone()
-                                if product:
-                                    product_id = product[0]
-
-                            # else:
-                            #     cursor.execute("select id from `product` where url_with_utm=%s", original_link)
-
-                            if pin_unique_key in pin_uuids:
-                                # 测试发现，pinterest可能会给出重复数据,如果这一把已经更新过，则不再更新
-                                logger.info("pin uuid duplicate!")
-                                continue
-
-                            if pin_unique_key in exist_pins_dict.keys():
-                                pin_id = int(exist_pins_dict[pin_unique_key])
-                                logger.info(
-                                    "pin is already exist, update uui={}, board id={}, pin id={}".format(uuid, board_id,
-                                                                                                     pin_id))
-                                cursor.execute(
-                                    '''update `pin` set note=%s, update_time=%s, saves=%s, comments=%s, likes=%s where id=%s''',
-                                    (note, update_time, pin_saves, pin_comments, pin_likes, pin_id))
-                                conn.commit()
-                            else:
-                                if product_id >= 0:
-                                    cursor.execute('''insert into `pin` (`uuid`, `url`, `note`, `origin_link`, 
-                                        `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`, `saves`, 
-                                        `comments`, `likes`, `image_url`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
-                                                   (uuid, url, note, original_link, pin_thumbnail, create_time, update_time,
-                                                    board_id, product_id, pin_saves, pin_comments, pin_likes, image_path))
-                                else:
-                                    cursor.execute('''insert into `pin` (`uuid`, `url`, `note`, `origin_link`, 
-                                        `thumbnail`, `publish_time`, `update_time`, `board_id`, `saves`, 
-                                        `comments`, `likes`, `image_url`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
-                                                   (uuid, url, note, original_link, pin_thumbnail, create_time, update_time,
-                                                    board_id, pin_saves, pin_comments, pin_likes, image_path))
-                                pin_id = cursor.lastrowid
-
-                                # 先合入，因为下面的历史表中有外键关联
-                                conn.commit()
-
-                            pin_uuids.append(pin_unique_key)
-                            # 　更新历史数据表
-                            if product_id >= 0:
-                                cursor.execute(
-                                    '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
-                                    `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
-                                    `pin_id`, `pinterest_account_id`, `product_id`, `account_followings`, 
-                                    `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`, `account_name`, `tag`) 
-                                    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                                    (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
-                                     update_time, board_id, pin_id, account_id, product_id, 0, 0, 0, 0, board_uuid, board_name, nickname, tag_max+1))
-                            else:
-                                cursor.execute(
-                                    '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
-                                    `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
-                                    `pin_id`, `pinterest_account_id`, `account_followings`, 
-                                    `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`, `account_name`, `tag`) 
-                                    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                                    (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
-                                     update_time, board_id, pin_id, account_id, 0, 0, 0, 0, board_uuid, board_name, nickname, tag_max+1))
-
+                        if pins:
+                            time_now = datetime.datetime.now()
+                            cursor.execute(
+                                '''update `pinterest_account` set pins=%s, update_time=%s where id=%s''', (len(pins), time_now, account_id))
                             conn.commit()
-                else:
-                    logger.error(
-                        "update pins get_user_pins error, account={} token={}, ret={}".format(account_uuid, token, ret))
+
+                            for pin in pins:
+                                uuid = pin.get("id", "")
+                                create_time = datetime.datetime.strptime(pin["created_at"], "%Y-%m-%dT%H:%M:%S")
+                                update_time = time_now
+                                url = pin.get("url", "")
+                                media_type = pin.get("media", {}).get("type", 'image')
+                                note = pin.get("note", "")
+                                link = pin.get("link", "")
+                                original_link = pin.get("original_link", "")
+                                board_url = pin.get("board", {}).get("url", "")
+                                board_uuid = pin.get("board", {}).get("id", "")
+                                board_name = pin.get("board", {}).get("name", "")
+                                # if "\\x" in str(board_name.encode("utf-8")):
+                                #     board_name = str(board_name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
+                                #         "\'", "")
+
+                                counts = pin.get("counts", {})
+                                pin_saves = counts.get("saves", 0)
+                                pin_comments = counts.get("comments", 0)
+
+                                image = pin.get("image", {}).get("original", {})
+                                image_path = image.get("url", "")
+                                image_width, image_height = image.get("width", 200), image.get("height", 200)
+                                metadata = pin.get("metadata", {})
+
+                                pin_thumbnail = self.image_2_base64(image_path)
+                                pin_likes = 0
+                                pin_views = 0
+                                pin_clicks = 0
+
+                                board_id = -1
+                                # 通过uuid找到对应的board
+                                cursor.execute("select id from `board` where uuid=%s and pinterest_account_id=%s", (board_uuid,
+                                               account_id))
+                                board = cursor.fetchone()
+                                if board:
+                                    board_id = board[0]
+
+                                # 如果pin　uuid 已经存在,且属于同一个board，则进行更新即可
+                                pin_unique_key = "{}--{}".format(uuid, board_id)
+                                product_id = -1
+                                # 通过pin背后的链接，找到他对应的产品
+                                if len(original_link.split("utm_term=")) == 2:
+                                    product_uuid = original_link.split("utm_term=")[1]
+                                    cursor.execute("select id from `product` where uuid=%s", product_uuid)
+                                    product = cursor.fetchone()
+                                    if product:
+                                        product_id = product[0]
+
+                                # else:
+                                #     cursor.execute("select id from `product` where url_with_utm=%s", original_link)
+
+                                if pin_unique_key in pin_uuids:
+                                    # 测试发现，pinterest可能会给出重复数据,如果这一把已经更新过，则不再更新
+                                    logger.info("pin uuid duplicate!")
+                                    continue
+
+                                if pin_unique_key in exist_pins_dict.keys():
+                                    pin_id = int(exist_pins_dict[pin_unique_key])
+                                    logger.info(
+                                        "pin is already exist, update uuid={}, board id={}, pin id={}".format(uuid, board_id,
+                                                                                                         pin_id))
+                                    cursor.execute(
+                                        '''update `pin` set note=%s, update_time=%s, saves=%s, comments=%s, likes=%s where id=%s''',
+                                        (note, update_time, pin_saves, pin_comments, pin_likes, pin_id))
+                                    conn.commit()
+                                else:
+                                    logger.info("insert new pin, unique key={}".format(pin_unique_key))
+                                    if product_id >= 0:
+                                        cursor.execute('''insert into `pin` (`uuid`, `url`, `note`, `origin_link`, 
+                                            `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`, `saves`, 
+                                            `comments`, `likes`, `image_url`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
+                                                       (uuid, url, note, original_link, pin_thumbnail, create_time, update_time,
+                                                        board_id, product_id, pin_saves, pin_comments, pin_likes, image_path))
+                                    else:
+                                        cursor.execute('''insert into `pin` (`uuid`, `url`, `note`, `origin_link`, 
+                                            `thumbnail`, `publish_time`, `update_time`, `board_id`, `saves`, 
+                                            `comments`, `likes`, `image_url`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ''',
+                                                       (uuid, url, note, original_link, pin_thumbnail, create_time, update_time,
+                                                        board_id, pin_saves, pin_comments, pin_likes, image_path))
+                                    pin_id = cursor.lastrowid
+
+                                    # 先合入，因为下面的历史表中有外键关联
+                                    conn.commit()
+
+                                pin_uuids.append(pin_unique_key)
+                                # 　更新历史数据表
+                                if product_id >= 0:
+                                    cursor.execute(
+                                        '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
+                                        `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
+                                        `pin_id`, `pinterest_account_id`, `product_id`, `account_followings`, 
+                                        `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`, `account_name`, `tag`) 
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                                        (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
+                                         update_time, board_id, pin_id, account_id, product_id, 0, 0, 0, 0, board_uuid, board_name, nickname, tag_max+1))
+                                else:
+                                    cursor.execute(
+                                        '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
+                                        `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
+                                        `pin_id`, `pinterest_account_id`, `account_followings`, 
+                                        `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`, `account_name`, `tag`) 
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                                        (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
+                                         update_time, board_id, pin_id, account_id, 0, 0, 0, 0, board_uuid, board_name, nickname, tag_max+1))
+
+                                conn.commit()
+                    else:
+                        limit = 0
+                        logger.error(
+                            "update pins get_user_pins error, account={} token={}, ret={}".format(account_uuid, token, ret))
             return True
         except Exception as e:
             logger.exception("update_pinterest_data exception e={}".format(e))
@@ -669,7 +683,7 @@ class TaskProcessor:
 
             # 取到所有新建未拆解的规则进行拆解
             cursor.execute('''
-            select id,product_list,update_time,board_id,start_time,end_time from `rule` where state=%s
+            select id,product_list,update_time,board_id,start_time,end_time,pinterest_account_id from `rule` where state=%s
             ''', -1)
             rules = cursor.fetchall()
             if not rules:
@@ -678,7 +692,7 @@ class TaskProcessor:
 
             analyzed_rule_ids = []
             for rule in rules:
-                rule_id, product_list, update_time, board_id, rule_start_time, rule_end_time = rule
+                rule_id, product_list, update_time, board_id, rule_start_time, rule_end_time, pinterest_account_id = rule
                 analyzed_rule_ids.append(rule_id)
                 product_list = eval(product_list)
                 # 调整至零点
@@ -717,6 +731,7 @@ class TaskProcessor:
                 # times = len(execute_time_list)
 
                 records = []
+                cursor.execute('''select ''')
                 while product_list and execute_time_list:
                     if execute_time_list[-1] < time_now:
                         break
@@ -729,8 +744,8 @@ class TaskProcessor:
                     exe_time = execute_time_list.pop(0)
                     records.append(exe_time)
                     cursor.execute('''
-                            insert into `publish_record` (`execute_time`, `board_id`, `product_id`, `rule_id`, `create_time`, `update_time`, `state`) values (%s, %s, %s, %s, %s, %s, %s)''',
-                                   (exe_time, board_id, product_id, rule_id, time_now, time_now, 0))
+                            insert into `publish_record` (`execute_time`, `board_id`, `product_id`, `rule_id`, `create_time`, `update_time`, `state`, `pinterest_account_id`) values (%s, %s, %s, %s, %s, %s, %s, %s)''',
+                                   (exe_time, board_id, product_id, rule_id, time_now, time_now, 0, pinterest_account_id))
                     conn.commit()
 
                 # product 不能重复发，所以用product list做外层循环,
@@ -772,7 +787,7 @@ class TaskProcessor:
             cursor.close() if cursor else 0
             conn.close() if conn else 0
 
-    def get_records(self,  status=0, execute_beg=None, execute_end=None):
+    def get_records(self, status=0, execute_beg=None, execute_end=None):
         """
         获取执行时间在某一段时间内的发布记录, 数据来源PublishRecord表
         :param execute_beg: 执行时间范围起点, datetime类型
@@ -785,24 +800,25 @@ class TaskProcessor:
             conn = DBUtil().get_instance()
             cursor = conn.cursor() if conn else None
             if not cursor:
+                logger.error(u"数据库连接失败")
                 return False
 
             # 先拿到所有状态为status, 执行时间在指定范围内的record
             if execute_beg and execute_end:
                 cursor.execute('''
-                        select id, execute_time, board_id, product_id, rule_id from `publish_record` where state=%s and execute_time between %s and %s''',
+                        select id, execute_time, board_id, product_id, rule_id, pinterest_account_id from `publish_record` where state=%s and execute_time between %s and %s''',
                                (status, execute_beg, execute_end))
             elif execute_beg:
                 cursor.execute('''
-                        select id, execute_time, board_id, product_id, rule_id from `publish_record` where state=%s and execute_time >= %s''',
+                        select id, execute_time, board_id, product_id, rule_id, pinterest_account_id from `publish_record` where state=%s and execute_time >= %s''',
                                (status, execute_beg))
             elif execute_end:
                 cursor.execute('''
-                        select id, execute_time, board_id, product_id, rule_id from `publish_record` where state=%s and execute_time <= %s''',
+                        select id, execute_time, board_id, product_id, rule_id, pinterest_account_id from `publish_record` where state=%s and execute_time <= %s''',
                                (status, execute_end))
             else:
                 cursor.execute('''
-                        select id, execute_time, board_id, product_id, rule_id from `publish_record` where state=%s''',
+                        select id, execute_time, board_id, product_id, rule_id, pinterest_account_id from `publish_record` where state=%s''',
                                (status, ))
 
             records = cursor.fetchall()
@@ -811,7 +827,7 @@ class TaskProcessor:
 
             # 遍历每一个record, 收集发布所需的所有参数
             for record in records:
-                record_id, execute_time, board_id, product_id, rule_id = record
+                record_id, execute_time, board_id, product_id, rule_id, pinterest_account_id = record
 
                 # 取到待发布的pin所隶属的board信息
                 cursor.execute('''
@@ -822,11 +838,11 @@ class TaskProcessor:
 
                 # 取到待发布的pin所隶属的账号信息，　主要是token
                 cursor.execute('''
-                        select account, state, token from `pinterest_account` where id=%s
+                        select account, state, token, publish_interval from `pinterest_account` where id=%s
                         ''', pinterest_account_id)
                 account = cursor.fetchone()
 
-                account, account_state, token = account
+                account, account_state, token, publish_interval = account
 
                 # 取到待发布的pin所关联的产品信息
                 cursor.execute('''
@@ -850,7 +866,8 @@ class TaskProcessor:
                                   "product_img_url": image_url,
                                   "product_name": name,
                                   "product_sku": sku,
-                                  "rule_id": rule_id}
+                                  "rule_id": rule_id,
+                                  "publish_interval": publish_interval}
 
                 target_records.append(pending_record)
         except Exception as e:
@@ -866,7 +883,7 @@ class TaskProcessor:
         #获取最近period秒内的所有状态为0的(待发布的)record, 前后误差10秒
         records = self.get_records(0, datetime.datetime.now()-datetime.timedelta(seconds=int(period/2+10)), datetime.datetime.now()+datetime.timedelta(seconds=int(period/2+10)))
         if not records:
-            logger.info("there have no record for publishing.")
+            logger.info("There have no record for publishing.")
             return True
         try:
             conn = DBUtil().get_instance()
@@ -883,9 +900,82 @@ class TaskProcessor:
                 link_with_utm = record["product_link"] + url_suffix
                 board_id = record["board_id"]
                 product_id = record["product_id"]
+                account_id = record["account_id"]
+                publish_interval = record["publish_interval"]
+                time_now = datetime.datetime.now()
+
+                # 先检查有没有过期
+                cursor.execute('''select state, end_time from `rule` where id=%s''', (rule_id, ))
+                rule = cursor.fetchone()
+                if rule:
+                    state, end_time = rule
+                    # 如果规则已经被暂停或者取消，不用再执行了
+                    if state not in [0, 1]:
+                        continue
+
+                    # 如果规则已经过期
+                    if time_now > end_time:
+                        # 已经过期
+                        if state in [-1, 0, 1, 2]:
+                            logger.info("rule expired, rule={}".format(rule_id))
+                            # 如果规则还在执行状态，　则把他置为过期状态4
+                            cursor.execute(
+                                '''update `rule` set state=4, update_time=%s where id=%s''', (update_time, rule_id))
+                            conn.commit()
+
+                            # 把当前规则下的还没有发布的，但发布时间超过规则有效期的record置为取消状态４，　
+                            remark = "Expired"
+                            cursor.execute(
+                                '''update `publish_record` set state=4, remark=%s, update_time=%s where rule_id=%s and state=0 and execute_time>%s''', (remark, update_time, rule_id, end_time))
+                            conn.commit()
+                        continue
+
+                cursor.execute('''select id from `publish_record` where state=1 and board_id=%s and product_id=%s''', (board_id, product_id))
+                exist_record = cursor.fetchone()
+                if exist_record:
+                    #如果在同一个board里已经发过同一个产品，则取消发布
+                    record_state = 4 # 已取消
+                    remark = "This product has been published in the same board."
+                    update_time = finished_time = time_now
+                    cursor.execute('''
+                            update `publish_record` set state=%s, remark=%s, finished_time=%s, update_time=%s where id=%s
+                            ''', (record_state, remark, finished_time, update_time, record["id"]))
+                    conn.commit()
+                    logger.info("{}, record={}".format(remark, record["id"]))
+
+                    # 如果某一个规则下的所有record都已经发布完毕（无论是否全部成功）或被人为取消或删除，　而且该rule目前是运行中状态，则将该rule更新为已完成状（3）
+                    cursor.execute('''select rule_id from `publish_record` where (state=0 or state=2) and rule_id=%s''',
+                                   (rule_id,))
+                    rule_pending_records = cursor.fetchall()
+                    if not rule_pending_records:
+                        rule_state = 3  # 已完成
+                        # 如果当前rule处于运行状态，但是它的所有record中没有待执行和暂停中的，那代表这个rule已经被完成了
+                        cursor.execute('''update `rule` set state=%s, update_time=%s where id=%s and state=1''',
+                                       (rule_state, update_time, rule_id))
+                        conn.commit()
+
+
+                cursor.execute('''select finished_time from `publish_record` where state=1 and pinterest_account_id=%s and finished_time>%s''', (account_id, time_now-datetime.timedelta(minutes=publish_interval)))
+                already_published_account = cursor.fetchall()
+                if already_published_account:
+                    #如果在同一个账号里1小时之内已经发过了，则往后推迟
+                    fst = already_published_account[-1][0]
+                    delay_to = fst+datetime.timedelta(minutes=publish_interval+1)
+                    remark = "This account has already published pins within {} minutes. Delayed to {}".format(int(publish_interval), delay_to)
+                    update_time = time_now
+                    cursor.execute('''
+                            update `publish_record` set execute_time=%s, remark=%s, update_time=%s where id=%s
+                            ''', (delay_to, remark, update_time, record["id"]))
+                    conn.commit()
+                    logger.info("{}, record={}".format(remark, record[id]))
+                    continue
+
+
+
+
                 logger.info("publish pin board name={}, product name={}".format(record["board_name"], product_name))
                 ret = pin_api.create_pin(board_id=record["board_uuid"], note=product_name, image_url=record["product_img_url"], link=link_with_utm)
-                time_now = datetime.datetime.now()
+
                 if ret["code"] == 1:
                     data = ret["data"]
                     pin_uuid = data["id"]
@@ -933,9 +1023,18 @@ class TaskProcessor:
                 cursor.execute('''select rule_id from `publish_record` where (state=0 or state=2) and rule_id=%s''', (rule_id, ))
                 rule_pending_records = cursor.fetchall()
                 if not rule_pending_records:
-                    # 如果当前rule处理运行状态，但是它的所有record中没有待执行和暂停中的，那代表这个rule已经被完成了
+                    rule_state = 3  # 已完成
+                    # 如果当前rule处于运行状态，但是它的所有record中没有待执行和暂停中的，那代表这个rule已经被完成了
                     cursor.execute('''update `rule` set state=%s, update_time=%s where id=%s and state=1''', (rule_state, update_time, rule_id))
                     conn.commit()
+
+                # 如果规则已经过期，则改状态为4
+                rule_state = 4  # 已完成
+                # 如果当前rule处于运行状态，但是它的所有record中没有待执行和暂停中的，那代表这个rule已经被完成了
+                cursor.execute('''update `rule` set state=%s, update_time=%s where state!=3 and state!=4 and state!=5 and end_time<%s''',
+                               (rule_state, update_time, update_time))
+                conn.commit()
+
         except Exception as e:
             logger.exception("publish_pins exception e={}".format(e))
             return False

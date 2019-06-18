@@ -231,7 +231,7 @@ class PinterestApi():
             logger.error("create new pin is failed:{}".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
-    def get_user_pins(self):
+    def get_user_pins(self, cursor="", limit=100):
         """
         获取当前用户的 pins
         :param fields:
@@ -240,19 +240,19 @@ class PinterestApi():
         get_user_pins_fields = ["id", "Clink", "Cnote", "Curl", "Cattribution", "Cboard", "Ccolor", "Ccounts",
                                 "Ccreated_at", "Ccreator", "Coriginal_link", "Cmedia", "Cmetadata", "Cimage"]
         str_fields = "%2".join(get_user_pins_fields)
-        api_request_url = f"{self.pinterest_host}/me/pins/?cursor=&access_token={self.access_token}&fields={str_fields}"
+        api_request_url = f"{self.pinterest_host}/me/pins/?cursor={cursor}&limit={limit}&access_token={self.access_token}&fields={str_fields}"
         try:
             result = requests.get(api_request_url)
             if result.status_code == 200:
                 logger.info("get user pins is success")
                 # print(result.text)
-                return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {})}
+                return {"code": 1, "msg": "", "data": json.loads(result.text).get("data", {}), "page": json.loads(result.text).get("page", {})}
             else:
                 logger.error("get user pin is failed, msg= {}".format(json.loads(result.text).get("message", "")))
-                return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": ""}
+                return {"code": 2, "msg": json.loads(result.text).get("message", ""), "data": "", "page": ""}
         except Exception as e:
             logger.error("get user pins is failed: {}".format(str(e)))
-            return {"code": -1, "msg": str(e), "data": ""}
+            return {"code": -1, "msg": str(e), "data": "", "page": ""}
 
     def get_pin_by_id(self, pin_id):
         """
