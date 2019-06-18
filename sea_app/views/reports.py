@@ -80,7 +80,7 @@ def daily_report(pin_set_list, product_set_list, request):
     data_list = []
     for date in time_list:
         # 获取当天的pin数据
-        pin_queryset= pin_set_list.filter(Q(update_time__range=(date, date+datetime.timedelta(days=1)-datetime.timedelta(seconds=1))),
+        pin_queryset= pin_set_list.filter(Q(update_time__range=(date, date+datetime.timedelta(days=1))),
                                           ~Q(tag=0))
         if not pin_queryset.exists():
             data_list.append({"date": date.strftime("%Y-%m-%d"), "accounts": 0, "account_followings": 0, "account_followers": 0,
@@ -109,7 +109,7 @@ def daily_report(pin_set_list, product_set_list, request):
 
         # 组装每日product对应pin的数据
         product_set_list_pre = product_set_list.filter(
-            Q(update_time__range=(date, date + datetime.timedelta(days=1)-datetime.timedelta(seconds=1))), ~Q(tag=0))
+            Q(update_time__range=(date, date + datetime.timedelta(days=1))), ~Q(tag=0))
         if product_set_list_pre.exists():
             product_set_list_pre = product_set_list_pre.filter(tag=product_set_list_pre.order_by('-tag').first().tag)
             p_list = list(set(filter(lambda x: x, group_dict["products"])))
@@ -200,7 +200,8 @@ def subaccount_report(pin_set_list, product_set_list, request):
             # group_dict[subaccount_id]["boards"].append(item.board_id)  # board数
             # group_dict[subaccount_id]["pins"].append(item.pin_id)  # pin数
             group_dict[subaccount_id]["pin_saves"] += item.pin_saves
-            # group_dict[subaccount_id]["pin_likes"] += item.pin_likes
+            group_dict[subaccount_id]["account_followings"] += item.account_followings
+            group_dict[subaccount_id]["account_followers"] += item.account_followers
             group_dict[subaccount_id]["pin_comments"] += item.pin_comments
             # group_dict[subaccount_id]["pin_view"] += item.pin_views
             # group_dict[subaccount_id]["pin_clicks"] += item.pin_clicks
@@ -280,7 +281,7 @@ def board_report(pin_set_list, product_set_list):
         else:
             group_dict[board_id]["pins"].append(item.pin_id)  # pin数
             group_dict[board_id]["pin_saves"] += item.pin_saves
-            # group_dict[board_id]["pin_likes"] += item.pin_likes
+            group_dict[board_id]["board_followers"] += item.board_followers
             group_dict[board_id]["pin_comments"] += item.pin_comments
             # group_dict[board_id]["pin_view"] += item.pin_views
             # group_dict[board_id]["pin_clicks"] += item.pin_clicks
