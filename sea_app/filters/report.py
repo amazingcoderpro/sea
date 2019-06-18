@@ -76,11 +76,11 @@ class AccountListFilter(BaseFilterBackend):
         today_date = datetime.today().date()
         while True:
             today_data_set = queryset.filter(Q(update_time__range=(today_date, today_date + timedelta(days=1))),
-                                             Q(pinterest_account_id__in=account_id_list))
+                                             Q(pinterest_account_id__in=account_id_list), ~Q(tag=0))
             if today_data_set.exists():
                 # 取今天最新的一批数据
-                lastest_time = today_data_set.first().update_time
-                today_data_set = today_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
+                lastest_tag = today_data_set.order_by('-tag').first().tag
+                today_data_set = today_data_set.filter(tag=lastest_tag)
                 break
             if datetime.today().date() - today_date >= timedelta(days=5):
                 break
@@ -88,11 +88,11 @@ class AccountListFilter(BaseFilterBackend):
         yesterday_date = today_date
         while True:
             yesterday_data_set = queryset.filter(Q(update_time__range=(yesterday_date + timedelta(days=-1), yesterday_date)),
-                                                 Q(pinterest_account_id__in=account_id_list))
+                                                 Q(pinterest_account_id__in=account_id_list), ~Q(tag=0))
             if yesterday_data_set.exists():
                 # 取昨天最新的一批数据
-                lastest_time = yesterday_data_set.first().update_time
-                yesterday_data_set = yesterday_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
+                lastest_tag = yesterday_data_set.order_by('-tag').first().tag
+                yesterday_data_set = yesterday_data_set.filter(tag=lastest_tag)
                 break
             if datetime.today().date() - yesterday_date >= timedelta(days=10):
                 break
@@ -134,9 +134,9 @@ class AccountListFilter(BaseFilterBackend):
             # info["index"] = index + 1
             # 获取账号数据相关联的board_id
             today_publish_account = today_publish_set.filter(board__pinterest_account_id=a_id)
-            info["finished"] = today_publish_account.filter(state=1).count()
-            # info["pending"] = today_publish_account.filter(state=0).count()
-            info["failed"] = today_publish_account.filter(state=2).count()
+            info["finished"] = today_publish_account.filter(state=1, finished_time__range=(datetime.now().date(), datetime.now())).count()
+            info["pending"] = today_publish_account.filter(state=0, execute_time__range=(datetime.now(), datetime.now().date()+timedelta(days=1))).count()
+            # info["failed"] = today_publish_account.filter(state=2).count()
             info.pop("pin_list")
             account_list.append(info)
         return {"count": len(account_set), "results": account_list}
@@ -216,11 +216,11 @@ class BoardListFilter(BaseFilterBackend):
         today_date = datetime.today().date()
         while True:
             today_data_set = queryset.filter(Q(update_time__range=(today_date, today_date + timedelta(days=1))),
-                                             Q(board_id__in=board_id_list))
+                                             Q(board_id__in=board_id_list), ~Q(tag=0))
             if today_data_set.exists():
                 # 取今天最新的一批数据
-                lastest_time = today_data_set.first().update_time
-                today_data_set = today_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
+                lastest_tag = today_data_set.order_by('-tag').first().tag
+                today_data_set = today_data_set.filter(tag=lastest_tag)
                 break
             if datetime.today().date() - today_date >= timedelta(days=5):
                 break
@@ -228,11 +228,11 @@ class BoardListFilter(BaseFilterBackend):
         yesterday_date = today_date
         while True:
             yesterday_data_set = queryset.filter(Q(update_time__range=(yesterday_date + timedelta(days=-1), yesterday_date)),
-                                                 Q(board_id__in=board_id_list))
+                                                 Q(board_id__in=board_id_list), ~Q(tag=0))
             if yesterday_data_set.exists():
                 # 取昨天最新的一批数据
-                lastest_time = yesterday_data_set.first().update_time
-                yesterday_data_set = yesterday_data_set.filter(Q(update_time__range=(lastest_time + timedelta(hours=-1), lastest_time)))
+                lastest_tag = yesterday_data_set.order_by('-tag').first().tag
+                yesterday_data_set = yesterday_data_set.filter(tag=lastest_tag)
                 break
             if datetime.today().date() - yesterday_date >= timedelta(days=10):
                 break
@@ -299,8 +299,8 @@ class BoardListFilter(BaseFilterBackend):
                         "board_name": today.board.name,
                         "board_description": today.board.description,
                         "board_state": today.board.state,
-                        "finished": today.board.publishrecord_set.filter(state=1).count(),
-                        "failed": today.board.publishrecord_set.filter(state=2).count()
+                        "finished": today.board.publishrecord_set.filter(state=1, finished_time__range=(datetime.now().date(), datetime.now())).count(),
+                        "pending": today.board.publishrecord_set.filter(state=0, execute_time__range=(datetime.now(), datetime.now().date()+timedelta(days=1))).count()
                     })
             else:
                 # group_dict[today.board_id]["pins"].append(today.pin_id)
@@ -321,8 +321,8 @@ class BoardListFilter(BaseFilterBackend):
                     "board_followers": 0,
                     # "likes": 0,
                     "comments": 0,
-                    "finished": board_obj.publishrecord_set.filter(state=1).count(),
-                    "failed": board_obj.publishrecord_set.filter(state=2).count()
+                    "finished": board_obj.publishrecord_set.filter(state=1, finished_time__range=(datetime.now().date(), datetime.now())).count(),
+                    "pending": board_obj.publishrecord_set.filter(state=0, execute_time__range=(datetime.now(), datetime.now().date()+timedelta(days=1))).count()
                 }
         return group_dict
 
