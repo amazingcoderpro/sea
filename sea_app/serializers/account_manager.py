@@ -65,7 +65,11 @@ class RuleSerializer(serializers.ModelSerializer):
                   "end_time",
                   "state",
                   "board_name",
-                  "account_name"
+                  "account_name",
+                  "pinterest_account",
+                  "product_key",
+                  "product_start",
+                  "product_end"
         )
 
     def create(self, validated_data):
