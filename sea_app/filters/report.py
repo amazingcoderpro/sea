@@ -134,9 +134,9 @@ class AccountListFilter(BaseFilterBackend):
             # info["index"] = index + 1
             # 获取账号数据相关联的board_id
             today_publish_account = today_publish_set.filter(board__pinterest_account_id=a_id)
-            info["finished"] = today_publish_account.filter(state=1).count()
-            # info["pending"] = today_publish_account.filter(state=0).count()
-            info["failed"] = today_publish_account.filter(state=2).count()
+            info["finished"] = today_publish_account.filter(state=1, finished_time__range=(datetime.now().date(), datetime.now())).count()
+            info["pending"] = today_publish_account.filter(state=0, execute_time__range=(datetime.now(), datetime.now().date()+timedelta(days=1))).count()
+            # info["failed"] = today_publish_account.filter(state=2).count()
             info.pop("pin_list")
             account_list.append(info)
         return {"count": len(account_set), "results": account_list}
@@ -299,8 +299,8 @@ class BoardListFilter(BaseFilterBackend):
                         "board_name": today.board.name,
                         "board_description": today.board.description,
                         "board_state": today.board.state,
-                        "finished": today.board.publishrecord_set.filter(state=1).count(),
-                        "failed": today.board.publishrecord_set.filter(state=2).count()
+                        "finished": today.board.publishrecord_set.filter(state=1, finished_time__range=(datetime.now().date(), datetime.now())).count(),
+                        "pending": today.board.publishrecord_set.filter(state=0, execute_time__range=(datetime.now(), datetime.now().date()+timedelta(days=1))).count()
                     })
             else:
                 # group_dict[today.board_id]["pins"].append(today.pin_id)
@@ -321,8 +321,8 @@ class BoardListFilter(BaseFilterBackend):
                     "board_followers": 0,
                     # "likes": 0,
                     "comments": 0,
-                    "finished": board_obj.publishrecord_set.filter(state=1).count(),
-                    "failed": board_obj.publishrecord_set.filter(state=2).count()
+                    "finished": board_obj.publishrecord_set.filter(state=1, finished_time__range=(datetime.now().date(), datetime.now())).count(),
+                    "pending": board_obj.publishrecord_set.filter(state=0, execute_time__range=(datetime.now(), datetime.now().date()+timedelta(days=1))).count()
                 }
         return group_dict
 
