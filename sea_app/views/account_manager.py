@@ -349,8 +349,6 @@ class PublishRecordDelView(APIView):
 
 
 class GetUserByAccounturiView(generics.ListAPIView):
-    queryset = models.PinterestAccount.objects.all()
-    serializer_class = account_manager.GetUserByAccountSerializer
-    filter_backends = (account_manager_filters.GetUserByAccountFilter,)
-    permission_classes = (IsAuthenticated, PublishRecordPermission)
-    authentication_classes = (JSONWebTokenAuthentication,)
+    queryset = models.User.objects.all()
+    serializer_class = account_manager.GetUserSerializer
+    filter_backends = (account_manager_filters.GetUserFilter,)

@@ -158,8 +158,7 @@ class RuleStatusSerializer(serializers.ModelSerializer):
         return instance
 
 
-class GetUserByAccountSerializer(serializers.ModelSerializer):
-    user_email = serializers.CharField(source="user.email", read_only=True)
+class GetUserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = models.PinterestAccount
-        fields = ("account", "user_email")
+        model = models.User
+        fields = ("username", "email")

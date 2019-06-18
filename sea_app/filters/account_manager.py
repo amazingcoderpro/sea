@@ -163,8 +163,8 @@ class ReportFilter(BaseFilterBackend):
         return queryset
 
 
-class GetUserByAccountFilter(BaseFilterBackend):
+class GetUserFilter(BaseFilterBackend):
 
     def filter_queryset(self, request, queryset, view):
-        account_uri = request.query_params.get("account_uri", '')
-        return queryset.filter(account=account_uri, user_id=request.user.id)
+        username = request.query_params.get("username", '')
+        return queryset.filter(username=username)
