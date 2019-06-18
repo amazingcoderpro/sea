@@ -54,8 +54,8 @@ def get_common_data(request):
     if search_word:
         # 查询pin_uuid or board_uuid or pin_note or board_name
         pin_set_list = pin_set_list.filter(
-            Q(pin_uuid=search_word) | Q(pin_note__icontains=search_word) | Q(board_uuid=search_word) | Q(
-                board_name=search_word))
+            Q(pin_uuid__icontains=search_word) | Q(pin_note__icontains=search_word) | Q(board_uuid__icontains=search_word) | Q(
+                board_name__icontains=search_word))
     else:
         # 按选择框输入查询
         if pinterest_account_id:
