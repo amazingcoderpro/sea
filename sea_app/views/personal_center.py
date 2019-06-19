@@ -171,6 +171,14 @@ class PinterestAccountCancelAuthView(generics.UpdateAPIView):
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JSONWebTokenAuthentication,)
 
+    def put(self, request, *args, **kwargs):
+        account_id = kwargs.get('pk', '')
+        # 需要先将account关联的rule进行取消
+        models.Rule.objects.filter(pinterest_account_id=account_id, state__in=[-1,0,1,2]).update(state=5)
+        # 需要将account关联的publish record进行取消
+        models.PublishRecord.objects.filter(pinterest_account_id=account_id, state__in=[0,1,2]).update(state=5)
+        return self.update(request, *args, **kwargs)
+
 
 class ShopifyCallback(APIView):
     """shopify 回调接口"""

@@ -75,7 +75,7 @@ class RuleFilter(BaseFilterBackend):
         if account_id:
             border_list = models.Board.objects.filter(pinterest_account=account_id).values_list("id")
             border_list = map(lambda x: x[0], border_list)
-            return queryset.filter(board_id__in=border_list)
+            return queryset.filter(board_id__in=border_list).order_by('-create_time')
         for filter_key in self.filter_keys.keys():
             val = request.query_params.get(filter_key, '')
             if val is not '':
@@ -84,7 +84,7 @@ class RuleFilter(BaseFilterBackend):
                     continue
                 filte_kwargs[self.filter_keys[filter_key]] = val
         queryset = queryset.filter(**filte_kwargs)
-        return queryset
+        return queryset.order_by('-create_time')
 
 
 class ProductCountFilter(BaseFilterBackend):
@@ -157,7 +157,7 @@ class ReportFilter(BaseFilterBackend):
             queryset = queryset.filter(execute_time__range=(start_time,end_time))
         record_manager = request.query_params.get("record_manager", '')
         if record_manager:
-            queryset = queryset.order_by("-execute_time")
+            queryset = queryset.order_by("execute_time")
         else:
             queryset = queryset.order_by("-finished_time")
         return queryset

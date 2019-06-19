@@ -118,10 +118,11 @@ def daily_report(pin_set_list, product_set_list, request):
             for item in product_list:
                 # 只能叠加当天最新一次拉取的数据
                 # 每一个产品只加一次
+                group_dict["product_clicks"] += item.product_clicks
                 group_dict["product_sales"] += item.product_sales
                 group_dict["product_revenue"] += item.product_revenue
-                group_dict["product_visitors"] = item.product_visitors
-                group_dict["product_new_visitors"] = item.product_new_visitors
+                group_dict["product_visitors"] += item.product_visitors
+                group_dict["product_new_visitors"] += item.product_new_visitors
 
         # 组装最后数据
         group_dict["accounts"] = len(set(filter(lambda x: x, group_dict["accounts"])))
@@ -144,7 +145,7 @@ def daily_report_view(request):
 def subaccount_report_view(request, type):
     """子账号视图函数"""
     pin_set_list, product_set_list = get_common_data(request)
-    # 取PinterestHistoryData最新一天的数据, ProductHistoryData时间范围内所有数据
+    # 取PinterestHistoryData最新一天的数据,
     start_time, end_time = get_request_datetime(request)
     pin_set_list_result = []
     while end_time >= start_time:
@@ -155,6 +156,16 @@ def subaccount_report_view(request, type):
         end_time += datetime.timedelta(days=-1)
     # 取有数据当天的最晚的一批数据
     pin_set_list = pin_set_list_result
+    # ProductHistoryData时间范围内每一天的最新数据
+    product_time_list = time_range_list(start_time, end_time)
+    for date in product_time_list:
+        current_set = product_set_list.filter(update_time__range=(date, date+datetime.timedelta(days=1)))
+        if current_set.exists():
+            lastest_tag = current_set.order_by('-tag').first().tag
+            # 排除当天非最新数据
+            product_set_list = product_set_list.exclude(Q(update_time__range=(date, date+datetime.timedelta(days=1))),
+                                                        ~Q(tag=lastest_tag))
+
 
     if type == 'pins':
         # pins report
@@ -226,14 +237,16 @@ def subaccount_report(pin_set_list, product_set_list, request):
             "product_revenue": 0
         }
         # 组装product对应pin的数据,并且还需要是最新的product数据
-        product_set_list = product_set_list.filter(product_id__in=info["products"])
+        product_id_list = list(set([i for i in info["products"] if i]))
+        product_set = product_set_list.filter(product_id__in=product_id_list)
         has_data_p_list = []
-        for item in product_set_list:
+        for item in product_set:
             if (item.update_time.date(), item.product_id) in has_data_p_list:
                 continue
             has_data_p_list.append((item.update_time.date(), item.product_id))
             data["product_visitors"] += item.product_visitors
             data["product_new_visitors"] += item.product_new_visitors
+            data["product_clicks"] += item.product_clicks
             data["product_sales"] += item.product_sales
             data["product_revenue"] += item.product_revenue
         data_list.append(data)
@@ -304,9 +317,10 @@ def board_report(pin_set_list, product_set_list):
             "product_revenue": 0
         }
         # 组装product对应pin的数据
-        product_set_list = product_set_list.filter(product_id__in=info["products"])
+        product_id_list = list(set([i for i in info["products"] if i]))
+        product_set = product_set_list.filter(product_id__in=product_id_list)
         has_data_p_list = []
-        for item in product_set_list:
+        for item in product_set:
             if (item.update_time.date(), item.product_id) in has_data_p_list:
                 continue
             has_data_p_list.append((item.update_time.date(), item.product_id))
@@ -379,6 +393,7 @@ def pins_report(pin_set_list, product_set_list):
             has_data_p_list.append((product_obj.update_time.date(), product_obj.product_id))
             data["product_visitors"] += product_obj.product_visitors
             data["product_new_visitors"] += product_obj.product_new_visitors
+            data["product_clicks"] += product_obj.product_clicks
             data["product_sales"] += product_obj.product_sales
             data["product_revenue"] += product_obj.product_revenue
 
