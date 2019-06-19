@@ -229,14 +229,16 @@ class TaskProcessor:
                                        (user_name, bio, account_type, create_at, boards, pins, account_followings, account_followers, account_uuid, time_now, account_thumbnail, account_id))
                         conn.commit()
 
-                        # 更新历史数据表
-                        cursor.execute(
-                            '''insert into `pinterest_history_data` (`board_uuid`, `board_name`, `board_followers`, 
-                            `board_id`, `pinterest_account_id`, `update_time`, `account_followings`, 
-                            `account_followers`, `account_views`, `pin_likes`, `pin_comments`, `pin_saves`, `account_name`, `tag`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                            (None, "", 0, None, account_id, time_now, account_followings, account_followers, 0, 0, 0, 0, user_name, tag_max+1))
+                        # 单账号更新时不更新历史数据表
+                        if specific_account_id < 0:
+                            # 更新历史数据表
+                            cursor.execute(
+                                '''insert into `pinterest_history_data` (`board_uuid`, `board_name`, `board_followers`, 
+                                `board_id`, `pinterest_account_id`, `update_time`, `account_followings`, 
+                                `account_followers`, `account_views`, `pin_likes`, `pin_comments`, `pin_saves`, `account_name`, `tag`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                                (None, "", 0, None, account_id, time_now, account_followings, account_followers, 0, 0, 0, 0, user_name, tag_max+1))
 
-                        conn.commit()
+                            conn.commit()
 
                     else:
                         logger.warning("get pinterest account info empty! account={}, token={}".format(account_uuid, token))
@@ -302,13 +304,15 @@ class TaskProcessor:
                                 conn.commit()
 
                             board_uuids.append(board_unique_key)
-                            cursor.execute(
-                                '''insert into `pinterest_history_data` (`board_uuid`, `board_name`, `board_followers`, 
-                                `board_id`, `pinterest_account_id`, `update_time`, `account_followings`, 
-                                `account_followers`, `account_views`, `pin_likes`, `pin_comments`, `pin_saves`, `account_name`, `tag`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                                (uuid, name, board_followers, board_id, account_id, time_now, 0, 0, 0, 0, 0, 0, nickname, tag_max+1))
+                            # 单账号更新时不更新历史数据表
+                            if specific_account_id < 0:
+                                cursor.execute(
+                                    '''insert into `pinterest_history_data` (`board_uuid`, `board_name`, `board_followers`, 
+                                    `board_id`, `pinterest_account_id`, `update_time`, `account_followings`, 
+                                    `account_followers`, `account_views`, `pin_likes`, `pin_comments`, `pin_saves`, `account_name`, `tag`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                                    (uuid, name, board_followers, board_id, account_id, time_now, 0, 0, 0, 0, 0, 0, nickname, tag_max+1))
 
-                            conn.commit()
+                                conn.commit()
                 else:
                     logger.error(
                         "update boards get_user_boards error, account={} token={}, ret={}".format(account_uuid, token,
@@ -422,27 +426,30 @@ class TaskProcessor:
                                     conn.commit()
 
                                 pin_uuids.append(pin_unique_key)
-                                # 　更新历史数据表
-                                if product_id >= 0:
-                                    cursor.execute(
-                                        '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
-                                        `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
-                                        `pin_id`, `pinterest_account_id`, `product_id`, `account_followings`, 
-                                        `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`, `account_name`, `tag`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                                        (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
-                                         update_time, board_id, pin_id, account_id, product_id, 0, 0, 0, 0, board_uuid, board_name, nickname, tag_max+1))
-                                else:
-                                    cursor.execute(
-                                        '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
-                                        `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
-                                        `pin_id`, `pinterest_account_id`, `account_followings`, 
-                                        `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`, `account_name`, `tag`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                                        (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
-                                         update_time, board_id, pin_id, account_id, 0, 0, 0, 0, board_uuid, board_name, nickname, tag_max+1))
 
-                                conn.commit()
+                                # 单账号更新时不更新历史数据表
+                                if specific_account_id < 0:
+                                    # 　更新历史数据表
+                                    if product_id >= 0:
+                                        cursor.execute(
+                                            '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
+                                            `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
+                                            `pin_id`, `pinterest_account_id`, `product_id`, `account_followings`, 
+                                            `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`, `account_name`, `tag`) 
+                                            values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                                            (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
+                                             update_time, board_id, pin_id, account_id, product_id, 0, 0, 0, 0, board_uuid, board_name, nickname, tag_max+1))
+                                    else:
+                                        cursor.execute(
+                                            '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
+                                            `pin_likes`, `pin_comments`, `pin_saves`, `update_time`, `board_id`, 
+                                            `pin_id`, `pinterest_account_id`, `account_followings`, 
+                                            `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`, `account_name`, `tag`) 
+                                            values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                                            (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
+                                             update_time, board_id, pin_id, account_id, 0, 0, 0, 0, board_uuid, board_name, nickname, tag_max+1))
+
+                                    conn.commit()
                     else:
                         limit = 0
                         logger.error(
@@ -513,9 +520,6 @@ class TaskProcessor:
                     logger.info("shop info={}".format(shop))
                     shop_uuid = shop.get("id", "")
                     shop_name = shop.get("name", "")
-                    # if "\\x" in str(shop_name.encode("utf-8")):
-                    #     shop_name = str(shop_name.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
-                    #         "\'", "")
                     shop_timezone = shop.get("timezone", "")
                     shop_domain = shop.get("domain", "")
                     shop_email = shop.get("email", "")
@@ -525,10 +529,6 @@ class TaskProcessor:
                     updated_at = shop.get("updated_at", '')
                     shop_phone = shop.get("phone", "")
                     shop_city = shop.get("city", '')
-                    # if "\\x" in str(shop_city.encode("utf-8")):
-                    #     shop_city = str(shop_city.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace(
-                    #         "\'", "")
-
                     shop_currency = shop.get("currency", "USD")
                     # shop_myshopify_domain = shop.get("myshopify_domain", "")
                     cursor.execute('''update `store` set uuid=%s, name=%s, url=%s, timezone=%s, email=%s, owner_name=%s, 
@@ -564,11 +564,7 @@ class TaskProcessor:
                                 continue
 
                             pro_title = pro.get("title", "")
-                            # if "\\x" in str(pro_title.encode("utf-8")):
-                            #     pro_title = str(pro_title.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace("\'", "")
                             handle = pro.get("handle", "")
-                            # if "dresses" in handle:
-                            #     print(handle)
                             pro_url = "https://{}/products/{}".format(store_url, handle)
                             pro_type = pro.get("product_type", "")
                             variants = pro.get("variants", [])
@@ -579,12 +575,7 @@ class TaskProcessor:
                                 pro_sku = variants[0].get("sku", "")
                                 pro_price = float(variants[0].get("price", "0"))
 
-                            # if "\\x" in str(pro_sku.encode("utf-8")):
-                            #     pro_sku = str(pro_sku.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace("\'", "")
-
                             pro_tags = pro.get("tags", "")
-                            # if "\\x" in str(pro_tags.encode("utf-8")):
-                            #     pro_tags = str(pro_tags.encode("utf-8")).replace("\\x", "").replace("b\'", "").replace("\'", "")
                             img_obj = pro.get("image", {})
                             if img_obj:
                                 pro_image = img_obj.get("src", "")
@@ -630,24 +621,27 @@ class TaskProcessor:
                             if reports.get("code", 0) == 1:
                                 data = reports.get("data", {})
                                 pro_report = data.get(pro_uuid, {})
-                                pv = int(pro_report.get("page_view", 0))
-                                uv = int(pro_report.get("unique_view", 0))
-                                nuv = int(pro_report.get("new_unique_view", 0))
-                                hits = int(pro_report.get("hits", 0))
-                                transactions = int(pro_report.get("transactions", 0))
-                                transactions_revenue = float(pro_report.get("transaction_revenue", 0))
-                                # cursor.execute('''select product_visitors from `product_history_data` where product_id=%s and tag=%s''', (pro_id, tag_max))
-                                # visitors = cursor.fetchone()
-                                # total_visitors = uv
-                                # if visitors:
-                                #     total_visitors += visitors[0]
-
-                                cursor.execute('''insert into `product_history_data` (`product_visitors`, `product_new_visitors`, `product_clicks`, `product_scan`, `product_sales`, `product_revenue`, `update_time`, `product_id`, `store_id`, `tag`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                                ''', (uv, nuv, hits, pv, transactions, transactions_revenue, time_now, pro_id, store_id, tag_max+1))
+                                # 这个产品如果没有关联的pin，就不用保存历史数据了
+                                # 单一产品更新数据时不保存历史数据，tag会错乱
+                                if pro_report and not url:
+                                    pv = int(pro_report.get("page_view", 0))
+                                    uv = int(pro_report.get("unique_view", 0))
+                                    nuv = int(pro_report.get("new_unique_view", 0))
+                                    hits = int(pro_report.get("hits", 0))
+                                    transactions = int(pro_report.get("transactions", 0))
+                                    transactions_revenue = float(pro_report.get("transaction_revenue", 0))
+                                    # cursor.execute('''select product_visitors from `product_history_data` where product_id=%s and tag=%s''', (pro_id, tag_max))
+                                    # visitors = cursor.fetchone()
+                                    # total_visitors = uv
+                                    # if visitors:
+                                    #     total_visitors += visitors[0]
+                                    # 如果全是0就不存了
+                                    if not (pv == 0 and uv == 0 and nuv == 0 and transactions == 0):
+                                        cursor.execute('''insert into `product_history_data` (`product_visitors`, `product_new_visitors`, `product_clicks`, `product_scan`, `product_sales`, `product_revenue`, `update_time`, `product_id`, `store_id`, `tag`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                        ''', (uv, nuv, hits, pv, transactions, transactions_revenue, time_now, pro_id, store_id, tag_max+1))
+                                        conn.commit()
                             else:
                                 logger.warning("get GA data failed, store view id={}, key_words={}".format(store_view_id, pro_uuid))
-
-                            conn.commit()
 
                         # 拉完了
                         if len(products) < 250:
