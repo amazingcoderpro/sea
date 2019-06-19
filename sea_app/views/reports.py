@@ -156,16 +156,16 @@ def subaccount_report_view(request, type):
         end_time += datetime.timedelta(days=-1)
     # 取有数据当天的最晚的一批数据
     pin_set_list = pin_set_list_result
-    #ProductHistoryData最新的一批数据
-    product_set_list_result = []
-    while end_time >= start_time:
-        product_set_list_result = product_set_list.filter(~Q(tag=0), Q(
-            update_time__range=(end_time + datetime.timedelta(days=-1), end_time)))
-        if product_set_list_result.exists():
-            product_set_list_result = product_set_list_result.filter(tag=product_set_list_result.order_by('-tag').first().tag)
-            break
-        end_time += datetime.timedelta(days=-1)
-    product_set_list = product_set_list_result
+    # ProductHistoryData时间范围内每一天的最新数据
+    product_time_list = time_range_list(start_time, end_time)
+    for date in product_time_list:
+        current_set = product_set_list.filter(update_time__range=(date, date+datetime.timedelta(days=1)))
+        if current_set.exists():
+            lastest_tag = current_set.order_by('-tag').first().tag
+            # 排除当天非最新数据
+            product_set_list = product_set_list.exclude(Q(update_time__range=(date, date+datetime.timedelta(days=1))),
+                                                        ~Q(tag=lastest_tag))
+
 
     if type == 'pins':
         # pins report
