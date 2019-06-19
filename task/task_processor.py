@@ -725,7 +725,6 @@ class TaskProcessor:
                 # times = len(execute_time_list)
 
                 records = []
-                cursor.execute('''select ''')
                 while product_list and execute_time_list:
                     if execute_time_list[-1] < time_now:
                         break
