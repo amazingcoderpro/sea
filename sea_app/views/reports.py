@@ -118,7 +118,7 @@ def daily_report(pin_set_list, product_set_list, request):
             for item in product_list:
                 # 只能叠加当天最新一次拉取的数据
                 # 每一个产品只加一次
-                group_dict["product_clicks"] += item.product_clicks
+                group_dict["product_clicks"] += item.product_scan
                 group_dict["product_sales"] += item.product_sales
                 group_dict["product_revenue"] += item.product_revenue
                 group_dict["product_visitors"] += item.product_visitors
@@ -246,7 +246,7 @@ def subaccount_report(pin_set_list, product_set_list, request):
             has_data_p_list.append((item.update_time.date(), item.product_id))
             data["product_visitors"] += item.product_visitors
             data["product_new_visitors"] += item.product_new_visitors
-            data["product_clicks"] += item.product_clicks
+            data["product_clicks"] += item.product_scan
             data["product_sales"] += item.product_sales
             data["product_revenue"] += item.product_revenue
         data_list.append(data)
@@ -326,7 +326,7 @@ def board_report(pin_set_list, product_set_list):
             has_data_p_list.append((item.update_time.date(), item.product_id))
             data["product_visitors"] += item.product_visitors
             data["product_new_visitors"] += item.product_new_visitors
-            data["product_clicks"] += item.product_clicks
+            data["product_clicks"] += item.product_scan
             data["product_sales"] += item.product_sales
             data["product_revenue"] += item.product_revenue
 
@@ -393,7 +393,7 @@ def pins_report(pin_set_list, product_set_list):
             has_data_p_list.append((product_obj.update_time.date(), product_obj.product_id))
             data["product_visitors"] += product_obj.product_visitors
             data["product_new_visitors"] += product_obj.product_new_visitors
-            data["product_clicks"] += product_obj.product_clicks
+            data["product_clicks"] += product_obj.product_scan
             data["product_sales"] += product_obj.product_sales
             data["product_revenue"] += product_obj.product_revenue
 
@@ -457,7 +457,7 @@ def site_count(pin_set_list, product_set_list, oneday=datetime.datetime.now().da
     product_set = product_queryset.filter(product_id__in=product_id_list)
     sales_num = count_num(product_set, "product_sales")
     # 获取click总数
-    click_num = count_num(product_set, "product_clicks")
+    click_num = count_num(product_set, "product_scan")
     # 获取revenue总数
     revenue_num = count_num(product_set, "product_revenue")
     visitor_num = count_num(product_set, "product_visitors")
