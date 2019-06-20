@@ -954,8 +954,8 @@ class TaskProcessor:
                     #如果在同一个账号里1小时之内已经发过了，则往后推迟
                     fst = already_published_account[-1][0]
                     delay_to = fst+datetime.timedelta(minutes=publish_interval)
-                    if (delay_to-time_now).total_seconds() < 180:
-                        delay_to += datetime.timedelta(minutes=3)
+                    if (delay_to-time_now).total_seconds() < 120:
+                        delay_to += datetime.timedelta(minutes=2)
 
                     remark = "This account has already published pins within {} minutes. Delayed to {}".format(int(publish_interval), delay_to)
                     update_time = time_now
@@ -1093,7 +1093,7 @@ def test():
 
 def main():
     tsp = TaskProcessor()
-    tsp.start_all(rule_interval=120, publish_pin_interval=240, pinterest_update_interval=7200*3, shopify_update_interval=7200*3, update_new=120)
+    tsp.start_all(rule_interval=120, publish_pin_interval=120, pinterest_update_interval=7200*3, shopify_update_interval=7200*3, update_new=120)
     while 1:
         time.sleep(1)
 
