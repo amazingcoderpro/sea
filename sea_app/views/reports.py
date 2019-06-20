@@ -118,7 +118,7 @@ def daily_report(pin_set_list, product_set_list, request):
             for item in product_list:
                 # 只能叠加当天最新一次拉取的数据
                 # 每一个产品只加一次
-                group_dict["product_clicks"] += item.product_clicks
+                group_dict["product_clicks"] += item.product_scan
                 group_dict["product_sales"] += item.product_sales
                 group_dict["product_revenue"] += item.product_revenue
                 group_dict["product_visitors"] += item.product_visitors
@@ -246,7 +246,7 @@ def subaccount_report(pin_set_list, product_set_list, request):
             has_data_p_list.append((item.update_time.date(), item.product_id))
             data["product_visitors"] += item.product_visitors
             data["product_new_visitors"] += item.product_new_visitors
-            data["product_clicks"] += item.product_clicks
+            data["product_clicks"] += item.product_scan
             data["product_sales"] += item.product_sales
             data["product_revenue"] += item.product_revenue
         data_list.append(data)
@@ -326,7 +326,7 @@ def board_report(pin_set_list, product_set_list):
             has_data_p_list.append((item.update_time.date(), item.product_id))
             data["product_visitors"] += item.product_visitors
             data["product_new_visitors"] += item.product_new_visitors
-            data["product_clicks"] += item.product_clicks
+            data["product_clicks"] += item.product_scan
             data["product_sales"] += item.product_sales
             data["product_revenue"] += item.product_revenue
 
@@ -393,7 +393,7 @@ def pins_report(pin_set_list, product_set_list):
             has_data_p_list.append((product_obj.update_time.date(), product_obj.product_id))
             data["product_visitors"] += product_obj.product_visitors
             data["product_new_visitors"] += product_obj.product_new_visitors
-            data["product_clicks"] += product_obj.product_clicks
+            data["product_clicks"] += product_obj.product_scan
             data["product_sales"] += product_obj.product_sales
             data["product_revenue"] += product_obj.product_revenue
 
@@ -457,7 +457,7 @@ def site_count(pin_set_list, product_set_list, oneday=datetime.datetime.now().da
     product_set = product_queryset.filter(product_id__in=product_id_list)
     sales_num = count_num(product_set, "product_sales")
     # 获取click总数
-    click_num = count_num(product_set, "product_clicks")
+    click_num = count_num(product_set, "product_scan")
     # 获取revenue总数
     revenue_num = count_num(product_set, "product_revenue")
     visitor_num = count_num(product_set, "product_visitors")
@@ -550,26 +550,26 @@ def top_pins(request, period=7):
     period = int(period)
     start_time = datetime.datetime.now() + datetime.timedelta(days=-period)
     end_time = datetime.datetime.now()
-    prev_start_time = datetime.datetime.now() + datetime.timedelta(days=-period * 2)
+    # prev_start_time = datetime.datetime.now() + datetime.timedelta(days=-period * 2)
     # store_id = request.GET.get("store_id")
-    store = models.Store.objects.filter(user_id=request.user).first()
-    store_id = store.id if store else None
+    # store = models.Store.objects.filter(user_id=request.user).first()
+    # store_id = store.id if store else None
     # 开始过滤ProductHistoryData数据
-    product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)),
-                                                                Q(store_id=store_id), ~Q(tag=0))
-    if product_set_list.exists():
-        product_set_list = product_set_list.filter(tag=product_set_list.order_by('-tag').first().tag)
-    product_id_list = []
-    for product in product_set_list:
-        if product.product_id and product.product_id not in product_id_list:
-            product_id_list.append(product.product_id)
+    # product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)),
+    #                                                             Q(store_id=store_id), ~Q(tag=0))
+    # if product_set_list.exists():
+    #     product_set_list = product_set_list.filter(tag=product_set_list.order_by('-tag').first().tag)
+    # product_id_list = []
+    # for product in product_set_list:
+    #     if product.product_id and product.product_id not in product_id_list:
+    #         product_id_list.append(product.product_id)
     # 过滤PinterestHistoryData数据(时间范围内最新的一次数据)
     new_queryset = old_queryset = []
     query_time = start_time
     while query_time <= end_time:
         old_queryset = models.PinterestHistoryData.objects.filter(
             Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
-            Q(product_id__in=product_id_list), ~Q(tag=0))
+            ~Q(product_id=None), ~Q(tag=0), Q(pinterest_account__user_id=request.user.id))
         if old_queryset.exists():
             old_queryset = old_queryset.filter(tag=old_queryset.order_by('-tag').first().tag)
             break
@@ -579,46 +579,46 @@ def top_pins(request, period=7):
         # 最新数据为截止到今天0：00：00的数据
         new_queryset = models.PinterestHistoryData.objects.filter(
             Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
-            Q(product_id__in=product_id_list), ~Q(tag=0))
+            ~Q(product_id=None), ~Q(tag=0), Q(pinterest_account__user_id=request.user.id))
         if new_queryset.exists():
             new_queryset = new_queryset.filter(tag=new_queryset.order_by('-tag').first().tag)
             break
         query_time += datetime.timedelta(days=-1)
     pin_dict = pins_period(new_queryset, old_queryset)
-    prev_new_queryset = prev_old_queryset = []
-    query_time = prev_start_time
-    while query_time <= start_time:
-        prev_old_queryset = models.PinterestHistoryData.objects.filter(
-            Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
-            Q(product_id__in=product_id_list), ~Q(tag=0))
-        if prev_old_queryset.exists():
-            prev_old_queryset = prev_old_queryset.filter(tag=prev_old_queryset.order_by('-tag').first().tag)
-            break
-        query_time += datetime.timedelta(days=1)
-    query_time = start_time
-    while query_time >= prev_start_time:
-        prev_new_queryset = models.PinterestHistoryData.objects.filter(
-            Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
-            Q(product_id__in=product_id_list), ~Q(tag=0))
-        if prev_new_queryset.exists():
-            prev_new_queryset = prev_new_queryset.filter(tag=prev_new_queryset.order_by('-tag').first().tag)
-            break
-        query_time += datetime.timedelta(days=-1)
-    prev_pin_dict = pins_period(prev_new_queryset, prev_old_queryset)
+    # prev_new_queryset = prev_old_queryset = []
+    # query_time = prev_start_time
+    # while query_time <= start_time:
+    #     prev_old_queryset = models.PinterestHistoryData.objects.filter(
+    #         Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
+    #         ~Q(product_id=None), ~Q(tag=0), Q(pinterest_account__user_id=request.user.id))
+    #     if prev_old_queryset.exists():
+    #         prev_old_queryset = prev_old_queryset.filter(tag=prev_old_queryset.order_by('-tag').first().tag)
+    #         break
+    #     query_time += datetime.timedelta(days=1)
+    # query_time = start_time
+    # while query_time >= prev_start_time:
+    #     prev_new_queryset = models.PinterestHistoryData.objects.filter(
+    #         Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
+    #         ~Q(product_id=None), ~Q(tag=0), Q(pinterest_account__user_id=request.user.id))
+    #     if prev_new_queryset.exists():
+    #         prev_new_queryset = prev_new_queryset.filter(tag=prev_new_queryset.order_by('-tag').first().tag)
+    #         break
+    #     query_time += datetime.timedelta(days=-1)
+    # prev_pin_dict = pins_period(prev_new_queryset, prev_old_queryset)
     # 计算trends
-    for pin_id, pin in pin_dict.items():
-        prev_pin = prev_pin_dict.get(pin_id)
-        if not prev_pin:
-            prev_saves = 0
-        else:
-            prev_saves = prev_pin.get("increment", 0)
-        if prev_saves == 0:
-            trends = pin.get("increment", 0)
-        else:
-            trends = (pin.get("increment", 0) - prev_saves) * 1.0 / prev_saves
-        pin["trends"] = trends
+    # for pin_id, pin in pin_dict.items():
+    #     prev_pin = prev_pin_dict.get(pin_id)
+    #     if not prev_pin:
+    #         prev_saves = 0
+    #     else:
+    #         prev_saves = prev_pin.get("increment", 0)
+    #     if prev_saves == 0:
+    #         trends = pin.get("increment", 0)
+    #     else:
+    #         trends = (pin.get("increment", 0) - prev_saves) * 1.0 / prev_saves
+    #     pin["trends"] = trends
     # 计算前5名
-    top_5_pins = sorted(pin_dict.values(), key=lambda v: v["saves"], reverse=True)[0:5]
+    top_5_pins = sorted(pin_dict.values(), key=lambda v: (v["saves"], v["trends"]), reverse=True)
     return top_5_pins
 
 
@@ -626,17 +626,19 @@ def pins_period(new_queryset, old_queryset):
     # 计算同一个pin在一个周期的增量（最后一天的数据减去第一天的数据)
 
     pin_dict = {}
-    for pin_obj in new_queryset:
+    for pin_obj in new_queryset.order_by('-pin_saves')[:5]:
         if pin_obj.pin_id not in pin_dict:
             old_saves = old_queryset.filter(pin_id=pin_obj.pin_id).first()
             old_saves = old_saves.pin_saves if old_saves else 0
             pin_dict[pin_obj.pin_id] = {
                 "pin_uri": pin_obj.pin_uuid,
+                "pin_url": pin_obj.pin.url,
                 "SKU": pin_obj.product.sku,
                 "image": pin_obj.pin_thumbnail,
                 "pin_date": pin_obj.pin.publish_time.strftime("%Y-%m-%d %H:%M:%S") if pin_obj.pin else "no pin date",
                 "saves": pin_obj.pin_saves,
-                "increment": pin_obj.pin_saves - old_saves
+                "increment": pin_obj.pin_saves - old_saves,
+                "trends": (pin_obj.pin_saves - old_saves)*1.0/old_saves if old_saves!=0 else pin_obj.pin_saves,
             }
     return pin_dict
 
@@ -646,31 +648,31 @@ def top_board(request, period=7):
     period = int(period)
     start_time = datetime.datetime.now() + datetime.timedelta(days=-period)
     end_time = datetime.datetime.now()
-    prev_start_time = datetime.datetime.now() + datetime.timedelta(days=-period * 2)
-    store = models.Store.objects.filter(user_id=request.user).first()
-    store_id = store.id if store else None
-    # 开始过滤ProductHistoryData数据
-    product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)),
-                                                                Q(store_id=store_id), ~Q(tag=0))
-    if product_set_list.exists():
-        product_set_list = product_set_list.filter(tag=product_set_list.order_by('-tag').first().tag)
-    # 获取board_id_list
-    board_id_list = []
-    product_id_list = []
-    for product_obj in product_set_list:
-        if product_obj.product_id not in product_id_list:
-            product_id_list.append(product_obj.product_id)
-    pin_set_all = models.Pin.objects.filter(product_id__in=product_id_list)
-    for pin_set in pin_set_all:
-        if pin_set.board_id and pin_set.board_id not in board_id_list:
-            board_id_list.append(pin_set.board_id)
+    # prev_start_time = datetime.datetime.now() + datetime.timedelta(days=-period * 2)
+    # store = models.Store.objects.filter(user_id=request.user).first()
+    # store_id = store.id if store else None
+    # # 开始过滤ProductHistoryData数据
+    # product_set_list = models.ProductHistoryData.objects.filter(Q(update_time__range=(start_time, end_time)),
+    #                                                             Q(store_id=store_id), ~Q(tag=0))
+    # if product_set_list.exists():
+    #     product_set_list = product_set_list.filter(tag=product_set_list.order_by('-tag').first().tag)
+    # # 获取board_id_list
+    # board_id_list = []
+    # product_id_list = []
+    # for product_obj in product_set_list:
+    #     if product_obj.product_id not in product_id_list:
+    #         product_id_list.append(product_obj.product_id)
+    # pin_set_all = models.Pin.objects.filter(product_id__in=product_id_list)
+    # for pin_set in pin_set_all:
+    #     if pin_set.board_id and pin_set.board_id not in board_id_list:
+    #         board_id_list.append(pin_set.board_id)
     # 过滤PinterestHistoryData数据(时间范围内最新的一次数据)
     new_queryset = old_queryset = []
     query_time = start_time
     while query_time <= end_time:
         old_queryset = models.PinterestHistoryData.objects.filter(
             Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
-            Q(board_id__in=board_id_list), ~Q(tag=0))
+            ~Q(tag=0), Q(pinterest_account__user_id=request.user.id))
         if old_queryset.exists():
             old_queryset = old_queryset.filter(tag=old_queryset.order_by('-tag').first().tag)
             break
@@ -679,66 +681,77 @@ def top_board(request, period=7):
     while query_time >= start_time:
         new_queryset = models.PinterestHistoryData.objects.filter(
             Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
-            Q(board_id__in=board_id_list), ~Q(tag=0))
+            ~Q(tag=0), Q(pinterest_account__user_id=request.user.id))
         if new_queryset.exists():
             new_queryset = new_queryset.filter(tag=new_queryset.order_by('-tag').first().tag)
             break
         query_time += datetime.timedelta(days=-1)
     board_dict = board_period(new_queryset, old_queryset)
-    prev_new_queryset = prev_old_queryset = []
-    query_time = prev_start_time
-    while query_time <= start_time:
-        prev_old_queryset = models.PinterestHistoryData.objects.filter(
-            Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
-            Q(board_id__in=board_id_list), ~Q(tag=0))
-        if prev_old_queryset.exists():
-            prev_old_queryset = prev_old_queryset.filter(tag=prev_old_queryset.order_by('-tag').first().tag)
-            break
-        query_time += datetime.timedelta(days=1)
-    query_time = start_time
-    while query_time >= prev_start_time:
-        prev_new_queryset = models.PinterestHistoryData.objects.filter(
-            Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
-            Q(board_id__in=board_id_list), ~Q(tag=0))
-        if prev_new_queryset.exists():
-            prev_new_queryset = prev_new_queryset.filter(tag=prev_new_queryset.order_by('-tag').first().tag)
-            break
-        query_time += datetime.timedelta(days=-1)
-    prev_pin_dict = board_period(prev_new_queryset, prev_old_queryset)
+    # prev_new_queryset = prev_old_queryset = []
+    # query_time = prev_start_time
+    # while query_time <= start_time:
+    #     prev_old_queryset = models.PinterestHistoryData.objects.filter(
+    #         Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
+    #         Q(board_id__in=board_id_list), ~Q(tag=0))
+    #     if prev_old_queryset.exists():
+    #         prev_old_queryset = prev_old_queryset.filter(tag=prev_old_queryset.order_by('-tag').first().tag)
+    #         break
+    #     query_time += datetime.timedelta(days=1)
+    # query_time = start_time
+    # while query_time >= prev_start_time:
+    #     prev_new_queryset = models.PinterestHistoryData.objects.filter(
+    #         Q(update_time__range=(query_time + datetime.timedelta(days=-1), query_time)),
+    #         Q(board_id__in=board_id_list), ~Q(tag=0))
+    #     if prev_new_queryset.exists():
+    #         prev_new_queryset = prev_new_queryset.filter(tag=prev_new_queryset.order_by('-tag').first().tag)
+    #         break
+    #     query_time += datetime.timedelta(days=-1)
+    # prev_pin_dict = board_period(prev_new_queryset, prev_old_queryset)
     # 计算trends
-    for b_id, data in board_dict.items():
-        prev_board = prev_pin_dict.get(b_id)
-        if not prev_board:
-            prev_increment = 0
-        else:
-            prev_increment = prev_board.get("increment", 0)
-        if prev_increment == 0:
-            trends = data.get("increment", 0)
-        else:
-            trends = (data.get("increment", 0) - prev_increment) * 1.0 / prev_increment
-        data["trends"] = trends
+    # for b_id, data in board_dict.items():
+    #     prev_board = prev_pin_dict.get(b_id)
+    #     if not prev_board:
+    #         prev_increment = 0
+    #     else:
+    #         prev_increment = prev_board.get("increment", 0)
+    #     if prev_increment == 0:
+    #         trends = data.get("increment", 0)
+    #     else:
+    #         trends = (data.get("increment", 0) - prev_increment) * 1.0 / prev_increment
+    #     data["trends"] = trends
     # 计算前5名
-    top_5_board = sorted(board_dict.values(), key=lambda v: v["followers"], reverse=True)[0:5]
+    top_5_board = sorted(board_dict.values(), key=lambda v: (v["followers"], v["trends"]), reverse=True)
     return top_5_board
 
 
 def board_period(new_queryset, old_queryset):
-    new_board_dict = board_period_part(new_queryset)
-    old_board_dict = board_period_part(old_queryset)
+    # 获取排名前五并且有关联过产品的board_id
+    top_board_id_list = []
+    for top_obj in new_queryset.filter(Q(pin_id=None), ~Q(board_id=None)).order_by("-board_followers"):
+        # 判断此board是否关联product
+        board_id = top_obj.board_id
+        if new_queryset.filter(Q(board_id=board_id), ~Q(product_id=None)).exists() and board_id not in top_board_id_list:
+            top_board_id_list.append(board_id)
+            if len(top_board_id_list)>=5:
+                break
+    new_board_dict = board_period_part(new_queryset, top_board_id_list)
+    old_board_dict = board_period_part(old_queryset, top_board_id_list)
     for b_id, data in new_board_dict.items():
         old_followers = old_board_dict.get(b_id)
         old_followers = old_followers.get("followers", 0) if old_followers else 0
         data["pins"] = len(set(filter(lambda x: x, data["pins"])))
         data["increment"] = data.get("followers", 0) - old_followers
+        data["trends"] = data["increment"]*1.0/old_followers if old_followers!=0 else data["increment"]
     return new_board_dict
 
 
-def board_period_part(queryset):
+def board_period_part(queryset, top_board_id_list):
     board_dict = {}
-    for board_obj in queryset:
+    for board_obj in queryset.filter(board_id__in=top_board_id_list):
         if board_obj.board_id not in board_dict:
             board_dict[board_obj.board_id] = {
                 "board_name": board_obj.board_name,
+                "board_url": board_obj.board.url,
                 "pins": [] if not board_obj.pin_id else [board_obj.pin_id],  # pin数
                 "saves": board_obj.pin_saves,
                 "create_date": board_obj.board.create_time.strftime("%Y-%m-%d %H:%M:%S"),
