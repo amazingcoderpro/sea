@@ -624,12 +624,12 @@ class TaskProcessor:
                                 # 这个产品如果没有关联的pin，就不用保存历史数据了
                                 # 单一产品更新数据时不保存历史数据，tag会错乱
                                 if pro_report and not url:
-                                    pv = int(pro_report.get("page_view", 0))
-                                    uv = int(pro_report.get("unique_view", 0))
-                                    nuv = int(pro_report.get("new_unique_view", 0))
+                                    pv = int(pro_report.get("sessions", 0))
+                                    uv = int(pro_report.get("users", 0))
+                                    nuv = int(pro_report.get("new_users", 0))
                                     hits = int(pro_report.get("hits", 0))
                                     transactions = int(pro_report.get("transactions", 0))
-                                    transactions_revenue = float(pro_report.get("transaction_revenue", 0))
+                                    transactions_revenue = float(pro_report.get("revenue", 0))
                                     # cursor.execute('''select product_visitors from `product_history_data` where product_id=%s and tag=%s''', (pro_id, tag_max))
                                     # visitors = cursor.fetchone()
                                     # total_visitors = uv
