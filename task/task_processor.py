@@ -948,12 +948,15 @@ class TaskProcessor:
                         conn.commit()
 
 
-                cursor.execute('''select finished_time from `publish_record` where state=1 and pinterest_account_id=%s and finished_time>%s''', (account_id, time_now-datetime.timedelta(minutes=publish_interval)))
+                cursor.execute('''select finished_time from `publish_record` where state=1 and pinterest_account_id=%s and finished_time>%s''', (account_id, time_now-datetime.timedelta(minutes=publish_interval-2)))
                 already_published_account = cursor.fetchall()
                 if already_published_account:
                     #如果在同一个账号里1小时之内已经发过了，则往后推迟
                     fst = already_published_account[-1][0]
-                    delay_to = fst+datetime.timedelta(minutes=publish_interval+1)
+                    delay_to = fst+datetime.timedelta(minutes=publish_interval)
+                    if (delay_to-time_now).total_seconds() < 180:
+                        delay_to += datetime.timedelta(minutes=3)
+
                     remark = "This account has already published pins within {} minutes. Delayed to {}".format(int(publish_interval), delay_to)
                     update_time = time_now
                     cursor.execute('''
