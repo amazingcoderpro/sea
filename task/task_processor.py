@@ -558,13 +558,16 @@ class TaskProcessor:
                                                                                                                len(
                                                                                                                    products)))
                         for pro in products:
-                            # print(products)
                             pro_uuid = str(pro.get("id", ""))
                             if pro_uuid in uuid_list:
                                 continue
 
-                            pro_title = pro.get("title", "")
                             handle = pro.get("handle", "")
+                            # 如果产品没有sku则不存
+                            if "-" in handle:
+                                continue
+
+                            pro_title = pro.get("title", "")
                             pro_url = "https://{}/products/{}".format(store_url, handle)
                             pro_type = pro.get("product_type", "")
                             variants = pro.get("variants", [])
