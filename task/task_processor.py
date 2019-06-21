@@ -568,11 +568,11 @@ class TaskProcessor:
                             pro_url = "https://{}/products/{}".format(store_url, handle)
                             pro_type = pro.get("product_type", "")
                             variants = pro.get("variants", [])
-                            pro_sku = ""
+                            pro_sku = handle.upper()
 
                             pro_price = 0
                             if variants:
-                                pro_sku = variants[0].get("sku", "")
+                                # pro_sku = variants[0].get("sku", "")
                                 pro_price = float(variants[0].get("price", "0"))
 
                             pro_tags = pro.get("tags", "")
