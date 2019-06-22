@@ -547,9 +547,9 @@ class TaskProcessor:
                 reports = gapi.get_report(key_word="", start_time="1daysAgo", end_time="today")
                 since_id = ""
                 max_fetch = 50      # 不管拉没拉完，最多拉250＊50个产品
+                uuid_list = []
                 while max_fetch > 0:
                     max_fetch -= 1
-                    uuid_list = []
                     ret = papi.get_all_products(limit=250, since_id=since_id)
                     if ret["code"] == 1:
                         time_now = datetime.datetime.now()
