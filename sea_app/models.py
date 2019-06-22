@@ -181,7 +181,7 @@ class PinterestAccount(models.Model):
     followers = models.IntegerField(default=0, verbose_name="账户粉丝")
     uuid = models.CharField(max_length=64, verbose_name="账户的uuid")
     thumbnail = models.TextField(verbose_name="缩略图", default=None, blank=True, null=True)
-    publish_interval = models.IntegerField(default=60, verbose_name=u"发布pin的最小间隔")
+    publish_interval = models.IntegerField(default=20, verbose_name=u"发布pin的最小间隔")
 
     objects = PinterestAccountManager()
 
