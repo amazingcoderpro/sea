@@ -426,7 +426,8 @@ def site_count(pin_set_list, product_set_list, oneday=datetime.datetime.now().da
     if not lastest_pin_data:
         return {"subaccount_num": 0, "board_num": 0, "pin_num": 0,
                 "visitor_num": 0, "click_num": 0, "sales_num": 0, "revenue_num": 0,
-                "board_followers": 0, "pin_saves": 0}
+                "board_followers": 0, "pin_saves": 0, "lastest_time": None}
+    lastest_time = lastest_pin_data.update_time.strftime("%Y-%m-%d %H:%M:%S")
     pin_queryset = pin_set_list.filter(tag=lastest_pin_data.tag)
     # 获取帐号总数
     subaccount_set = pin_queryset.filter(board_id=None, pin_id=None)
@@ -446,7 +447,7 @@ def site_count(pin_set_list, product_set_list, oneday=datetime.datetime.now().da
     if not lastest_product_data:
         return {"subaccount_num": subaccount_num, "board_num": board_num, "pin_num": pin_num,
                 "visitor_num": 0, "click_num": 0, "sales_num": 0, "revenue_num": 0,
-                "board_followers": board_followers, "pin_saves": pin_saves}
+                "board_followers": board_followers, "pin_saves": pin_saves, "lastest_time": lastest_time}
     product_queryset = product_set_list.filter(tag=lastest_product_data.tag)
     # 获取product_id_list
     product_id_list = []
@@ -471,7 +472,8 @@ def site_count(pin_set_list, product_set_list, oneday=datetime.datetime.now().da
         "sales_num": sales_num,
         "revenue_num": revenue_num,
         "board_followers": board_followers,
-        "pin_saves": pin_saves
+        "pin_saves": pin_saves,
+        "lastest_time": lastest_time
     }
 
 
@@ -537,7 +539,7 @@ def latest_updates(pin_set_list, product_set_list, request):
     """最近更新视图"""
     new_value, old_value = account_overview_chart(pin_set_list, product_set_list, request, reslut_num=2)
     return {
-        "datetime": new_value["date"],
+        "datetime": new_value["lastest_time"] if new_value["lastest_time"] else new_value["date"],
         "new_accounts": new_value["subaccount_num"] - old_value["subaccount_num"],
         "new_board": new_value["board_num"] - old_value["board_num"],
         "new_pins": new_value["pin_num"] - old_value["pin_num"],
