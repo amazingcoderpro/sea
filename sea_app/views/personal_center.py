@@ -37,9 +37,15 @@ class LoginView(generics.CreateAPIView):
             username = request.data.get('username', '')
             password = request.data.get('password', '')
             code = request.data.get("code", "")
-            obj = models.User.objects.filter(username=username).first()
+            if code:
+                print(username,code)
+                obj = models.User.objects.filter(username=username,code=code).first()
+                print(obj)
+            else:
+                obj = models.User.objects.filter(username=username).first()
             if obj and obj.is_active == 0:
                 if code:
+                    print(obj.code,code)
                     if obj.code == code:
                         obj.is_active = 1
                         obj.save()
@@ -198,7 +204,6 @@ class ShopifyCallback(APIView):
             user_instance = models.User.objects.filter(id=instance.user_id).first()
             user_instance.is_active = 0
             user_instance.password = ""
-            user_instance.code = random_code.create_random_code(6, True)
             user_instance.save()
             email = user_instance.email
         else:
