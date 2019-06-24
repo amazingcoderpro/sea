@@ -79,6 +79,7 @@ class Store(models.Model):
     """店铺表"""
     name = models.CharField(blank=True, null=True, max_length=255, verbose_name="店铺名称")
     url = models.CharField(blank=True, null=False, max_length=255, unique=True, verbose_name="店铺URL")
+    uri = models.CharField(blank=True, null=True, max_length=255, unique=True, verbose_name="授权uri")
     email = models.EmailField(
         verbose_name='email address',
         max_length=255,
