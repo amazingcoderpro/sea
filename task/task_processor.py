@@ -41,6 +41,7 @@ class DBUtil:
                     password=self.pwd,
                     charset='utf8'
                 )
+                # conn.connect_timeout
                 self.conn_pool[name] = conn
         except Exception as e:
             logger.exception("connect mysql error, e={}".format(e))
@@ -260,9 +261,9 @@ class TaskProcessor:
                         time_now = datetime.datetime.now()
 
                         # 因为在测试过程发现user info中的boards数量与实际不符，所以在此再次更新一下boards数量
-                        cursor.execute(
-                            '''update `pinterest_account` set boards=%s, update_time=%s where id=%s''', (len(boards), time_now, account_id))
-                        conn.commit()
+                        # cursor.execute(
+                        #     '''update `pinterest_account` set boards=%s, update_time=%s where id=%s''', (len(boards), time_now, account_id))
+                        # conn.commit()
                         board_uuids = []
                         for board in boards:
                             uuid = board.get("id", "")
@@ -336,9 +337,6 @@ class TaskProcessor:
 
                         if pins:
                             time_now = datetime.datetime.now()
-                            cursor.execute(
-                                '''update `pinterest_account` set pins=%s, update_time=%s where id=%s''', (len(pins), time_now, account_id))
-                            conn.commit()
 
                             for pin in pins:
                                 uuid = pin.get("id", "")
