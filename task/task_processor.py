@@ -561,9 +561,6 @@ class TaskProcessor:
                                 continue
 
                             handle = pro.get("handle", "")
-                            # 如果产品没有sku则不存
-                            if "-" in handle:
-                                continue
 
                             pro_title = pro.get("title", "")
                             pro_url = "https://{}/products/{}".format(store_url, handle)

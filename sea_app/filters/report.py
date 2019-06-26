@@ -106,13 +106,14 @@ class AccountListFilter(BaseFilterBackend):
         for a_id, info in today_group_dict.items():
             # 获取账号增量
             pin_id_under_account = list(set(filter(lambda x: x, info["pin_list"])))
+            info["pins"] = len(pin_id_under_account)
             try:
                 info["account_publish_time"] = models.Pin.objects.filter(Q(id__in=pin_id_under_account)).order_by('-publish_time').first().publish_time.strftime("%Y-%m-%d %H:%M:%S")
             except AttributeError:
                 info["account_publish_time"] = "no publish information"
             yesterday_info = yesterday_group_dict.get(a_id)
             if yesterday_info:
-                yesterday_pins = yesterday_info.get("pins", 0)
+                yesterday_pins = len(set(filter(lambda x: x, yesterday_info.get("pin_list", []))))
                 yesterday_saves = yesterday_info.get("saves", 0)
                 # yesterday_likes = yesterday_info.get("likes", 0)
                 yesterday_comment = yesterday_info.get("comments", 0)
@@ -151,7 +152,7 @@ class AccountListFilter(BaseFilterBackend):
                 # 获取账号数据
                 group_dict[today.pinterest_account_id] = {
                     "pin_list": [] if not today.pin_id else [today.pin_id],  # pin_id 列表
-                    "pins": today.pinterest_account.pins,  # pin数
+                    # "pins": today.pinterest_account.pins,  # pin数
                     "saves": today.pin_saves,
                     # "likes": today.pin_likes,
                     "comments": today.pin_comments,
@@ -192,7 +193,7 @@ class AccountListFilter(BaseFilterBackend):
                 "account_state": account_obj.state,
                 "account_crawl_time": account_obj.update_time.strftime("%Y-%m-%d %H:%M:%S"),
                 "pin_list": [],  # pin_id 列表
-                "pins": account_obj.pins,  # pin数
+                # "pins": 0,  # pin数
                 "saves": 0,
                 # "likes": 0,
                 "comments": 0,
@@ -246,10 +247,10 @@ class BoardListFilter(BaseFilterBackend):
         #     Q(board_id__in=today_group_dict.keys()))
         for b_id, b_info in today_group_dict.items():
             # if not isinstance(b_info["pins"], int):
-            #     b_info["pins"] = len(set(filter(lambda x: x, b_info["pins"])))
-            yesterday_b_info = yesterday_group_dict.get("b_id")
+            b_info["pins"] = len(set(filter(lambda x: x, b_info["pins"])))
+            yesterday_b_info = yesterday_group_dict.get(b_id)
             if yesterday_b_info:
-                yesterday_pins = yesterday_b_info.get("pins", 0)
+                yesterday_pins = len(set(filter(lambda x: x, yesterday_b_info.get("pins", []))))
                 yesterday_saves = yesterday_b_info.get("saves", 0)
                 yesterday_followers = yesterday_b_info.get("board_followers", 0)
                 yesterday_comment = yesterday_b_info.get("comments", 0)
@@ -287,7 +288,7 @@ class BoardListFilter(BaseFilterBackend):
                 if board_id_list is not None:
                     board_id_list.remove(today.board_id)
                 group_dict[today.board_id] = {
-                    "pins": today.board.pins,  # pin数
+                    "pins": [] if not today.pin_id else [today.pin_id],  # pin数
                     "saves": today.pin_saves,
                     "board_followers": today.board_followers,
                     # "likes": today.pin_likes,
@@ -303,7 +304,7 @@ class BoardListFilter(BaseFilterBackend):
                         "pending": today.board.publishrecord_set.filter(state=0, execute_time__range=(datetime.now(), datetime.now().date()+timedelta(days=1))).count()
                     })
             else:
-                # group_dict[today.board_id]["pins"].append(today.pin_id)
+                group_dict[today.board_id]["pins"].append(today.pin_id)
                 group_dict[today.board_id]["saves"] += today.pin_saves
                 group_dict[today.board_id]["board_followers"] += today.board_followers
                 group_dict[today.board_id]["comments"] += today.pin_comments
@@ -316,7 +317,7 @@ class BoardListFilter(BaseFilterBackend):
                     "board_name": board_obj.name,
                     "board_description": board_obj.description,
                     "board_state": board_obj.state,
-                    "pins": board_obj.pins,  # pin数
+                    "pins": [],  # pin数
                     "saves": 0,
                     "board_followers": 0,
                     # "likes": 0,
@@ -377,7 +378,7 @@ class PinListFilter(BaseFilterBackend):
         pins_list = []
         # 获取pin增量
         for p_id, p_info in today_group_dict.items():
-            yesterday_p_info = yesterday_group_dict.get("p_id")
+            yesterday_p_info = yesterday_group_dict.get(p_id)
             if yesterday_p_info:
                 # yesterday_view = yesterday_p_info.get("views", 0)
                 yesterday_saves = yesterday_p_info.get("saves", 0)

@@ -197,7 +197,7 @@ class ShopifyCallback(APIView):
         result = ShopifyBase(shop).get_token(code)
         if result["code"] != 1:
             return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
-        instance = models.Store.objects.filter(url=shop).first()
+        instance = models.Store.objects.filter(uri=shop).first()
         if instance:
             instance.token = result["data"]
             instance.save()
@@ -207,7 +207,7 @@ class ShopifyCallback(APIView):
             user_instance.save()
             email = user_instance.email
         else:
-            store_data = {"name": shop_name, "url": shop, "token": result["data"], "platform": models.Platform.objects.filter(id=1).first()}
+            store_data = {"name": shop_name, "url": shop, "uri": shop, "token": result["data"], "platform": models.Platform.objects.filter(id=1).first()}
             instance = models.Store.objects.create(**store_data)
             info = ProductsApi(access_token=result["data"], shop_uri=shop).get_shop_info()
             email = info["data"]["shop"]["email"]
