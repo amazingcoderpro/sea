@@ -640,7 +640,7 @@ def pins_period(new_queryset, old_queryset):
                 "pin_date": pin_obj.pin.publish_time.strftime("%Y-%m-%d %H:%M:%S") if pin_obj.pin else "no pin date",
                 "saves": pin_obj.pin_saves,
                 "increment": pin_obj.pin_saves - old_saves,
-                "trends": (pin_obj.pin_saves - old_saves)*1.0/old_saves if old_saves!=0 else pin_obj.pin_saves,
+                "trends": round((pin_obj.pin_saves - old_saves)*1.0/old_saves, 2) if old_saves!=0 else pin_obj.pin_saves,
             }
     return pin_dict
 
@@ -743,7 +743,7 @@ def board_period(new_queryset, old_queryset):
         old_followers = old_followers.get("followers", 0) if old_followers else 0
         data["pins"] = len(set(filter(lambda x: x, data["pins"])))
         data["increment"] = data.get("followers", 0) - old_followers
-        data["trends"] = data["increment"]*1.0/old_followers if old_followers!=0 else data["increment"]
+        data["trends"] = round(data["increment"]*1.0/old_followers, 2) if old_followers!=0 else data["increment"]
     return new_board_dict
 
 
