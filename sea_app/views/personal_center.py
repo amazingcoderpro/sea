@@ -333,3 +333,33 @@ class ShopifyAuthView(APIView):
         return HttpResponseRedirect(redirect_to=permission_url)
 
 
+class PostTimeView(generics.ListCreateAPIView):
+    """发布时间节点"""
+    queryset = models.PinterestAccount.objects.all()
+    serializer_class = personal_center.PostTimeSerializer
+    filter_backends = (personal_center_filters.PostTimeFilter,)
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        instance = self.queryset.get(pk=data.get("account_id", None))
+        post_time = data.get("post_time", None)
+        if post_time:
+            instance.post_time=data.get("post_time", None)
+            instance.save()
+            return Response({"message": "update account {} post_time success.".format(instance.nickname)}, status=status.HTTP_201_CREATED)
+        return Response({"message": "no post_time."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SelectPostTimeView(generics.ListAPIView):
+    queryset = models.PinterestAccount.objects.all()
+    serializer_class = personal_center.PostTimeSerializer
+    filter_backends = (personal_center_filters.SelectPostTimeFilter,)
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
