@@ -183,6 +183,23 @@ class PinterestAccount(models.Model):
     uuid = models.CharField(max_length=64, verbose_name="账户的uuid")
     thumbnail = models.TextField(verbose_name="缩略图", default=None, blank=True, null=True)
     publish_interval = models.IntegerField(default=15, verbose_name=u"发布pin的最小间隔")
+    default_post_time = '''{"mon": ["00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00",
+                       "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"], 
+               "tues": ["00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00",
+                       "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"], 
+               "wed": ["00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00",
+                       "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"], 
+               "thur": ["00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00",
+                       "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"], 
+               "fri": ["00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00",
+                       "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"], 
+               "sat": ["00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00",
+                       "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"], 
+               "sun": ["00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00",
+                       "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"], 
+               "every": ["00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00",
+                       "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"]}'''
+    post_time = models.TextField(verbose_name="发布时间节点", default=default_post_time)
 
     objects = PinterestAccountManager()
 
@@ -315,6 +332,9 @@ class Rule(models.Model):
     product_start = models.DateTimeField(verbose_name="产品发布时间起点", blank=True, null=True)
     product_end = models.DateTimeField(verbose_name="产品发布时间终点", blank=True, null=True,)
 
+    rules_type_choices = ((0, 'Short Term Rule'), (1, 'Long Term Rule'))
+    type = models.SmallIntegerField(choices=rules_type_choices, default=0, verbose_name="规则类型")
+
     class Meta:
         # managed = False
         db_table = 'rule'
@@ -331,6 +351,8 @@ class RuleSchedule(models.Model):
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     interval_time = models.IntegerField(default=3600, verbose_name="发布间隔时间（秒）")
     rule = models.ForeignKey(Rule, related_name="schedule_rule", on_delete=models.DO_NOTHING)
+
+    post_time = models.CharField(verbose_name="发布时间节点", null=True, blank=True, max_length=64)
 
     class Meta:
         # managed = False
