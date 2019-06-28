@@ -28,6 +28,9 @@ DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 
+MYSQL_PASSWD = os.getenv('MYSQL_PASSWD', None)
+MYSQL_HOST = os.getenv('MYSQL_HOST', None)
+
 
 # Application definition
 
@@ -82,10 +85,9 @@ DATABASES = {
     'default': {
     'ENGINE': 'django.db.backends.mysql',
     'NAME':'sea',
-    'USER': 'sea_test',
-    'PASSWORD': 'FuewAw6a1r',
-    #'HOST': '47.112.113.252',
-    'HOST': 'rm-j6c6x9lcj0vd71m4lgo.mysql.rds.aliyuncs.com',
+    'USER': 'sea',
+    'PASSWORD': MYSQL_PASSWD,
+    'HOST': MYSQL_HOST,
     'PORT': '3306',
     'OPTIONS': {"init_command": "SET foreign_key_checks = 0;",}
     }
