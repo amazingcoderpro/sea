@@ -82,10 +82,10 @@ DATABASES = {
     'default': {
     'ENGINE': 'django.db.backends.mysql',
     'NAME':'sea',
-    'USER': 'sea',
-    'PASSWORD': 'sea@orderplus.com',
+    'USER': 'sea_test',
+    'PASSWORD': 'FuewAw6a1r',
     #'HOST': '47.112.113.252',
-    'HOST': '127.0.0.1',
+    'HOST': 'rm-j6c6x9lcj0vd71m4lgo.mysql.rds.aliyuncs.com',
     'PORT': '3306',
     'OPTIONS': {"init_command": "SET foreign_key_checks = 0;",}
     }
