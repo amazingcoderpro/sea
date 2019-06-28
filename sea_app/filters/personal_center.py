@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from functools import reduce
 
 from rest_framework.filters import BaseFilterBackend
 from django.db.models import Q
@@ -38,6 +39,7 @@ class PostTimeFilter(BaseFilterBackend):
 
 
 class SelectPostTimeFilter(BaseFilterBackend):
+
     def filter_queryset(self, request, queryset, view):
         account_id = request.query_params.get("account_id", None)
         queryobj = models.PinterestAccount.objects.get(pk=account_id)
@@ -48,10 +50,22 @@ class SelectPostTimeFilter(BaseFilterBackend):
         result_list = models.RuleSchedule.objects.filter(rule_id__in=rule_ids).values("weekday", "post_time")
         time_dict = {}
         for res in result_list:
-            if res[0] not in time_dict:
-                time_dict.update({res[0]: [res[1], ]})
+            key = {0: "mon", 1: "tues", 2: "wed", 3: "thur", 4: "fri", 5: "sat", 6: "sun"}[res["weekday"]]
+            if key not in time_dict:
+                time_dict.update({key: [res["post_time"], ] if res["post_time"] else []})
             else:
-                time_dict[res[0]].append(res[1])
+                if res["post_time"]:
+                    time_dict[key].append(res["post_time"])
         for day in total_time.keys():
+            if day == "every":
+                continue
             [total_time[day].remove(t) for t in total_time[day] if t in time_dict[day]]
+        total_time.pop("every")
+        total_time["every"] = self.intersection_for_multi_list(total_time.values())
         return total_time
+
+    def intersection_for_multi_list(self, item_list):
+        fm = lambda x, y: list(set(x).intersection(set(y))) if isinstance(x, list) and isinstance(y, list) else 'error'
+        fn = lambda x: x[0] if len(x) == 1 else [] if len(x) == 0 else reduce(fm, tuple(y for y in x))
+        item_list = fn(item_list)
+        return sorted(item_list)
