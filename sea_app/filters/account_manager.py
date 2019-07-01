@@ -93,6 +93,7 @@ class ProductCountFilter(BaseFilterBackend):
     filter_keys = {
         "publish_begin_time": "publish_time__gte",
         "publish_end_time": "publish_time__lte",
+        "product_category_list": "product_category_id__in"
     }
 
     def filter_queryset(self, request, queryset, view):
@@ -100,6 +101,8 @@ class ProductCountFilter(BaseFilterBackend):
         for filter_key in self.filter_keys.keys():
             val = request.query_params.get(filter_key, '')
             if val is not '':
+                if filter_key == "product_category_list":
+                    filte_kwargs[self.filter_keys[filter_key]] = eval(val)
                 filte_kwargs[self.filter_keys[filter_key]] = val
         if not filte_kwargs:
             return []

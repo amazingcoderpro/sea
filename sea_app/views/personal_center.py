@@ -1,3 +1,5 @@
+from functools import reduce
+
 from django.contrib import auth
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import HttpResponseRedirect
@@ -346,10 +348,21 @@ class PostTimeView(generics.ListCreateAPIView):
         instance = self.queryset.get(pk=data.get("account_id", None))
         post_time = data.get("post_time", None)
         if post_time:
-            instance.post_time=data.get("post_time", None)
+            # 在此计算post_time的every
+            post_time = eval(post_time)
+            post_time.pop("every")
+            post_time["every"] = {"state": 1,
+                                   "time": self.intersection_for_multi_list(map(lambda x: x["time"] if x["state"] == 1 else [], post_time.values()))}
+            instance.post_time = str(post_time)
             instance.save()
             return Response({"message": "update account {} post_time success.".format(instance.nickname)}, status=status.HTTP_201_CREATED)
         return Response({"message": "no post_time."}, status=status.HTTP_400_BAD_REQUEST)
+
+    def intersection_for_multi_list(self, item_list):
+        fm = lambda x, y: list(set(x).intersection(set(y))) if isinstance(x, list) and isinstance(y, list) else 'error'
+        fn = lambda x: x[0] if len(x) == 1 else [] if len(x) == 0 else reduce(fm, tuple(y for y in x))
+        item_list = fn(item_list)
+        return sorted(item_list)
 
 
 class SelectPostTimeView(generics.ListAPIView):

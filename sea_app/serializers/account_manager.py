@@ -164,8 +164,8 @@ class GetUserSerializer(serializers.ModelSerializer):
         fields = ("username", "email")
 
 
-class GetCategorylizer(serializers.ModelSerializer):
+class GetCategorySerializer(serializers.ModelSerializer):
     "产品类目列表"
     class Meta:
         model = models.ProductCategory
-        fields = "__all__"
+        fields = ("id", "title")
