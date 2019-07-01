@@ -39,6 +39,8 @@ rule_urlpatterns = [
 
     # 增加规则 规则列表
     url(r'^$', account_manager.RuleView.as_view()),
+    # 增加规则：获取所有类目列表
+    url(r'get_collections/$', account_manager.GetCategoryView.as_view()),
     # 增加规则: 查询符合条件的产品列表
     url(r'search_product/$', account_manager.SearchProductView.as_view()),
     # 增加规则: 获取某用户的pinterest账号和board
