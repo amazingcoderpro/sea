@@ -118,8 +118,8 @@ class Store(models.Model):
 
 class ProductCategory(models.Model):
     """产品类目表"""
-    title = models.CharField(max_length=255, verbose_name="产品类目标题")
-    url = models.IntegerField(db_index=True, blank=True, null=True, verbose_name="产品类目url")
+    title = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品类目标题")
+    url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品类目标题url")
     category_id = models.IntegerField(db_index=True, blank=True, null=True, verbose_name="产品类目id")
     store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, blank=True, null=True)
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
@@ -127,7 +127,7 @@ class ProductCategory(models.Model):
 
     class Meta:
         # managed = False
-        unique_together = ("title", "store")
+        unique_together = ("category_id", "store")
         db_table = 'product_category'
 
 
