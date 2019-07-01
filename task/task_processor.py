@@ -1130,9 +1130,10 @@ class TaskProcessor:
                 if res["code"] == 1:
                     for collection in res["data"]["custom_collections"]:
                         category_id = collection["id"]
-                        url = store_url + "/collections/" + collection["handle"]
+                        url = store_url + "/collections/" + collection["handle"] + "/"
                         title = collection["title"]
                         update_time = datetime.datetime.now()
+                        print(category_id,url,title,store_id)
                         try:
                             if category_id in exist_collections_dict.keys():
                                 id = exist_collections_dict[category_id]
@@ -1146,8 +1147,9 @@ class TaskProcessor:
                                     (title, url, category_id, store_id, update_time, update_time))
 
                             conn.commit()
-                        except:
-                            logger.exception("update product_category exception.")
+
+                        except Exception as e:
+                            logger.exception("update product_category exception e={}".format(e))
 
         except Exception as e:
             logger.exception("update_collection e={}".format(e))
