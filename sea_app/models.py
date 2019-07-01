@@ -119,7 +119,8 @@ class Store(models.Model):
 class ProductCategory(models.Model):
     """产品类目表"""
     title = models.CharField(max_length=255, verbose_name="产品类目标题")
-    url = models.IntegerField(db_index=True, blank=True, null=True, verbose_name="类型标识")
+    url = models.IntegerField(db_index=True, blank=True, null=True, verbose_name="产品类目url")
+    category_id = models.IntegerField(db_index=True, blank=True, null=True, verbose_name="产品类目id")
     store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, blank=True, null=True)
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
