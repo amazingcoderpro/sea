@@ -235,3 +235,12 @@ class CancelAuthSerializer(serializers.ModelSerializer):
 
     # def update(self, instance, validated_data):
     #     pass
+
+
+class PostTimeSerializer(serializers.ModelSerializer):
+    timezone = serializers.CharField(source="user.store.timezone", read_only=True)
+
+    class Meta:
+        model = models.PinterestAccount
+        depth = 1
+        fields = ("id", "thumbnail", "nickname","update_time", "timezone", "post_time")

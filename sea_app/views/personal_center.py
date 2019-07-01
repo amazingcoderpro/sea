@@ -37,9 +37,15 @@ class LoginView(generics.CreateAPIView):
             username = request.data.get('username', '')
             password = request.data.get('password', '')
             code = request.data.get("code", "")
-            obj = models.User.objects.filter(username=username).first()
+            if code:
+                print(username,code)
+                obj = models.User.objects.filter(username=username,code=code).first()
+                print(obj)
+            else:
+                obj = models.User.objects.filter(username=username).first()
             if obj and obj.is_active == 0:
                 if code:
+                    print(obj.code,code)
                     if obj.code == code:
                         obj.is_active = 1
                         obj.save()
@@ -191,18 +197,17 @@ class ShopifyCallback(APIView):
         result = ShopifyBase(shop).get_token(code)
         if result["code"] != 1:
             return HttpResponseRedirect(redirect_to="https://pinbooster.seamarketings.com/aut_state?state=2")
-        instance = models.Store.objects.filter(url=shop).first()
+        instance = models.Store.objects.filter(uri=shop).first()
         if instance:
             instance.token = result["data"]
             instance.save()
             user_instance = models.User.objects.filter(id=instance.user_id).first()
             user_instance.is_active = 0
             user_instance.password = ""
-            user_instance.code = random_code.create_random_code(6, True)
             user_instance.save()
             email = user_instance.email
         else:
-            store_data = {"name": shop_name, "url": shop, "token": result["data"], "platform": models.Platform.objects.filter(id=1).first()}
+            store_data = {"name": shop_name, "url": shop, "uri": shop, "token": result["data"], "platform": models.Platform.objects.filter(id=1).first()}
             instance = models.Store.objects.create(**store_data)
             info = ProductsApi(access_token=result["data"], shop_uri=shop).get_shop_info()
             email = info["data"]["shop"]["email"]
@@ -328,3 +333,31 @@ class ShopifyAuthView(APIView):
         return HttpResponseRedirect(redirect_to=permission_url)
 
 
+class PostTimeView(generics.ListCreateAPIView):
+    """发布时间节点"""
+    queryset = models.PinterestAccount.objects.all()
+    serializer_class = personal_center.PostTimeSerializer
+    filter_backends = (personal_center_filters.PostTimeFilter,)
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        instance = self.queryset.get(pk=data.get("account_id", None))
+        post_time = data.get("post_time", None)
+        if post_time:
+            instance.post_time=data.get("post_time", None)
+            instance.save()
+            return Response({"message": "update account {} post_time success.".format(instance.nickname)}, status=status.HTTP_201_CREATED)
+        return Response({"message": "no post_time."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SelectPostTimeView(generics.ListAPIView):
+    queryset = models.PinterestAccount.objects.all()
+    filter_backends = (personal_center_filters.SelectPostTimeFilter,)
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JSONWebTokenAuthentication,)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        return Response(queryset)

@@ -42,7 +42,7 @@ class GoogleApi():
                                     {'startDate': start_time, 'endDate': end_time},
                                 ],
                                 "metrics": [
-                                    {"expression": "ga:pageviews"},  # pv
+                                    {"expression": "ga:sessions"},  # pageviews
                                     {"expression": "ga:Users"},      # uv
                                     {"expression": "ga:newUsers"},
                                     {"expression": "ga:transactions"},  # 交易数量
@@ -76,15 +76,15 @@ class GoogleApi():
                         values = dateRangeValues[0].get('values', [])
                         if values:
                             if temp_key_word not in results:
-                                results[temp_key_word] = {"page_view": int(values[0]), "unique_view": int(values[1]),"new_unique_view": int(values[2]),
-                                                  "transactions": int(values[3]), "transaction_revenue": float(values[4]),
+                                results[temp_key_word] = {"sessions": int(values[0]), "users": int(values[1]),"new_users": int(values[2]),
+                                                  "transactions": int(values[3]), "revenue": float(values[4]),
                                                   "hits": int(values[5])}
                             else:
-                                results[temp_key_word]["page_view"] += int(values[0])
-                                results[temp_key_word]["unique_view"] += int(values[1])
-                                results[temp_key_word]["new_unique_view"] += int(values[2])
+                                results[temp_key_word]["sessions"] += int(values[0])
+                                results[temp_key_word]["users"] += int(values[1])
+                                results[temp_key_word]["new_users"] += int(values[2])
                                 results[temp_key_word]["transactions"] += int(values[3])
-                                results[temp_key_word]["transaction_revenue"] += float(values[4])
+                                results[temp_key_word]["revenue"] += float(values[4])
                                 results[temp_key_word]["hits"] += int(values[5])
                 # print(results)
                 return {"code": 1, "data": results, "msg": ""}

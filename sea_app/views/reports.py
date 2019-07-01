@@ -118,7 +118,7 @@ def daily_report(pin_set_list, product_set_list, request):
             for item in product_list:
                 # 只能叠加当天最新一次拉取的数据
                 # 每一个产品只加一次
-                group_dict["product_clicks"] += item.product_clicks
+                group_dict["product_clicks"] += item.product_scan
                 group_dict["product_sales"] += item.product_sales
                 group_dict["product_revenue"] += item.product_revenue
                 group_dict["product_visitors"] += item.product_visitors
@@ -246,7 +246,7 @@ def subaccount_report(pin_set_list, product_set_list, request):
             has_data_p_list.append((item.update_time.date(), item.product_id))
             data["product_visitors"] += item.product_visitors
             data["product_new_visitors"] += item.product_new_visitors
-            data["product_clicks"] += item.product_clicks
+            data["product_clicks"] += item.product_scan
             data["product_sales"] += item.product_sales
             data["product_revenue"] += item.product_revenue
         data_list.append(data)
@@ -326,7 +326,7 @@ def board_report(pin_set_list, product_set_list):
             has_data_p_list.append((item.update_time.date(), item.product_id))
             data["product_visitors"] += item.product_visitors
             data["product_new_visitors"] += item.product_new_visitors
-            data["product_clicks"] += item.product_clicks
+            data["product_clicks"] += item.product_scan
             data["product_sales"] += item.product_sales
             data["product_revenue"] += item.product_revenue
 
@@ -393,7 +393,7 @@ def pins_report(pin_set_list, product_set_list):
             has_data_p_list.append((product_obj.update_time.date(), product_obj.product_id))
             data["product_visitors"] += product_obj.product_visitors
             data["product_new_visitors"] += product_obj.product_new_visitors
-            data["product_clicks"] += product_obj.product_clicks
+            data["product_clicks"] += product_obj.product_scan
             data["product_sales"] += product_obj.product_sales
             data["product_revenue"] += product_obj.product_revenue
 
@@ -426,7 +426,8 @@ def site_count(pin_set_list, product_set_list, oneday=datetime.datetime.now().da
     if not lastest_pin_data:
         return {"subaccount_num": 0, "board_num": 0, "pin_num": 0,
                 "visitor_num": 0, "click_num": 0, "sales_num": 0, "revenue_num": 0,
-                "board_followers": 0, "pin_saves": 0}
+                "board_followers": 0, "pin_saves": 0, "lastest_time": None}
+    lastest_time = lastest_pin_data.update_time.strftime("%Y-%m-%d %H:%M:%S")
     pin_queryset = pin_set_list.filter(tag=lastest_pin_data.tag)
     # 获取帐号总数
     subaccount_set = pin_queryset.filter(board_id=None, pin_id=None)
@@ -446,7 +447,7 @@ def site_count(pin_set_list, product_set_list, oneday=datetime.datetime.now().da
     if not lastest_product_data:
         return {"subaccount_num": subaccount_num, "board_num": board_num, "pin_num": pin_num,
                 "visitor_num": 0, "click_num": 0, "sales_num": 0, "revenue_num": 0,
-                "board_followers": board_followers, "pin_saves": pin_saves}
+                "board_followers": board_followers, "pin_saves": pin_saves, "lastest_time": lastest_time}
     product_queryset = product_set_list.filter(tag=lastest_product_data.tag)
     # 获取product_id_list
     product_id_list = []
@@ -457,7 +458,7 @@ def site_count(pin_set_list, product_set_list, oneday=datetime.datetime.now().da
     product_set = product_queryset.filter(product_id__in=product_id_list)
     sales_num = count_num(product_set, "product_sales")
     # 获取click总数
-    click_num = count_num(product_set, "product_clicks")
+    click_num = count_num(product_set, "product_scan")
     # 获取revenue总数
     revenue_num = count_num(product_set, "product_revenue")
     visitor_num = count_num(product_set, "product_visitors")
@@ -471,7 +472,8 @@ def site_count(pin_set_list, product_set_list, oneday=datetime.datetime.now().da
         "sales_num": sales_num,
         "revenue_num": revenue_num,
         "board_followers": board_followers,
-        "pin_saves": pin_saves
+        "pin_saves": pin_saves,
+        "lastest_time": lastest_time
     }
 
 
@@ -537,7 +539,7 @@ def latest_updates(pin_set_list, product_set_list, request):
     """最近更新视图"""
     new_value, old_value = account_overview_chart(pin_set_list, product_set_list, request, reslut_num=2)
     return {
-        "datetime": new_value["date"],
+        "datetime": new_value["lastest_time"] if new_value["lastest_time"] else new_value["date"],
         "new_accounts": new_value["subaccount_num"] - old_value["subaccount_num"],
         "new_board": new_value["board_num"] - old_value["board_num"],
         "new_pins": new_value["pin_num"] - old_value["pin_num"],
@@ -638,7 +640,7 @@ def pins_period(new_queryset, old_queryset):
                 "pin_date": pin_obj.pin.publish_time.strftime("%Y-%m-%d %H:%M:%S") if pin_obj.pin else "no pin date",
                 "saves": pin_obj.pin_saves,
                 "increment": pin_obj.pin_saves - old_saves,
-                "trends": (pin_obj.pin_saves - old_saves)*1.0/old_saves if old_saves!=0 else pin_obj.pin_saves,
+                "trends": round((pin_obj.pin_saves - old_saves)*1.0/old_saves, 4) if old_saves!=0 else pin_obj.pin_saves,
             }
     return pin_dict
 
@@ -741,7 +743,7 @@ def board_period(new_queryset, old_queryset):
         old_followers = old_followers.get("followers", 0) if old_followers else 0
         data["pins"] = len(set(filter(lambda x: x, data["pins"])))
         data["increment"] = data.get("followers", 0) - old_followers
-        data["trends"] = data["increment"]*1.0/old_followers if old_followers!=0 else data["increment"]
+        data["trends"] = round(data["increment"]*1.0/old_followers, 4) if old_followers!=0 else data["increment"]
     return new_board_dict
 
 

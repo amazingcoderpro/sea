@@ -19,9 +19,13 @@ from sdk.shopify.get_shopify_products import ProductsApi
 from sdk.googleanalytics.google_oauth_info import GoogleApi
 from config import SHOPIFY_CONFIG
 
+MYSQL_PASSWD = os.getenv('MYSQL_PASSWD', None)
+MYSQL_HOST = os.getenv('MYSQL_HOST', None)
+
+
 # 47.52.221.217
 class DBUtil:
-    def __init__(self, host="127.0.0.1", port=3306, db="sea", user="sea", password="sea@orderplus.com"):
+    def __init__(self, host=MYSQL_HOST, port=3306, db="sea", user="sea", password=MYSQL_PASSWD):
         self.conn_pool = {}
         self.host = host
         self.port = port
@@ -41,6 +45,7 @@ class DBUtil:
                     password=self.pwd,
                     charset='utf8'
                 )
+                # conn.connect_timeout
                 self.conn_pool[name] = conn
         except Exception as e:
             logger.exception("connect mysql error, e={}".format(e))
@@ -79,7 +84,7 @@ class TaskProcessor:
     def start_job_update_shopify_data(self, interval=7200):
         # 定时更新shopify数据
         logger.info("start_job_update_shopify_data")
-        self.update_shopify_data()
+        # self.update_shopify_data()
         # self.shopify_job = self.bk_scheduler.add_job(self.update_shopify_data, 'interval', seconds=interval)
         self.shopify_job = self.bk_scheduler.add_job(self.update_shopify_data, 'cron', day_of_week="*", hour=1, minute=30)
 
@@ -118,6 +123,7 @@ class TaskProcessor:
         self.start_job_analyze_rule_job(rule_interval)
         self.start_job_publish_pin_job(publish_pin_interval)
         self.start_job_update_pinterest_data(pinterest_update_interval)
+        self.start_job_update_shopify_()
         self.start_job_update_shopify_data(shopify_update_interval)
 
     def stop_all(self):
@@ -260,9 +266,9 @@ class TaskProcessor:
                         time_now = datetime.datetime.now()
 
                         # 因为在测试过程发现user info中的boards数量与实际不符，所以在此再次更新一下boards数量
-                        cursor.execute(
-                            '''update `pinterest_account` set boards=%s, update_time=%s where id=%s''', (len(boards), time_now, account_id))
-                        conn.commit()
+                        # cursor.execute(
+                        #     '''update `pinterest_account` set boards=%s, update_time=%s where id=%s''', (len(boards), time_now, account_id))
+                        # conn.commit()
                         board_uuids = []
                         for board in boards:
                             uuid = board.get("id", "")
@@ -336,9 +342,6 @@ class TaskProcessor:
 
                         if pins:
                             time_now = datetime.datetime.now()
-                            cursor.execute(
-                                '''update `pinterest_account` set pins=%s, update_time=%s where id=%s''', (len(pins), time_now, account_id))
-                            conn.commit()
 
                             for pin in pins:
                                 uuid = pin.get("id", "")
@@ -547,9 +550,9 @@ class TaskProcessor:
                 reports = gapi.get_report(key_word="", start_time="1daysAgo", end_time="today")
                 since_id = ""
                 max_fetch = 50      # 不管拉没拉完，最多拉250＊50个产品
+                uuid_list = []
                 while max_fetch > 0:
                     max_fetch -= 1
-                    uuid_list = []
                     ret = papi.get_all_products(limit=250, since_id=since_id)
                     if ret["code"] == 1:
                         time_now = datetime.datetime.now()
@@ -558,21 +561,21 @@ class TaskProcessor:
                                                                                                                len(
                                                                                                                    products)))
                         for pro in products:
-                            # print(products)
                             pro_uuid = str(pro.get("id", ""))
                             if pro_uuid in uuid_list:
                                 continue
 
-                            pro_title = pro.get("title", "")
                             handle = pro.get("handle", "")
+
+                            pro_title = pro.get("title", "")
                             pro_url = "https://{}/products/{}".format(store_url, handle)
                             pro_type = pro.get("product_type", "")
                             variants = pro.get("variants", [])
-                            pro_sku = ""
+                            pro_sku = handle.upper()
 
                             pro_price = 0
                             if variants:
-                                pro_sku = variants[0].get("sku", "")
+                                # pro_sku = variants[0].get("sku", "")
                                 pro_price = float(variants[0].get("price", "0"))
 
                             pro_tags = pro.get("tags", "")
@@ -624,12 +627,12 @@ class TaskProcessor:
                                 # 这个产品如果没有关联的pin，就不用保存历史数据了
                                 # 单一产品更新数据时不保存历史数据，tag会错乱
                                 if pro_report and not url:
-                                    pv = int(pro_report.get("page_view", 0))
-                                    uv = int(pro_report.get("unique_view", 0))
-                                    nuv = int(pro_report.get("new_unique_view", 0))
+                                    pv = int(pro_report.get("sessions", 0))
+                                    uv = int(pro_report.get("users", 0))
+                                    nuv = int(pro_report.get("new_users", 0))
                                     hits = int(pro_report.get("hits", 0))
                                     transactions = int(pro_report.get("transactions", 0))
-                                    transactions_revenue = float(pro_report.get("transaction_revenue", 0))
+                                    transactions_revenue = float(pro_report.get("revenue", 0))
                                     # cursor.execute('''select product_visitors from `product_history_data` where product_id=%s and tag=%s''', (pro_id, tag_max))
                                     # visitors = cursor.fetchone()
                                     # total_visitors = uv
@@ -948,12 +951,15 @@ class TaskProcessor:
                         conn.commit()
 
 
-                cursor.execute('''select finished_time from `publish_record` where state=1 and pinterest_account_id=%s and finished_time>%s''', (account_id, time_now-datetime.timedelta(minutes=publish_interval)))
+                cursor.execute('''select finished_time from `publish_record` where state=1 and pinterest_account_id=%s and finished_time>%s''', (account_id, time_now-datetime.timedelta(minutes=publish_interval-2)))
                 already_published_account = cursor.fetchall()
                 if already_published_account:
                     #如果在同一个账号里1小时之内已经发过了，则往后推迟
                     fst = already_published_account[-1][0]
-                    delay_to = fst+datetime.timedelta(minutes=publish_interval+1)
+                    delay_to = fst+datetime.timedelta(minutes=publish_interval)
+                    if (delay_to-time_now).total_seconds() < 120:
+                        delay_to += datetime.timedelta(minutes=2)
+
                     remark = "This account has already published pins within {} minutes. Delayed to {}".format(int(publish_interval), delay_to)
                     update_time = time_now
                     cursor.execute('''
@@ -1090,7 +1096,7 @@ def test():
 
 def main():
     tsp = TaskProcessor()
-    tsp.start_all(rule_interval=120, publish_pin_interval=240, pinterest_update_interval=7200*3, shopify_update_interval=7200*3, update_new=120)
+    tsp.start_all(rule_interval=120, publish_pin_interval=120, pinterest_update_interval=7200*3, shopify_update_interval=7200*3, update_new=120)
     while 1:
         time.sleep(1)
 

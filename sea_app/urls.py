@@ -77,7 +77,9 @@ account_urlpatterns = [
     url(r'users/(?P<pk>[0-9]+)/$', personal_center.UserOperView.as_view()),
     url(r'users/operation_record/$', personal_center.OperationRecord.as_view()),
     # url(r'role/$', personal_center.RoleView.as_view()),
-    # url(r'role/(?P<pk>[0-9]+)/$', personal_center.RoleOperView.as_view()),
+    url(r'post_time/$', personal_center.PostTimeView.as_view()),
+    url(r'^select_time/$', personal_center.SelectPostTimeView.as_view()),
+
 ]
 
 # 授权 `/v1/auth/`
