@@ -120,7 +120,7 @@ class ProductCategory(models.Model):
     """产品类目表"""
     title = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品类目标题")
     url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品类目标题url")
-    category_id = models.CharField(db_index=True, blank=True, null=True, verbose_name="产品类目id")
+    category_id = models.CharField(db_index=True, max_length=255,blank=True, null=True, verbose_name="产品类目id")
     store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, blank=True, null=True)
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
