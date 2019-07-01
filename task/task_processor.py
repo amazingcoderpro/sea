@@ -525,31 +525,6 @@ class TaskProcessor:
 
                 # 更新店铺信息
                 papi = ProductsApi(store_token, store_uri)
-                ret = papi.get_shop_info()
-                if ret["code"] == 1:
-                    shop = ret["data"].get("shop", {})
-                    logger.info("shop info={}".format(shop))
-                    shop_uuid = shop.get("id", "")
-                    shop_name = shop.get("name", "")
-                    shop_timezone = shop.get("timezone", "")
-                    shop_domain = shop.get("domain", "")
-                    shop_email = shop.get("email", "")
-                    shop_owner = shop.get("shop_owner", "")
-                    shop_country_name = shop.get("country_name", "")
-                    created_at = shop.get("created_at", '')
-                    updated_at = shop.get("updated_at", '')
-                    shop_phone = shop.get("phone", "")
-                    shop_city = shop.get("city", '')
-                    shop_currency = shop.get("currency", "USD")
-                    # shop_myshopify_domain = shop.get("myshopify_domain", "")
-                    cursor.execute('''update `store` set uuid=%s, name=%s, url=%s, timezone=%s, email=%s, owner_name=%s, 
-                    owner_phone=%s, country=%s, city=%s, store_create_time=%s, store_update_time=%s, currency=%s where id=%s''',
-                                   (shop_uuid, shop_name, shop_domain, shop_timezone, shop_email, shop_owner, shop_phone,
-                                    shop_country_name, shop_city, datetime.datetime.strptime(created_at[0:-6], "%Y-%m-%dT%H:%M:%S"),
-                                    datetime.datetime.strptime(updated_at[0:-6], "%Y-%m-%dT%H:%M:%S"), shop_currency, store_id))
-                    conn.commit()
-                else:
-                    logger.warning("get shop info failed. ret={}".format(ret))
 
                 # 获取店铺里的所有产品
                 #
@@ -1093,7 +1068,8 @@ class TaskProcessor:
 
     def update_shopify_collections(self):
         """
-        获取所有店铺的所有类目，并保存至数据库
+        1. 更新所有的店铺
+        2. 获取所有店铺的所有类目，并保存至数据库
         """
         logger.info("update_collection is cheking...")
         try:
@@ -1124,19 +1100,48 @@ class TaskProcessor:
                     logger.error("store uri={}, not illegal")
                     continue
 
-                # 更新产品信息
+                # 更新店铺信息
                 papi = ProductsApi(store_token, store_uri)
+                ret = papi.get_shop_info()
+                if ret["code"] == 1:
+                    shop = ret["data"].get("shop", {})
+                    logger.info("shop info={}".format(shop))
+                    shop_uuid = shop.get("id", "")
+                    shop_name = shop.get("name", "")
+                    shop_timezone = shop.get("timezone", "")
+                    shop_domain = shop.get("domain", "")
+                    shop_email = shop.get("email", "")
+                    shop_owner = shop.get("shop_owner", "")
+                    shop_country_name = shop.get("country_name", "")
+                    created_at = shop.get("created_at", '')
+                    updated_at = shop.get("updated_at", '')
+                    shop_phone = shop.get("phone", "")
+                    shop_city = shop.get("city", '')
+                    shop_currency = shop.get("currency", "USD")
+                    # shop_myshopify_domain = shop.get("myshopify_domain", "")
+                    cursor.execute('''update `store` set uuid=%s, name=%s, url=%s, timezone=%s, email=%s, owner_name=%s, 
+                    owner_phone=%s, country=%s, city=%s, store_create_time=%s, store_update_time=%s, currency=%s where id=%s''',
+                                   (shop_uuid, shop_name, shop_domain, shop_timezone, shop_email, shop_owner, shop_phone,
+                                    shop_country_name, shop_city, datetime.datetime.strptime(created_at[0:-6], "%Y-%m-%dT%H:%M:%S"),
+                                    datetime.datetime.strptime(updated_at[0:-6], "%Y-%m-%dT%H:%M:%S"), shop_currency, store_id))
+                    conn.commit()
+                else:
+                    logger.warning("get shop info failed. ret={}".format(ret))
+
+                # 更新产品类目信息
                 res = papi.get_all_collections()
                 if res["code"] == 1:
-                    for collection in res["data"]["custom_collections"]:
+                    result = res["data"]["custom_collections"]
+                    result = result + res["data"]["smart_collections"]
+
+                    for collection in result:
                         category_id = collection["id"]
                         url = store_url + "/collections/" + collection["handle"] + "/"
                         title = collection["title"]
                         update_time = datetime.datetime.now()
-                        print(category_id,url,title,store_id)
                         try:
-                            if category_id in exist_collections_dict.keys():
-                                id = exist_collections_dict[category_id]
+                            if str(category_id) in exist_collections_dict.keys():
+                                id = exist_collections_dict[str(category_id)]
                                 logger.info("product_collections is already exist, url={}, id={}".format(url,id))
                                 cursor.execute(
                                     '''update `product_category` set title=%s, url=%s, category_id=%s, update_time=%s where id=%s''',
@@ -1145,12 +1150,9 @@ class TaskProcessor:
                                 cursor.execute(
                                     "insert into `product_category` (`title`, `url`, `category_id`, `store_id`, `create_time`, `update_time`) values (%s, %s, %s, %s, %s, %s)",
                                     (title, url, category_id, store_id, update_time, update_time))
-
                             conn.commit()
-
                         except Exception as e:
                             logger.exception("update product_category exception e={}".format(e))
-
         except Exception as e:
             logger.exception("update_collection e={}".format(e))
             return False
@@ -1179,5 +1181,5 @@ def main():
 
 if __name__ == '__main__':
     # test()
-    #main()
-    TaskProcessor().update_shopify_collections()
+    main()
+    #TaskProcessor().update_shopify_collections()
