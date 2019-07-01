@@ -118,16 +118,16 @@ class Store(models.Model):
 
 class ProductCategory(models.Model):
     """产品类目表"""
-    title = models.CharField(max_length=255, verbose_name="产品类目标题")
-    url = models.IntegerField(db_index=True, blank=True, null=True, verbose_name="产品类目url")
-    category_id = models.IntegerField(db_index=True, blank=True, null=True, verbose_name="产品类目id")
+    title = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品类目标题")
+    url = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品类目标题url")
+    category_id = models.CharField(db_index=True, max_length=255,blank=True, null=True, verbose_name="产品类目id")
     store = models.ForeignKey(Store, on_delete=models.DO_NOTHING, blank=True, null=True)
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
     class Meta:
         # managed = False
-        unique_together = ("title", "store")
+        unique_together = ("category_id", "store")
         db_table = 'product_category'
 
 
@@ -140,7 +140,7 @@ class Product(models.Model):
     image_url = models.CharField(max_length=255, verbose_name="图片URL")
     thumbnail = models.TextField(verbose_name="缩略图", blank=True, null=True, default=None)
     price = models.CharField(max_length=255, verbose_name="产品价格")
-    product_category_id = models.IntegerField(db_index=True, blank=True, null=True, verbose_name="产品.类型id")
+    product_category_id = models.IntegerField(db_index=True, blank=True, null=True, verbose_name="产品类目id")
     tag = models.CharField(max_length=255, verbose_name="所属标签")
     store = models.ForeignKey(Store, on_delete=models.DO_NOTHING)
     publish_time = models.DateTimeField(blank=True, null=True, verbose_name="发布时间")
@@ -150,6 +150,7 @@ class Product(models.Model):
 
     class Meta:
         # managed = False
+        unique_together = ("product_category_id", "uuid")
         db_table = 'product'
         ordering = ["-id"]
 

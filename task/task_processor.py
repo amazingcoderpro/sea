@@ -62,6 +62,7 @@ class TaskProcessor:
         self.rule_job = None
         self.publish_pin_job = None
         self.update_new_job = None
+        self.shopify_collections_job = None
 
     def start_job_analyze_rule_job(self, interval=120):
         # 规则解析任务　
@@ -87,6 +88,13 @@ class TaskProcessor:
         # self.update_shopify_data()
         # self.shopify_job = self.bk_scheduler.add_job(self.update_shopify_data, 'interval', seconds=interval)
         self.shopify_job = self.bk_scheduler.add_job(self.update_shopify_data, 'cron', day_of_week="*", hour=1, minute=30)
+
+    def start_job_update_shopify_collections(self, interval=7200):
+        # 定时更新shopify collections数据
+        logger.info("start_job_update_shopify_collections")
+        self.update_shopify_collections()
+        self.shopify_collections_job = self.bk_scheduler.add_job(self.update_shopify_collections, 'cron', day_of_week="*", hour=1,
+                                                     minute=10)
 
     def start_job_update_new(self, interval=120):
         def update_new():
@@ -123,7 +131,7 @@ class TaskProcessor:
         self.start_job_analyze_rule_job(rule_interval)
         self.start_job_publish_pin_job(publish_pin_interval)
         self.start_job_update_pinterest_data(pinterest_update_interval)
-        self.start_job_update_shopify_()
+        self.start_job_update_shopify_collections(shopify_update_interval)
         self.start_job_update_shopify_data(shopify_update_interval)
 
     def stop_all(self):
@@ -517,31 +525,6 @@ class TaskProcessor:
 
                 # 更新店铺信息
                 papi = ProductsApi(store_token, store_uri)
-                ret = papi.get_shop_info()
-                if ret["code"] == 1:
-                    shop = ret["data"].get("shop", {})
-                    logger.info("shop info={}".format(shop))
-                    shop_uuid = shop.get("id", "")
-                    shop_name = shop.get("name", "")
-                    shop_timezone = shop.get("timezone", "")
-                    shop_domain = shop.get("domain", "")
-                    shop_email = shop.get("email", "")
-                    shop_owner = shop.get("shop_owner", "")
-                    shop_country_name = shop.get("country_name", "")
-                    created_at = shop.get("created_at", '')
-                    updated_at = shop.get("updated_at", '')
-                    shop_phone = shop.get("phone", "")
-                    shop_city = shop.get("city", '')
-                    shop_currency = shop.get("currency", "USD")
-                    # shop_myshopify_domain = shop.get("myshopify_domain", "")
-                    cursor.execute('''update `store` set uuid=%s, name=%s, url=%s, timezone=%s, email=%s, owner_name=%s, 
-                    owner_phone=%s, country=%s, city=%s, store_create_time=%s, store_update_time=%s, currency=%s where id=%s''',
-                                   (shop_uuid, shop_name, shop_domain, shop_timezone, shop_email, shop_owner, shop_phone,
-                                    shop_country_name, shop_city, datetime.datetime.strptime(created_at[0:-6], "%Y-%m-%dT%H:%M:%S"),
-                                    datetime.datetime.strptime(updated_at[0:-6], "%Y-%m-%dT%H:%M:%S"), shop_currency, store_id))
-                    conn.commit()
-                else:
-                    logger.warning("get shop info failed. ret={}".format(ret))
 
                 # 获取店铺里的所有产品
                 #
@@ -1083,6 +1066,101 @@ class TaskProcessor:
         img.save(image_path)
         return True
 
+    def update_shopify_collections(self):
+        """
+        1. 更新所有的店铺
+        2. 获取所有店铺的所有类目，并保存至数据库
+        """
+        logger.info("update_collection is cheking...")
+        try:
+            conn = DBUtil().get_instance()
+            cursor = conn.cursor() if conn else None
+            if not cursor:
+                return False
+
+            cursor.execute(
+                    """select store.id, store.url, store.token, store.uri from store left join user on store.user_id = user.id where user.is_active = 1 and store.id >= 5""")
+            stores = cursor.fetchall()
+
+            for store in stores:
+                store_id, store_url, store_token, store_uri = store
+
+                # 取中已经存在的所有products, 只需更新即可
+                cursor.execute('''select id, category_id from `product_category` where store_id=%s''', (store_id))
+                product_category = cursor.fetchall()
+                exist_collections_dict = {}
+                for exp in product_category:
+                    exist_collections_dict[exp[1]] = exp[0]
+
+                if not all([store_uri, store_token]):
+                    logger.warning("store url or token is invalid, store id={}".format(store_id))
+                    continue
+
+                if "shopify" not in store_uri:
+                    logger.error("store uri={}, not illegal")
+                    continue
+
+                # 更新店铺信息
+                papi = ProductsApi(store_token, store_uri)
+                ret = papi.get_shop_info()
+                if ret["code"] == 1:
+                    shop = ret["data"].get("shop", {})
+                    logger.info("shop info={}".format(shop))
+                    shop_uuid = shop.get("id", "")
+                    shop_name = shop.get("name", "")
+                    shop_timezone = shop.get("timezone", "")
+                    shop_domain = shop.get("domain", "")
+                    shop_email = shop.get("email", "")
+                    shop_owner = shop.get("shop_owner", "")
+                    shop_country_name = shop.get("country_name", "")
+                    created_at = shop.get("created_at", '')
+                    updated_at = shop.get("updated_at", '')
+                    shop_phone = shop.get("phone", "")
+                    shop_city = shop.get("city", '')
+                    shop_currency = shop.get("currency", "USD")
+                    # shop_myshopify_domain = shop.get("myshopify_domain", "")
+                    cursor.execute('''update `store` set uuid=%s, name=%s, url=%s, timezone=%s, email=%s, owner_name=%s, 
+                    owner_phone=%s, country=%s, city=%s, store_create_time=%s, store_update_time=%s, currency=%s where id=%s''',
+                                   (shop_uuid, shop_name, shop_domain, shop_timezone, shop_email, shop_owner, shop_phone,
+                                    shop_country_name, shop_city, datetime.datetime.strptime(created_at[0:-6], "%Y-%m-%dT%H:%M:%S"),
+                                    datetime.datetime.strptime(updated_at[0:-6], "%Y-%m-%dT%H:%M:%S"), shop_currency, store_id))
+                    conn.commit()
+                else:
+                    logger.warning("get shop info failed. ret={}".format(ret))
+
+                # 更新产品类目信息
+                res = papi.get_all_collections()
+                if res["code"] == 1:
+                    result = res["data"]["custom_collections"]
+                    result = result + res["data"]["smart_collections"]
+
+                    for collection in result:
+                        category_id = collection["id"]
+                        url = store_url + "/collections/" + collection["handle"] + "/"
+                        title = collection["title"]
+                        update_time = datetime.datetime.now()
+                        try:
+                            if str(category_id) in exist_collections_dict.keys():
+                                id = exist_collections_dict[str(category_id)]
+                                logger.info("product_collections is already exist, url={}, id={}".format(url,id))
+                                cursor.execute(
+                                    '''update `product_category` set title=%s, url=%s, category_id=%s, update_time=%s where id=%s''',
+                                    (title, url, category_id, update_time, id))
+                            else:
+                                cursor.execute(
+                                    "insert into `product_category` (`title`, `url`, `category_id`, `store_id`, `create_time`, `update_time`) values (%s, %s, %s, %s, %s, %s)",
+                                    (title, url, category_id, store_id, update_time, update_time))
+                            conn.commit()
+                        except Exception as e:
+                            logger.exception("update product_category exception e={}".format(e))
+        except Exception as e:
+            logger.exception("update_collection e={}".format(e))
+            return False
+        finally:
+            cursor.close() if cursor else 0
+            conn.close() if conn else 0
+        return True
+
 
 def test():
     tsp = TaskProcessor()
@@ -1104,3 +1182,4 @@ def main():
 if __name__ == '__main__':
     # test()
     main()
+    #TaskProcessor().update_shopify_collections()
