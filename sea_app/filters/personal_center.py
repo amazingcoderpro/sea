@@ -56,12 +56,12 @@ class SelectPostTimeFilter(BaseFilterBackend):
                 if res["post_time"]:
                     time_dict[key].append(res["post_time"])
         for day in total_time.keys():
-            if day == "every" or total_time[day]["state"] == False:
+            if day == "every" or total_time[day]["state"] == 0:
                 continue
             [total_time[day].remove(t) for t in total_time[day]["time"] if t in time_dict[day]]
         total_time.pop("every")
-        total_time["every"] = {"state": True,
-                               "time": self.intersection_for_multi_list(map(lambda x: x["time"] if x["state"] else [], total_time.values()))}
+        total_time["every"] = {"state": 1,
+                               "time": self.intersection_for_multi_list(map(lambda x: x["time"] if x["state"]==1 else [], total_time.values()))}
         return total_time
 
     def intersection_for_multi_list(self, item_list):

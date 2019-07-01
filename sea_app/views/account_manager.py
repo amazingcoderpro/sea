@@ -352,3 +352,11 @@ class GetUserByAccounturiView(generics.ListAPIView):
     queryset = models.User.objects.all()
     serializer_class = account_manager.GetUserSerializer
     filter_backends = (account_manager_filters.GetUserFilter,)
+
+
+class GetCategoryView(generics.ListAPIView):
+    queryset = models.ProductCategory.objects.all()
+    serializer_class = account_manager.GetCategorylizer
+    filter_backends = (account_manager_filters.GetCategoryFilter,)
+    permission_classes = (IsAuthenticated, RulePermission)
+    authentication_classes = (JSONWebTokenAuthentication,)

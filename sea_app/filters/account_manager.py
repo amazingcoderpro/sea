@@ -169,3 +169,8 @@ class GetUserFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         username = request.query_params.get("username", '')
         return queryset.filter(username=username)
+
+
+class GetCategoryFilter(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        return queryset.filter(store__user=request.user)
