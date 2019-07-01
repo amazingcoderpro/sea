@@ -41,7 +41,10 @@ class SelectPostTimeFilter(BaseFilterBackend):
 
     def filter_queryset(self, request, queryset, view):
         account_id = request.query_params.get("account_id", None)
-        queryobj = models.PinterestAccount.objects.get(pk=account_id)
+        try:
+            queryobj = models.PinterestAccount.objects.get(pk=account_id)
+        except:
+            return None
         total_time = eval(queryobj.post_time)
         # 查询此账号下，所有的rule
         rule_ids = models.Rule.objects.filter(pinterest_account_id=account_id).values_list('id', flat=True)
@@ -58,10 +61,10 @@ class SelectPostTimeFilter(BaseFilterBackend):
         for day in total_time.keys():
             if day == "every" or total_time[day]["state"] == 0:
                 continue
-            [total_time[day].remove(t) for t in total_time[day]["time"] if t in time_dict[day]]
+            [total_time[day]["time"].remove(t) for t in total_time[day]["time"] if t in time_dict[day]]
         total_time.pop("every")
         total_time["every"] = {"state": 1,
-                               "time": self.intersection_for_multi_list(map(lambda x: x["time"] if x["state"]==1 else [], total_time.values()))}
+                               "time": self.intersection_for_multi_list([lambda x: x["time"] if x["state"]==1 else [], total_time.values()])}
         return total_time
 
     def intersection_for_multi_list(self, item_list):

@@ -373,4 +373,6 @@ class SelectPostTimeView(generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
+        if not queryset:
+            return Response({"message": "PinterestAccount matching query does not exist."}, status=status.HTTP_400_BAD_REQUEST)
         return Response(queryset)
