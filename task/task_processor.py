@@ -25,7 +25,7 @@ MYSQL_HOST = os.getenv('MYSQL_HOST', None)
 
 # 47.52.221.217
 class DBUtil:
-    def __init__(self, host=MYSQL_HOST, port=3306, db="seo", user="seo", password=MYSQL_PASSWD):
+    def __init__(self, host=MYSQL_HOST, port=3306, db="sea", user="sea", password=MYSQL_PASSWD):
         self.conn_pool = {}
         self.host = host
         self.port = port
@@ -123,6 +123,7 @@ class TaskProcessor:
         self.start_job_analyze_rule_job(rule_interval)
         self.start_job_publish_pin_job(publish_pin_interval)
         self.start_job_update_pinterest_data(pinterest_update_interval)
+        self.start_job_update_shopify_()
         self.start_job_update_shopify_data(shopify_update_interval)
 
     def stop_all(self):

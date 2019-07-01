@@ -137,6 +137,73 @@ class ProductsApi:
             logger.error("get shopify all order by id is failed; info={}".format(str(e)))
             return {"code": -1, "msg": str(e), "data": ""}
 
+    def get_all_collections(self):
+        """
+        获取collections_id的product
+        # 接口  /admin/api/#{api_version}/products.json?collection_id=841564295
+        # 连接地址 https://help.shopify.com/en/api/reference/products/product
+        :return:
+        """
+        shop_url = f"https://{self.client_id}:{self.access_token}@{self.shop_uri}{self.version_url}custom_collections.json"
+        shop_url2 = f"https://{self.client_id}:{self.access_token}@{self.shop_uri}{self.version_url}smart_collections.json"
+        try:
+            result = requests.get(shop_url)
+            result2 = requests.get(shop_url2)
+
+            if result.status_code == 200 and result2.status_code == 200:
+                logger.info("get shopify all collections info is success")
+                res_dict = json.loads(result.text)
+                res_dict.update(json.loads(result2.text))
+                print(res_dict)
+                return {"code": 1, "msg": "", "data": res_dict}
+            else:
+                logger.info("get shopify all collections info is failed")
+                return {"code": 2, "msg": json.loads(result.text).get("errors", ""), "data": ""}
+        except Exception as e:
+            logger.error("get shopify all collections info is failed info={}".format(str(e)))
+            return {"code": -1, "msg": str(e), "data": ""}
+
+    @classmethod
+    def parse_collections(cls, data):
+        all_collections = []
+        for col in data["custom_collections"] + data["smart_collections"]:
+            if "home" in col.get("title", "").lower():
+                continue
+            all_collections.append(
+                {
+                    "uuid": col.get("id", ""),
+                    "meta_title": col.get("title", ""),
+                    "address": "/collections/" + col.get("title", "").lower().replace("'", "").replace(" ", "-"),
+                    "meta_description": col.get("body_html", ""),
+                }
+            )
+        return all_collections
+
+    def get_collections_products(self, collection_id, limit=250, since_id=""):
+        """
+        获取collections_id的product
+        # 接口  /admin/api/2019-04/smart_collections.json
+                /admin/api/2019-04/custom_collections.json
+        # 连接地址 https://help.shopify.com/en/api/reference/products/product
+        :return:
+        """
+        if not since_id:
+            products_url = f"https://{self.client_id}:{self.access_token}@{self.shop_uri}{self.version_url}products.json?collection_id={collection_id}&limit={limit}"
+        if since_id:
+            products_url = f"https://{self.client_id}:{self.access_token}@{self.shop_uri}{self.version_url}products.json?collection_id={collection_id}&limit={limit}&since_id={since_id}"
+        try:
+            result = requests.get(products_url)
+            if result.status_code == 200:
+                logger.info("get shopify all products is success")
+                # print(result.text)
+                return {"code": 1, "msg": "", "data": json.loads(result.text)}
+            else:
+                logger.info("get shopify all products is failed")
+                return {"code": 2, "msg": json.loads(result.text).get("errors", ""), "data": ""}
+        except Exception as e:
+            logger.error("get shopify all products is failed info={}".format(str(e)))
+            return {"code": -1, "msg": str(e), "data": ""}
+
 
 if __name__ == '__main__':
     client_id = "7fced15ff9d1a461f10979c3eae2eca8"
@@ -147,7 +214,11 @@ if __name__ == '__main__':
     id = "3583116148816"
     shop_uri = "tiptopfree.myshopify.com"
     products_api = ProductsApi(access_token=access_token, shop_uri=shop_uri)
-    products_api.get_custom_collections()
+    # 获取所有的类目接口
+    products_api.get_all_collections()
+    # 获取cellection-id 的所有的产品接口
+    products_api.get_collections_products(collection_id="80777805869", limit="250")
+    # products_api.get_custom_collections()
     # products_api.get_all_products(limit="250", since_id="1833170796589")
     # products_api.get_order(create_start_time="2019-05-22T0:0:0-04:00", create_end_time="2019-05-28T0:0:0-04:00", key_word="google", financial_status="paid")
     # products_api.get_shop_info()
