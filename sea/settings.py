@@ -168,7 +168,7 @@ DEFAULT_FROM_EMAIL = "PinBooster Customer Support <service@pinbooster.seamarketi
 EMAIL_USE_SSL = True
 EMAIL_SUBJECT_PREFIX = " "
 # 默认邮件接收方(开发人员，如果代码出现极端异常可进行邮件通知.)
-DEFAULT_TO_EMAILS = ["877252373@qq.com", ]
+DEFAULT_TO_EMAILS = ["alicia.wang@orderplus.com", "daisy.zhou@orderplus.com", "lily.zhang@orderplus.com"]
 
 
 # view 缓存
