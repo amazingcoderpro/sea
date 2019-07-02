@@ -366,7 +366,7 @@ class PublishRecord(models.Model):
     """发布记录表"""
     board = models.ForeignKey(Board, on_delete=models.DO_NOTHING)
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, blank=True, null=True)
-    rule = models.ForeignKey(Rule, on_delete=models.DO_NOTHING)
+    rule = models.ForeignKey(Rule, related_name="publish_record", on_delete=models.DO_NOTHING)
     pin = models.ForeignKey(Pin, on_delete=models.DO_NOTHING, blank=True, null=True)
     state_choices = ((0, '待发布'), (1, '已发布'), (2, '暂停中'), (3, '发布失败'), (4, "已取消"), (5, "已删除"))
     state = models.SmallIntegerField(db_index=True, choices=state_choices, default=0, verbose_name="发布状态")

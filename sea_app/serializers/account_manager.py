@@ -1,3 +1,5 @@
+import datetime
+
 from django.db import transaction
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
@@ -38,8 +40,22 @@ class RuleScheduleSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class PublishRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.PublishRecord
+        depth = 2
+        fields = "__all__"
+
+
+class PublishRecordDSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.PublishRecord
+        fields = "__all__"
+
+
 class RuleSerializer(serializers.ModelSerializer):
     schedule_rule = RuleScheduleSerializer(many=True, read_only=True)
+    publish_record = PublishRecordDSerializer(many=True, read_only=True)
     scan_sign_name = serializers.CharField(source="get_scan_sign_display", read_only=True)
     sale_sign_name = serializers.CharField(source="get_sale_sign_display", read_only=True)
     board_name = serializers.CharField(source="board.name", read_only=True)
@@ -63,24 +79,66 @@ class RuleSerializer(serializers.ModelSerializer):
                   "create_time",
                   "start_time",
                   "end_time",
-                  "state",
                   "board_name",
                   "account_name",
                   "pinterest_account",
                   "product_key",
                   "product_start",
-                  "product_end"
+                  "product_end",
+                  "publish_record"
         )
 
     def create(self, validated_data):
         with transaction.atomic():
             validated_data["user"] = self.context["request"].user
             schedule_rule_list = eval(self.context["request"].data["schedule_rule"])
+            # 对product_list使用uuid去重
+            product_list = eval(self.context["request"].data["product_list"])
+            product_tuple = models.Product.objects.filter(id__in=product_list).values("id", "uuid")
+            product_dict = {}
+            for item in product_tuple:
+                if item["uuid"] not in product_dict:
+                    product_dict.update({item["uuid"]: item["id"]})
+            product_list = list(product_dict.values())
+            # 需要计算规则的开始时间和结束时间
+            publish_list = self.create_publish_record(product_list, schedule_rule_list,
+                        self.context["request"].data["start_time"],self.context["request"].data["end_time"])
+            # validated_data["start_time"] = publish_list[0]["execute_time"].strftime("%Y-%m-%d %H:%M:%S")
+            # validated_data["end_time"] = publish_list[-1]["execute_time"].strftime("%Y-%m-%d %H:%M:%S")
             rule_instance = super(RuleSerializer, self).create(validated_data)
             for row in schedule_rule_list:
                 row["rule"] = rule_instance
                 models.RuleSchedule.objects.create(**row)
+            for row in publish_list:
+                row["rule"] = rule_instance
+                row["board_id"] = self.context["request"].data["board"]
+                row["pinterest_account_id"] = self.context["request"].data["pinterest_account"]
+                row["state"] = 0
+                models.PublishRecord.objects.create(**row)
         return rule_instance
+
+    def create_publish_record(self, product_list, schedule_rule, start_time, end_time):
+        # 生成发布记录列表
+        publish_list = []
+        date = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+        while len(product_list) > 0:
+            if date.weekday() in [item["weekday"] for item in schedule_rule]:
+                for item in schedule_rule:
+                    if item["weekday"] != date.weekday():
+                        continue
+                    for t in item["post_time"]:
+                        # 开始日期第一天已过期的时间不计算
+                        if date.date() == datetime.datetime.today().date() and date.strftime("%H:%M") >= t:
+                            continue
+                        execute_time = datetime.datetime.strptime(date.date().strftime("%Y-%m-%d") + " " + t, "%Y-%m-%d %H:%M")
+                        # 结束日期最后一个时间点到后直接返回
+                        if execute_time.strftime("%Y-%m-%d %H:%M:%S") > end_time:
+                            return sorted(publish_list, key=lambda x: x["execute_time"])
+                        if len(product_list) > 0:
+                            publish_list.append({"execute_time": execute_time, "product_id": product_list.pop()})
+            date = date + datetime.timedelta(days=1)
+        return sorted(publish_list, key=lambda x: x["execute_time"])
+
 
     def update(self, instance, validated_data):
         schedule_rule_list = eval(self.context["request"].data["schedule_rule"])
@@ -102,13 +160,6 @@ class ProductSerializer(serializers.ModelSerializer):
 class ProductHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.ProductHistoryData
-        fields = "__all__"
-
-
-class PublishRecordSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.PublishRecord
-        depth = 2
         fields = "__all__"
 
 

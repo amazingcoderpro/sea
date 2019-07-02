@@ -352,8 +352,8 @@ class PostTimeView(generics.ListCreateAPIView):
             post_time = eval(post_time)
             post_time.pop("every")
             post_time["every"] = {"state": 1,
-                                   "time": self.intersection_for_multi_list(map(lambda x: x["time"] if x["state"] == 1 else [], post_time.values()))}
-            instance.post_time = str(post_time)
+                                   "time": self.intersection_for_multi_list([lambda x: x["time"] if x["state"] == 1 else [], post_time.values()])}
+            instance.post_time = str(post_time).replace("'", '"')
             instance.save()
             return Response({"message": "update account {} post_time success.".format(instance.nickname)}, status=status.HTTP_201_CREATED)
         return Response({"message": "no post_time."}, status=status.HTTP_400_BAD_REQUEST)
