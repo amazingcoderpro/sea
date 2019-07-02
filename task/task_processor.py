@@ -680,9 +680,10 @@ class TaskProcessor:
 
             stores = cursor.fetchall()
 
-            cursor.execute('''select tag from `product_history_data` where id>0''')
-            tags = cursor.fetchall()
-            tag_max = max([tag[0] if tag[0] else 0 for tag in tags])
+            # cursor.execute('''select tag from `product_history_data` where id>0''')
+            # tags = cursor.fetchall()
+            # tag_max = max([tag[0] if tag[0] else 0 for tag in tags])
+            tag_max = 1
 
             # 组装store和collection和product数据，之后放入redis中
             store_collections_dict = {}
@@ -705,10 +706,10 @@ class TaskProcessor:
                 store_collections_dict[store_id]["collections"] = collections
                 # 组装 product
                 store_product_dict[store_id] = {}
-                cursor.execute('''select id, uuid from `product` where store_id=%s''', (store_id))
+                cursor.execute('''select id, uuid, product_category_id from `product` where store_id=%s''', (store_id))
                 exist_products = cursor.fetchall()
                 for exp in exist_products:
-                    store_product_dict[store_id][exp[1]] = exp[0]
+                    store_product_dict[store_id][str(exp[1]) + "_" + str(exp[2])] = exp[0]
 
             # 遍历数据库中的所有store,获取GA数据,拉产品
             new_product = {}
@@ -735,7 +736,7 @@ class TaskProcessor:
                             logger.info("get all products succeed, limit=250, since_id={}, len products={}".format(since_id,len(products)))
                             if not products:
                                 break
-                            for pro in products:
+                            for pro in products[:5]:
                                 pro_uuid = str(pro.get("id", ""))
                                 if pro_uuid in uuid_list:
                                     continue
@@ -772,8 +773,9 @@ class TaskProcessor:
                                     pro_publish_time = None
 
                                 try:
-                                    if pro_uuid in store_product_dict[store_id].keys():
-                                        pro_id = store_product_dict[store_id][pro_uuid]
+                                    uniq_id = str(pro_uuid) + "_" + str(id)
+                                    if uniq_id in store_product_dict[store_id].keys():
+                                        pro_id = store_product_dict[store_id][uniq_id]
                                         logger.info("product is already exist, pro_uuid={}, pro_id={}".format(pro_uuid, pro_id))
                                         cursor.execute('''update `product` set sku=%s, url=%s, name=%s, price=%s, tag=%s, update_time=%s, image_url=%s, thumbnail=%s, publish_time=%s, product_category_id=%s where id=%s''',
                                                        (pro_sku, pro_url, pro_title, pro_price, pro_tags, time_now, pro_image, thumbnail, pro_publish_time, id, pro_id))
@@ -781,20 +783,20 @@ class TaskProcessor:
                                     else:
 
                                         cursor.execute(
-                                            "insert into `product` (`sku`, `url`, `name`, `image_url`,`thumbnail`, `price`, `tag`, `create_time`, `update_time`, `store_id`, `publish_time`, `uuid`, `product_category_id`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                                            "insert into `product` (`sku`, `url`, `name`, `image_url`,`thumbnail`, `price`, `tag`, `create_time`, `update_time`, `store_id`, `publish_time`, `uuid`, `product_category_id`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                                             (pro_sku, pro_url, pro_title, pro_image, thumbnail, pro_price, pro_tags, time_now,
                                              time_now, store_id, pro_publish_time, pro_uuid,id))
                                         pro_id = cursor.lastrowid
                                         conn.commit()
-                                        if str(store_id) not in new_product:
-                                            new_product[str(store_id)] = {id:[(pro_id, pro_title, pro_url)]}
+                                        if store_id not in new_product.keys():
+                                            new_product[store_id] = {id:[(pro_id, pro_title, pro_url)]}
                                         else:
-                                            if id not in new_product[str(store_id)]:
-                                                new_product[str(store_id)]["id"] = [(pro_id, pro_title, pro_url)]
+                                            if id not in new_product[store_id].keys():
+                                                new_product[store_id][id] = [(pro_id, pro_title, pro_url)]
                                             else:
-                                                new_product[str(store_id)][id].append((pro_id, pro_title, pro_url))
+                                                new_product[store_id][id].append((pro_id, pro_title, pro_url))
                                     uuid_list.append(pro_uuid)
-                                except:
+                                except Exception as e:
                                     logger.exception("update product exception.")
 
                                 if not store_view_id:
@@ -803,30 +805,30 @@ class TaskProcessor:
 
                                 # pro_uuid = "google" # 测试
                                 # ga_data = gapi.get_report(key_word=pro_uuid, start_time="1daysAgo", end_time="today")
-                                time_now = datetime.datetime.now()
-                                if reports.get("code", 0) == 1:
-                                    data = reports.get("data", {})
-                                    pro_report = data.get(pro_uuid, {})
-                                    # 这个产品如果没有关联的pin，就不用保存历史数据了
-                                    # 单一产品更新数据时不保存历史数据，tag会错乱
-                                    if pro_report and not url:
-                                        pv = int(pro_report.get("sessions", 0))
-                                        uv = int(pro_report.get("users", 0))
-                                        nuv = int(pro_report.get("new_users", 0))
-                                        hits = int(pro_report.get("hits", 0))
-                                        transactions = int(pro_report.get("transactions", 0))
-                                        transactions_revenue = float(pro_report.get("revenue", 0))
-                                        # cursor.execute('''select product_visitors from `product_history_data` where product_id=%s and tag=%s''', (pro_id, tag_max))
-                                        # visitors = cursor.fetchone()
-                                        # total_visitors = uv
-                                        # if visitors:
-                                        #     total_visitors += visitors[0]
-                                        # 如果全是0就不存了
-                                        if not (pv == 0 and uv == 0 and nuv == 0 and transactions == 0):
-                                            cursor.execute('''insert into `product_history_data` (`product_visitors`, `product_new_visitors`, `product_clicks`, `product_scan`, `product_sales`, `product_revenue`, `update_time`, `product_id`, `store_id`, `tag`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', (uv, nuv, hits, pv, transactions, transactions_revenue, time_now, pro_id, store_id, tag_max+1))
-                                            conn.commit()
-                                else:
-                                    logger.warning("get GA data failed, store view id={}, key_words={}".format(store_view_id, pro_uuid))
+                                # time_now = datetime.datetime.now()
+                                # if reports.get("code", 0) == 1:
+                                #     data = reports.get("data", {})
+                                #     pro_report = data.get(pro_uuid, {})
+                                #     # 这个产品如果没有关联的pin，就不用保存历史数据了
+                                #     # 单一产品更新数据时不保存历史数据，tag会错乱
+                                #     if pro_report and not url:
+                                #         pv = int(pro_report.get("sessions", 0))
+                                #         uv = int(pro_report.get("users", 0))
+                                #         nuv = int(pro_report.get("new_users", 0))
+                                #         hits = int(pro_report.get("hits", 0))
+                                #         transactions = int(pro_report.get("transactions", 0))
+                                #         transactions_revenue = float(pro_report.get("revenue", 0))
+                                #         # cursor.execute('''select product_visitors from `product_history_data` where product_id=%s and tag=%s''', (pro_id, tag_max))
+                                #         # visitors = cursor.fetchone()
+                                #         # total_visitors = uv
+                                #         # if visitors:
+                                #         #     total_visitors += visitors[0]
+                                #         # 如果全是0就不存了
+                                #         if not (pv == 0 and uv == 0 and nuv == 0 and transactions == 0):
+                                #             cursor.execute('''insert into `product_history_data` (`product_visitors`, `product_new_visitors`, `product_clicks`, `product_scan`, `product_sales`, `product_revenue`, `update_time`, `product_id`, `store_id`, `tag`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', (uv, nuv, hits, pv, transactions, transactions_revenue, time_now, pro_id, store_id, tag_max+1))
+                                #             conn.commit()
+                                # else:
+                                #     logger.warning("get GA data failed, store view id={}, key_words={}".format(store_view_id, pro_uuid))
 
                             # 拉完了
                             if len(products) < 250:
@@ -836,7 +838,7 @@ class TaskProcessor:
                                 if not since_id:
                                     break
 
-            self.update_rule(new_product)
+            self.update_rule(cursor, new_product)
         except Exception as e:
             logger.exception("get_products e={}".format(e))
             return False
@@ -846,7 +848,7 @@ class TaskProcessor:
 
         return True
 
-    def update_rule(new_product):
+    def update_rule(self, new_product):
         conn = DBUtil().get_instance()
         cursor = conn.cursor() if conn else None
         if not cursor:
@@ -855,12 +857,12 @@ class TaskProcessor:
             collections_list = value.keys()
             try:
                 cursor.execute(
-                    """select id from user where store_id=%s""",(key,))
+                    """select user_id from store where id=%s""",(key,))
 
-                users = cursor.fetchall()
+                users = cursor.fetchone()
                 end_time = datetime.datetime.now()
                 cursor.execute(
-                    """select id,product_list,product_category_list,product_key, from rule where user_id=%s and product_end is null and end_time<=%s""",(users[0][0],end_time))
+                    """select id,product_list,product_category_list,product_key from rule where user_id=%s and product_end is null and end_time<=%s""",(users[0],end_time))
                 rule_list = cursor.fetchall()
 
                 for rule in rule_list:
@@ -868,19 +870,14 @@ class TaskProcessor:
                     category_list = list(set(eval(product_category_list)) & set(collections_list))
                     for category in category_list:
                         for pro in value[category]:
-                            pass
-                            # if re.match()
+                            if not re.match(r".*" + product_key.replace(" ", ".*") + ".*",pro[1]):
+                                continue
+                            else:
+                                pass
                             # pro_id, pro_title, pro_url
-
-
-
-
             except Exception as e:
                 logger.exception("get_products e={}".format(e))
                 return False
-            finally:
-                cursor.close() if cursor else 0
-                conn.close() if conn else 0
 
 
 
