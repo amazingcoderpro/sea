@@ -311,12 +311,12 @@ class ProductHistoryData(models.Model):
 
 class Rule(models.Model):
     """规则表"""
-    scan_sign_choices = ((0, '='), (1, '>'), (2, '<'))
-    scan_sign = models.SmallIntegerField(choices=scan_sign_choices, default=0, verbose_name="浏览量符号")
-    scan = models.IntegerField(default=0, verbose_name="产品浏览量")
-    sale_sign_choices = ((0, '='), (1, '>'), (2, '<'))
-    sale_sign = models.SmallIntegerField(choices=sale_sign_choices, default=0, verbose_name="销量符号")
-    sale = models.CharField(max_length=255, blank=True, null=True, default=0, verbose_name="产品销量")
+    # scan_sign_choices = ((0, '='), (1, '>'), (2, '<'))
+    # scan_sign = models.SmallIntegerField(choices=scan_sign_choices, default=0, verbose_name="浏览量符号")
+    # scan = models.IntegerField(default=0, verbose_name="产品浏览量")
+    # sale_sign_choices = ((0, '='), (1, '>'), (2, '<'))
+    # sale_sign = models.SmallIntegerField(choices=sale_sign_choices, default=0, verbose_name="销量符号")
+    # sale = models.CharField(max_length=255, blank=True, null=True, default=0, verbose_name="产品销量")
     product_list = models.TextField(default="", verbose_name="产品列表")
     tag = models.CharField(max_length=255, blank=True, null=True, verbose_name="规则标签")
     board = models.ForeignKey(Board, on_delete=models.DO_NOTHING)
@@ -331,11 +331,12 @@ class Rule(models.Model):
     # 增加以下字段用于规则克隆
     pinterest_account = models.ForeignKey(PinterestAccount, on_delete=models.DO_NOTHING, blank=True, null=True)
     product_key = models.CharField(max_length=255, blank=True, null=True, verbose_name="产品搜索关键字")
+    product_category_list = models.TextField(blank=True, null=True, verbose_name="产品类目id_list")
     product_start = models.DateTimeField(verbose_name="产品发布时间起点", blank=True, null=True)
     product_end = models.DateTimeField(verbose_name="产品发布时间终点", blank=True, null=True,)
 
-    rules_type_choices = ((0, 'Short Term Rule'), (1, 'Long Term Rule'))
-    type = models.SmallIntegerField(choices=rules_type_choices, default=0, verbose_name="规则类型")
+    # rules_type_choices = ((0, 'Short Term Rule'), (1, 'Long Term Rule'))
+    # type = models.SmallIntegerField(choices=rules_type_choices, default=0, verbose_name="规则类型")
 
     class Meta:
         # managed = False
