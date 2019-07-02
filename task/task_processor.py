@@ -868,8 +868,9 @@ class TaskProcessor:
                     category_list = list(set(eval(product_category_list)) & set(collections_list))
                     for category in category_list:
                         for pro in value[category]:
-                            if re.match()
-                            pro_id, pro_title, pro_url
+                            pass
+                            # if re.match()
+                            # pro_id, pro_title, pro_url
 
 
 

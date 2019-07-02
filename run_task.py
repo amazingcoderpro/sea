@@ -14,6 +14,6 @@ def main():
 
 
 if __name__ == '__main__':
-    # main()
+    main()
     # TaskProcessor().update_shopify_collections()
-    TaskProcessor().update_shopify_product()
+    #TaskProcessor().update_shopify_product()
