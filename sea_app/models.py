@@ -150,7 +150,7 @@ class Product(models.Model):
 
     class Meta:
         # managed = False
-        unique_together = ("product_category_id", "uuid")
+        unique_together = ("product_category", "uuid")
         db_table = 'product'
         ordering = ["-id"]
 

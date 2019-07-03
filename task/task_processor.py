@@ -854,81 +854,41 @@ class TaskProcessor:
         if not cursor:
             return False
 
-        # for key,value in new_product.items():  # key: collection_id  value: 新增产品列表
-        #     collections_list = value.keys()    # collection列表
-        #     try:
-                # cursor.execute(
-                #     """select user_id from store where id=%s""",(key,))
-                #
-                # users = cursor.fetchone()
-                #
-                # cursor.execute(
-                #     """select id,product_category_list,product_key from rule where user_id=%s and product_end is null and product_category_list is not null""",(users[0]))
-                # rule_list = cursor.fetchall()
-                #
-                # new_product_rule = {}
-                # for rule in rule_list:
-                #     rule_id, product_category_list, product_key = rule
-                #     category_list = list(set(eval(product_category_list)) & set(collections_list))
-                #     for category in category_list:
-                #         if not product_key:
-                #             if rule_id not in new_product_rule.keys():
-                #                 new_product_rule[rule_id] = value[category]
-                #             else:
-                #                 new_product_rule[rule_id] = new_product_rule[rule_id] + value[category]
-                #         else:
-                #             for pro in value[category]:
-                #                 re_product_key = ".*" + product_key.replace(" ", ".*") + ".*"
-                #                 if not re.match(re_product_key, pro[1]):
-                #                     continue
-                #                 else:
-                #                     if rule_id not in new_product_rule.keys():
-                #                         new_product_rule[rule_id] = [pro]
-                #                     else:
-                #                         new_product_rule[rule_id].append(pro)
+        for key,value in new_product.items():  # key: collection_id  value: 新增产品列表
+            collections_list = value.keys()    # collection列表
+            try:
+                cursor.execute(
+                    """select user_id from store where id=%s""",(key,))
 
-                new_product_rule= {12: [
-                    (1, '2018 Sexy Backless Bandage One-Piece', 'https://www.tiptopfree.com/products/sw6baa4fb5fde2')],
-                 13: [(11, 'Chest Knotted Openwork Print Ruffled Bikini',
-                       'https://www.tiptopfree.com/products/788bc915a0e9'), (
-                      12, 'Collarless Chest Knotted Zigzag Striped Bikini',
-                      'https://www.tiptopfree.com/products/0549c6e1b0ad')],
-                 14: [(1, '2018 Sexy Backless Bandage One-Piece', 'https://www.tiptopfree.com/products/sw6baa4fb5fde2'),
-                      (2, 'Animal Printed Flat Peep Toe Casual Travel Flat Sandals',
-                       'https://www.tiptopfree.com/products/65e877e38760'),
-                      (3, 'Boho Vertical Stripe Wrap Dresses', 'https://www.tiptopfree.com/products/7f8e5fcfd923'),
-                      (4, 'Bow Tie Bikini', 'https://www.tiptopfree.com/products/bow-tie-bikini'), (
-                      5, 'Collarless  Feather  Long Sleeve Cardigans',
-                      'https://www.tiptopfree.com/products/2e85d9091d43'), (
-                      6, 'Asymmetric Hem Plain Short Sleeve Skater Dresses',
-                      'https://www.tiptopfree.com/products/23d3f387cec9'), (
-                      7, 'Backless Printed Sleeveless Bodycon Dresses',
-                      'https://www.tiptopfree.com/products/a48c722e4958'),
-                      (8, 'Belt Plain Shift Dresses', 'https://www.tiptopfree.com/products/315a18f26450'), (
-                      9, 'Black Open Shoulder Lantern Sleeve Bodycon Dresses',
-                      'https://www.tiptopfree.com/products/lv_1565615909'),
-                      (10, 'Boat Neck Color Block Casual Dress', 'https://www.tiptopfree.com/products/50221fef8387'), (
-                      11, 'Chest Knotted Openwork Print Ruffled Bikini',
-                      'https://www.tiptopfree.com/products/788bc915a0e9'), (
-                      12, 'Collarless Chest Knotted Zigzag Striped Bikini',
-                      'https://www.tiptopfree.com/products/0549c6e1b0ad'),
-                      (13, 'Collarless Striped Bikini', 'https://www.tiptopfree.com/products/5efd6a137be5'),
-                      (14, 'Crochet Plain Bikini', 'https://www.tiptopfree.com/products/0827fe9147de'),
-                      (15, 'Geometric Print Sexy Bikini', 'https://www.tiptopfree.com/products/0f609060e0e1')]}
+                users = cursor.fetchone()
 
+                cursor.execute(
+                    """select id,product_category_list,product_key from rule where user_id=%s and product_end is null and product_category_list is not null""",(users[0]))
+                rule_list = cursor.fetchall()
 
-
-
-
-
-
-
-
+                new_product_rule = {}
+                for rule in rule_list:
+                    rule_id, product_category_list, product_key = rule
+                    category_list = list(set(eval(product_category_list)) & set(collections_list))
+                    for category in category_list:
+                        if not product_key:
+                            if rule_id not in new_product_rule.keys():
+                                new_product_rule[rule_id] = value[category]
+                            else:
+                                new_product_rule[rule_id] = new_product_rule[rule_id] + value[category]
+                        else:
+                            for pro in value[category]:
+                                re_product_key = ".*" + product_key.replace(" ", ".*") + ".*"
+                                if not re.match(re_product_key, pro[1]):
+                                    continue
+                                else:
+                                    if rule_id not in new_product_rule.keys():
+                                        new_product_rule[rule_id] = [pro]
+                                    else:
+                                        new_product_rule[rule_id].append(pro)
             except Exception as e:
                 logger.exception("get_products e={}".format(e))
                 return False
-
-
 
 
     def analyze_rule(self):
