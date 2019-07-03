@@ -88,7 +88,6 @@ class TaskProcessor:
         # 定时更新shopify数据
         logger.info("start_job_update_shopify_data")
         # self.update_shopify_data()
-        # self.shopify_job = self.bk_scheduler.add_job(self.update_shopify_data, 'interval', seconds=interval)
         self.shopify_job = self.bk_scheduler.add_job(self.update_shopify_data, 'cron', day_of_week="*", hour=1, minute=30)
 
     def start_job_update_shopify_collections(self, interval=7200):
@@ -101,9 +100,8 @@ class TaskProcessor:
     def start_job_update_shopify_product(self,interval=7200):
         # 定时更新shopify product
         logger.info("start_job_update_shopify_product")
-        self.update_shopify_product()
-        self.shopify_product_job = self.bk_scheduler.add_job(self.update_shopify_product, 'cron',
-                                                                 day_of_week="*", hour=1,)
+        #self.update_shopify_product()
+        self.shopify_product_job = self.bk_scheduler.add_job(self.update_shopify_product, 'cron', day_of_week="*", hour=1,)
 
     def start_job_update_new(self, interval=120):
         def update_new():
@@ -682,8 +680,10 @@ class TaskProcessor:
 
             cursor.execute('''select tag from `product_history_data` where id>0''')
             tags = cursor.fetchall()
-            tag_max = max([tag[0] if tag[0] else 0 for tag in tags])
-
+            if not tags:
+                tag_max = 1
+            else:
+                tag_max = max([tag[0] if tag[0] else 0 for tag in tags])
 
             # 组装store和collection和product数据，之后放入redis中
             store_collections_dict = {}
@@ -715,6 +715,15 @@ class TaskProcessor:
             new_product = {}
             for key, value in store_collections_dict.items():
                 store_id, store_uri, store_token, store_name, store_url, user_id, store_view_id = value["store"]
+
+                cursor.execute(
+                    """select user_id from store where id=%s""", (store_id))
+                user_id = cursor.fetchone()[0]
+
+                cursor.execute(
+                    """select id from rule where id=%s""",(user_id))
+                is_user = cursor.fetchall()
+
                 for collection in value["collections"]:
                     id, collection_title, collection_id = collection
                     # 获取该店铺的ga数据
@@ -736,7 +745,7 @@ class TaskProcessor:
                             logger.info("get all products succeed, limit=250, since_id={}, len products={}".format(since_id,len(products)))
                             if not products:
                                 break
-                            for pro in products[:5]:
+                            for pro in products:
                                 pro_uuid = str(pro.get("id", ""))
                                 if pro_uuid in uuid_list:
                                     continue
@@ -788,6 +797,8 @@ class TaskProcessor:
                                              time_now, store_id, pro_publish_time, pro_uuid,id))
                                         pro_id = cursor.lastrowid
                                         conn.commit()
+                                        if not is_user:
+                                            continue
                                         if store_id not in new_product.keys():
                                             new_product[store_id] = {id:[(pro_id, pro_title, pro_url)]}
                                         else:
@@ -838,7 +849,7 @@ class TaskProcessor:
                                 if not since_id:
                                     break
 
-            self.update_rule(cursor, new_product)
+            self.update_rule(conn, cursor, new_product)
         except Exception as e:
             logger.exception("get_products e={}".format(e))
             return False
@@ -848,109 +859,64 @@ class TaskProcessor:
 
         return True
 
-    def update_rule(self, new_product):
-        conn = DBUtil().get_instance()
-        cursor = conn.cursor() if conn else None
-        if not cursor:
-            return False
-
-        # for key,value in new_product.items():  # key: collection_id  value: 新增产品列表
-        #     collections_list = value.keys()    # collection列表
-        #     try:
-                # cursor.execute(
-                #     """select user_id from store where id=%s""",(key,))
-                #
-                # users = cursor.fetchone()
-                #
-                # cursor.execute(
-                #     """select id,product_category_list,product_key from rule where user_id=%s and product_end is null and product_category_list is not null""",(users[0]))
-                # rule_list = cursor.fetchall()
-                #
-                # new_product_rule = {}
-                # for rule in rule_list:
-                #     rule_id, product_category_list, product_key = rule
-                #     category_list = list(set(eval(product_category_list)) & set(collections_list))
-                #     for category in category_list:
-                #         if not product_key:
-                #             if rule_id not in new_product_rule.keys():
-                #                 new_product_rule[rule_id] = value[category]
-                #             else:
-                #                 new_product_rule[rule_id] = new_product_rule[rule_id] + value[category]
-                #         else:
-                #             for pro in value[category]:
-                #                 re_product_key = ".*" + product_key.replace(" ", ".*") + ".*"
-                #                 if not re.match(re_product_key, pro[1]):
-                #                     continue
-                #                 else:
-                #                     if rule_id not in new_product_rule.keys():
-                #                         new_product_rule[rule_id] = [pro]
-                #                     else:
-                #                         new_product_rule[rule_id].append(pro)
-
-        new_product_rule = {12: [(1, '2018 Sexy Backless Bandage One-Piece', 'https://www.tiptopfree.com/products/sw6baa4fb5fde2')],
-                            13: [(11, 'Chest Knotted Openwork Print Ruffled Bikini','https://www.tiptopfree.com/products/788bc915a0e9'),
-                                 (12, 'Collarless Chest Knotted Zigzag Striped Bikini','https://www.tiptopfree.com/products/0549c6e1b0ad')],
-         14: [(1, '2018 Sexy Backless Bandage One-Piece', 'https://www.tiptopfree.com/products/sw6baa4fb5fde2'),
-              (2, 'Animal Printed Flat Peep Toe Casual Travel Flat Sandals',
-               'https://www.tiptopfree.com/products/65e877e38760'),
-              (3, 'Boho Vertical Stripe Wrap Dresses', 'https://www.tiptopfree.com/products/7f8e5fcfd923'),
-              (4, 'Bow Tie Bikini', 'https://www.tiptopfree.com/products/bow-tie-bikini'), (
-              5, 'Collarless  Feather  Long Sleeve Cardigans',
-              'https://www.tiptopfree.com/products/2e85d9091d43'), (
-              6, 'Asymmetric Hem Plain Short Sleeve Skater Dresses',
-              'https://www.tiptopfree.com/products/23d3f387cec9'), (
-              7, 'Backless Printed Sleeveless Bodycon Dresses',
-              'https://www.tiptopfree.com/products/a48c722e4958'),
-              (8, 'Belt Plain Shift Dresses', 'https://www.tiptopfree.com/products/315a18f26450'), (
-              9, 'Black Open Shoulder Lantern Sleeve Bodycon Dresses',
-              'https://www.tiptopfree.com/products/lv_1565615909'),
-              (10, 'Boat Neck Color Block Casual Dress', 'https://www.tiptopfree.com/products/50221fef8387'), (
-              11, 'Chest Knotted Openwork Print Ruffled Bikini',
-              'https://www.tiptopfree.com/products/788bc915a0e9'), (
-              12, 'Collarless Chest Knotted Zigzag Striped Bikini',
-              'https://www.tiptopfree.com/products/0549c6e1b0ad'),
-              (13, 'Collarless Striped Bikini', 'https://www.tiptopfree.com/products/5efd6a137be5'),
-              (14, 'Crochet Plain Bikini', 'https://www.tiptopfree.com/products/0827fe9147de'),
-              (15, 'Geometric Print Sexy Bikini', 'https://www.tiptopfree.com/products/0f609060e0e1')]}
-        for rule, product in new_product_rule.items():
-
-            new_product_list = [item[0] for item in product]
+    def update_rule(self,conn, cursor, new_product):
+        for key,value in new_product.items():  # key: collection_id  value: 新增产品列表
+            collections_list = value.keys()    # collection列表
             try:
-                # 将每一个规则新增的产品更新到rule表里
-                cursor.execute("""select `product_list`,`pinterest_account_id`,`board_id`,`end_time` from rule where id=%s""", (rule,))
-                old_product_list, pinterest_account, board, end_time = cursor.fetchone()
-                product_list = eval(old_product_list) + new_product_list
-                cursor.execute("""update rule set `product_list`=%s,`update_time`=%s where id=%s""", (str(product_list), datetime.datetime.now(), rule))
-                # 使用新产品结合规则列表创建新的发布记录
-                # 获取相关信息，lastest execute_time
-                cursor.execute("""select `execute_time` from publish_record where rule_id=%s order by -execute_time""", (rule,))
-                lastest_execute_time = cursor.fetchone()[0]
-                # 组装schedule_rule: [{"weekday":0,"start_time":"00:00:00","end_time":"23:59:59","post_time":["08:00","10:00"]}]
-                cursor.execute("""select `weekday`,`post_time` from rule_schedule where rule_id=%s order by weekday""", (rule,))
-                schedule_rule = []
-                for item in cursor.fetchall():
-                    schedule_rule.append({"weekday":item[0],"start_time":"00:00:00","end_time":"23:59:59","post_time":eval(item[1]) if item[1] else []})
-                publish_list = self.create_publish_record_list(new_product_list, schedule_rule, lastest_execute_time, end_time)
-                for row in publish_list:
-                    cursor.execute("""insert into publish_record (`board_id`,`pinterest_account_id`,`rule_id`,`product_id`,`execute_time`,`state`,`create_time`,`update_time`) values (%s,%s,%s,%s,%s,%s,%s,%s)""",
-                                   (board, pinterest_account, rule, row["product_id"], row["execute_time"], 0, datetime.datetime.now(), datetime.datetime.now()))
-                conn.commit()
+                cursor.execute(
+                    """select user_id from store where id=%s""",(key,))
+
+                users = cursor.fetchone()
+
+                cursor.execute(
+                    """select id,product_category_list,product_key from rule where user_id=%s and product_end is null and product_category_list is not null""",(users[0]))
+                rule_list = cursor.fetchall()
+
+                new_product_rule = {}
+                for rule in rule_list:
+                    rule_id, product_category_list, product_key = rule
+                    category_list = list(set(eval(product_category_list)) & set(collections_list))
+                    for category in category_list:
+                        if not product_key:
+                            if rule_id not in new_product_rule.keys():
+                                new_product_rule[rule_id] = value[category]
+                            else:
+                                new_product_rule[rule_id] = new_product_rule[rule_id] + value[category]
+                        else:
+                            for pro in value[category]:
+                                re_product_key = ".*" + product_key.replace(" ", ".*") + ".*"
+                                if not re.match(re_product_key, pro[1]):
+                                    continue
+                                else:
+                                    if rule_id not in new_product_rule.keys():
+                                        new_product_rule[rule_id] = [pro]
+                                    else:
+                                        new_product_rule[rule_id].append(pro)
+
+                for rule, product in new_product_rule.items():
+                    new_product_list = [item[0] for item in product]
+                    # 将每一个规则新增的产品更新到rule表里
+                    cursor.execute("""select `product_list`,`pinterest_account_id`,`board_id`,`end_time` from rule where id=%s""", (rule,))
+                    old_product_list, pinterest_account, board, end_time = cursor.fetchone()
+                    product_list = eval(old_product_list) + new_product_list
+                    cursor.execute("""update rule set `product_list`=%s,`update_time`=%s where id=%s""", (str(product_list), datetime.datetime.now(), rule))
+                    # 使用新产品结合规则列表创建新的发布记录
+                    # 获取相关信息，lastest execute_time
+                    cursor.execute("""select `execute_time` from publish_record where rule_id=%s order by -execute_time""", (rule,))
+                    lastest_execute_time = cursor.fetchone()[0]
+                    # 组装schedule_rule: [{"weekday":0,"start_time":"00:00:00","end_time":"23:59:59","post_time":["08:00","10:00"]}]
+                    cursor.execute("""select `weekday`,`post_time` from rule_schedule where rule_id=%s order by weekday""", (rule,))
+                    schedule_rule = []
+                    for item in cursor.fetchall():
+                        schedule_rule.append({"weekday":item[0],"start_time":"00:00:00","end_time":"23:59:59","post_time":eval(item[1]) if item[1] else []})
+                    publish_list = self.create_publish_record_list(new_product_list, schedule_rule, lastest_execute_time, end_time)
+                    for row in publish_list:
+                        cursor.execute("""insert into publish_record (`board_id`,`pinterest_account_id`,`rule_id`,`product_id`,`execute_time`,`state`,`create_time`,`update_time`) values (%s,%s,%s,%s,%s,%s,%s,%s)""",
+                                       (board, pinterest_account, rule, row["product_id"], row["execute_time"], 0, datetime.datetime.now(), datetime.datetime.now()))
+                    conn.commit()
             except Exception as e:
                 logger.exception("get_products e={}".format(e))
                 return False
-
-
-
-
-
-
-
-
-
-            # except Exception as e:
-            #     logger.exception("get_products e={}".format(e))
-            #     return False
-
 
     def create_publish_record_list(self, product_list, schedule_rule, start_time, end_time):
         # 生成发布记录列表
