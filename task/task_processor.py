@@ -204,8 +204,11 @@ class TaskProcessor:
 
             cursor.execute('''select tag from `pinterest_history_data` where id>0''')
             tags = cursor.fetchall()
-            tag_list = [tag[0] if tag[0] else 0 for tag in tags]
-            tag_max = max(tag_list)
+            if not tags:
+                tag_max = 1
+            else:
+                tag_list = [tag[0] if tag[0] else 0 for tag in tags]
+                tag_max = max(tag_list)
 
             for account in accounts:
                 account_id, token, account_uuid, nickname = account
