@@ -56,8 +56,8 @@ class PublishRecordDSerializer(serializers.ModelSerializer):
 class RuleSerializer(serializers.ModelSerializer):
     schedule_rule = RuleScheduleSerializer(many=True, read_only=True)
     publish_record = PublishRecordDSerializer(many=True, read_only=True)
-    scan_sign_name = serializers.CharField(source="get_scan_sign_display", read_only=True)
-    sale_sign_name = serializers.CharField(source="get_sale_sign_display", read_only=True)
+    # scan_sign_name = serializers.CharField(source="get_scan_sign_display", read_only=True)
+    # sale_sign_name = serializers.CharField(source="get_sale_sign_display", read_only=True)
     board_name = serializers.CharField(source="board.name", read_only=True)
     account_name = serializers.CharField(source="board.pinterest_account.account", read_only=True)
 
@@ -65,12 +65,13 @@ class RuleSerializer(serializers.ModelSerializer):
         model = models.Rule
         # depth = 2
         fields = ("id",
-                  "scan_sign",
-                  "scan_sign_name",
-                  "sale_sign_name",
-                  "scan",
-                  "sale_sign",
-                  "sale",
+                  # "scan_sign",
+                  # "scan_sign_name",
+                  # "sale_sign_name",
+                  # "scan",
+                  # "sale_sign",
+                  # "sale",
+                  "product_category_list",
                   "product_list",
                   "tag",
                   "state",
@@ -100,11 +101,8 @@ class RuleSerializer(serializers.ModelSerializer):
                 if item["uuid"] not in product_dict:
                     product_dict.update({item["uuid"]: item["id"]})
             product_list = list(product_dict.values())
-            # 需要计算规则的开始时间和结束时间
             publish_list = self.create_publish_record(product_list, schedule_rule_list,
                         self.context["request"].data["start_time"],self.context["request"].data["end_time"])
-            # validated_data["start_time"] = publish_list[0]["execute_time"].strftime("%Y-%m-%d %H:%M:%S")
-            # validated_data["end_time"] = publish_list[-1]["execute_time"].strftime("%Y-%m-%d %H:%M:%S")
             rule_instance = super(RuleSerializer, self).create(validated_data)
             for row in schedule_rule_list:
                 row["rule"] = rule_instance

@@ -110,7 +110,6 @@ class ProductCountFilter(BaseFilterBackend):
         name = request.query_params.get("product__name", '')
         name = ".*" + name.replace(" ", ".*") + ".*"
         filte_kwargs["name__iregex"] = name
-        print("###", filte_kwargs)
         queryset = queryset.filter(**filte_kwargs)
 
         return queryset
