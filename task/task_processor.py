@@ -887,49 +887,94 @@ class TaskProcessor:
                 #                     else:
                 #                         new_product_rule[rule_id].append(pro)
 
-                new_product_rule= {12: [
-                    (1, '2018 Sexy Backless Bandage One-Piece', 'https://www.tiptopfree.com/products/sw6baa4fb5fde2')],
-                 13: [(11, 'Chest Knotted Openwork Print Ruffled Bikini',
-                       'https://www.tiptopfree.com/products/788bc915a0e9'), (
-                      12, 'Collarless Chest Knotted Zigzag Striped Bikini',
-                      'https://www.tiptopfree.com/products/0549c6e1b0ad')],
-                 14: [(1, '2018 Sexy Backless Bandage One-Piece', 'https://www.tiptopfree.com/products/sw6baa4fb5fde2'),
-                      (2, 'Animal Printed Flat Peep Toe Casual Travel Flat Sandals',
-                       'https://www.tiptopfree.com/products/65e877e38760'),
-                      (3, 'Boho Vertical Stripe Wrap Dresses', 'https://www.tiptopfree.com/products/7f8e5fcfd923'),
-                      (4, 'Bow Tie Bikini', 'https://www.tiptopfree.com/products/bow-tie-bikini'), (
-                      5, 'Collarless  Feather  Long Sleeve Cardigans',
-                      'https://www.tiptopfree.com/products/2e85d9091d43'), (
-                      6, 'Asymmetric Hem Plain Short Sleeve Skater Dresses',
-                      'https://www.tiptopfree.com/products/23d3f387cec9'), (
-                      7, 'Backless Printed Sleeveless Bodycon Dresses',
-                      'https://www.tiptopfree.com/products/a48c722e4958'),
-                      (8, 'Belt Plain Shift Dresses', 'https://www.tiptopfree.com/products/315a18f26450'), (
-                      9, 'Black Open Shoulder Lantern Sleeve Bodycon Dresses',
-                      'https://www.tiptopfree.com/products/lv_1565615909'),
-                      (10, 'Boat Neck Color Block Casual Dress', 'https://www.tiptopfree.com/products/50221fef8387'), (
-                      11, 'Chest Knotted Openwork Print Ruffled Bikini',
-                      'https://www.tiptopfree.com/products/788bc915a0e9'), (
-                      12, 'Collarless Chest Knotted Zigzag Striped Bikini',
-                      'https://www.tiptopfree.com/products/0549c6e1b0ad'),
-                      (13, 'Collarless Striped Bikini', 'https://www.tiptopfree.com/products/5efd6a137be5'),
-                      (14, 'Crochet Plain Bikini', 'https://www.tiptopfree.com/products/0827fe9147de'),
-                      (15, 'Geometric Print Sexy Bikini', 'https://www.tiptopfree.com/products/0f609060e0e1')]}
+        new_product_rule = {12: [(1, '2018 Sexy Backless Bandage One-Piece', 'https://www.tiptopfree.com/products/sw6baa4fb5fde2')],
+                            13: [(11, 'Chest Knotted Openwork Print Ruffled Bikini','https://www.tiptopfree.com/products/788bc915a0e9'),
+                                 (12, 'Collarless Chest Knotted Zigzag Striped Bikini','https://www.tiptopfree.com/products/0549c6e1b0ad')],
+         14: [(1, '2018 Sexy Backless Bandage One-Piece', 'https://www.tiptopfree.com/products/sw6baa4fb5fde2'),
+              (2, 'Animal Printed Flat Peep Toe Casual Travel Flat Sandals',
+               'https://www.tiptopfree.com/products/65e877e38760'),
+              (3, 'Boho Vertical Stripe Wrap Dresses', 'https://www.tiptopfree.com/products/7f8e5fcfd923'),
+              (4, 'Bow Tie Bikini', 'https://www.tiptopfree.com/products/bow-tie-bikini'), (
+              5, 'Collarless  Feather  Long Sleeve Cardigans',
+              'https://www.tiptopfree.com/products/2e85d9091d43'), (
+              6, 'Asymmetric Hem Plain Short Sleeve Skater Dresses',
+              'https://www.tiptopfree.com/products/23d3f387cec9'), (
+              7, 'Backless Printed Sleeveless Bodycon Dresses',
+              'https://www.tiptopfree.com/products/a48c722e4958'),
+              (8, 'Belt Plain Shift Dresses', 'https://www.tiptopfree.com/products/315a18f26450'), (
+              9, 'Black Open Shoulder Lantern Sleeve Bodycon Dresses',
+              'https://www.tiptopfree.com/products/lv_1565615909'),
+              (10, 'Boat Neck Color Block Casual Dress', 'https://www.tiptopfree.com/products/50221fef8387'), (
+              11, 'Chest Knotted Openwork Print Ruffled Bikini',
+              'https://www.tiptopfree.com/products/788bc915a0e9'), (
+              12, 'Collarless Chest Knotted Zigzag Striped Bikini',
+              'https://www.tiptopfree.com/products/0549c6e1b0ad'),
+              (13, 'Collarless Striped Bikini', 'https://www.tiptopfree.com/products/5efd6a137be5'),
+              (14, 'Crochet Plain Bikini', 'https://www.tiptopfree.com/products/0827fe9147de'),
+              (15, 'Geometric Print Sexy Bikini', 'https://www.tiptopfree.com/products/0f609060e0e1')]}
+        for rule, product in new_product_rule.items():
 
-
-
-
-
-
-
-
-
+            new_product_list = [item[0] for item in product]
+            try:
+                # 将每一个规则新增的产品更新到rule表里
+                cursor.execute("""select `product_list`,`pinterest_account_id`,`board_id`,`end_time` from rule where id=%s""", (rule,))
+                old_product_list, pinterest_account, board, end_time = cursor.fetchone()
+                product_list = eval(old_product_list) + new_product_list
+                cursor.execute("""update rule set `product_list`=%s,`update_time`=%s where id=%s""", (str(product_list), datetime.datetime.now(), rule))
+                # 使用新产品结合规则列表创建新的发布记录
+                # 获取相关信息，lastest execute_time
+                cursor.execute("""select `execute_time` from publish_record where rule_id=%s order by -execute_time""", (rule,))
+                lastest_execute_time = cursor.fetchone()[0]
+                # 组装schedule_rule: [{"weekday":0,"start_time":"00:00:00","end_time":"23:59:59","post_time":["08:00","10:00"]}]
+                cursor.execute("""select `weekday`,`post_time` from rule_schedule where rule_id=%s order by weekday""", (rule,))
+                schedule_rule = []
+                for item in cursor.fetchall():
+                    schedule_rule.append({"weekday":item[0],"start_time":"00:00:00","end_time":"23:59:59","post_time":eval(item[1]) if item[1] else []})
+                publish_list = self.create_publish_record_list(new_product_list, schedule_rule, lastest_execute_time, end_time)
+                for row in publish_list:
+                    cursor.execute("""insert into publish_record (`board_id`,`pinterest_account_id`,`rule_id`,`product_id`,`execute_time`,`state`,`create_time`,`update_time`) values (%s,%s,%s,%s,%s,%s,%s,%s)""",
+                                   (board, pinterest_account, rule, row["product_id"], row["execute_time"], 0, datetime.datetime.now(), datetime.datetime.now()))
+                conn.commit()
             except Exception as e:
                 logger.exception("get_products e={}".format(e))
                 return False
 
 
 
+
+
+
+
+
+
+            # except Exception as e:
+            #     logger.exception("get_products e={}".format(e))
+            #     return False
+
+
+    def create_publish_record_list(self, product_list, schedule_rule, start_time, end_time):
+        # 生成发布记录列表
+        publish_list = []
+        date = start_time if start_time >= datetime.datetime.now() else datetime.datetime.now()
+        while len(product_list) > 0:
+            if date > end_time or end_time < datetime.datetime.now():
+                break
+            if date.weekday() in [item["weekday"] for item in schedule_rule]:
+                for item in schedule_rule:
+                    if item["weekday"] != date.weekday():
+                        continue
+                    for t in item["post_time"]:
+                        # 开始日期第一天已过期的时间不计算
+                        if date.date() == datetime.datetime.today().date() and date.strftime("%H:%M") >= t:
+                            continue
+                        execute_time = datetime.datetime.strptime(date.date().strftime("%Y-%m-%d") + " " + t, "%Y-%m-%d %H:%M")
+                        # 结束日期最后一个时间点到后直接返回
+                        if execute_time > end_time:
+                            return sorted(publish_list, key=lambda x: x["execute_time"])
+                        if len(product_list) > 0:
+                            publish_list.append({"execute_time": execute_time, "product_id": product_list.pop()})
+            date = date + datetime.timedelta(days=1)
+        return sorted(publish_list, key=lambda x: x["execute_time"])
 
     def analyze_rule(self):
         """

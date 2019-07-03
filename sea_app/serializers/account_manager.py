@@ -135,6 +135,8 @@ class RuleSerializer(serializers.ModelSerializer):
                         if len(product_list) > 0:
                             publish_list.append({"execute_time": execute_time, "product_id": product_list.pop()})
             date = date + datetime.timedelta(days=1)
+            if date.strftime("%Y-%m-%d %H:%M:%S") > end_time:
+                break
         return sorted(publish_list, key=lambda x: x["execute_time"])
 
 

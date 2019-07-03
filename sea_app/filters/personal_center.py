@@ -77,7 +77,7 @@ class SelectPostTimeFilter(BaseFilterBackend):
         for item in total_time.values():
             if item["state"] == 1:
                 item_list.append([t["T"] for t in item["time"]])
-        total_time["every"] = {"state": 1, "time": item_list}
+        total_time["every"] = {"state": 1, "time": self.intersection_for_multi_list(item_list)}
         return total_time
 
     def intersection_for_multi_list(self, item_list):
