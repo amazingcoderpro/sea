@@ -88,7 +88,6 @@ class TaskProcessor:
         # 定时更新shopify数据
         logger.info("start_job_update_shopify_data")
         # self.update_shopify_data()
-        # self.shopify_job = self.bk_scheduler.add_job(self.update_shopify_data, 'interval', seconds=interval)
         self.shopify_job = self.bk_scheduler.add_job(self.update_shopify_data, 'cron', day_of_week="*", hour=1, minute=30)
 
     def start_job_update_shopify_collections(self, interval=7200):
@@ -101,9 +100,8 @@ class TaskProcessor:
     def start_job_update_shopify_product(self,interval=7200):
         # 定时更新shopify product
         logger.info("start_job_update_shopify_product")
-        self.update_shopify_product()
-        self.shopify_product_job = self.bk_scheduler.add_job(self.update_shopify_product, 'cron',
-                                                                 day_of_week="*", hour=1,)
+        #self.update_shopify_product()
+        self.shopify_product_job = self.bk_scheduler.add_job(self.update_shopify_product, 'cron', day_of_week="*", hour=1,)
 
     def start_job_update_new(self, interval=120):
         def update_new():
@@ -682,8 +680,10 @@ class TaskProcessor:
 
             cursor.execute('''select tag from `product_history_data` where id>0''')
             tags = cursor.fetchall()
-            tag_max = max([tag[0] if tag[0] else 0 for tag in tags])
-
+            if not tags:
+                tag_max = 1
+            else:
+                tag_max = max([tag[0] if tag[0] else 0 for tag in tags])
 
             # 组装store和collection和product数据，之后放入redis中
             store_collections_dict = {}
@@ -715,6 +715,15 @@ class TaskProcessor:
             new_product = {}
             for key, value in store_collections_dict.items():
                 store_id, store_uri, store_token, store_name, store_url, user_id, store_view_id = value["store"]
+
+                cursor.execute(
+                    """select user_id from store where id=%s""", (store_id))
+                user_id = cursor.fetchone()[0]
+
+                cursor.execute(
+                    """select id from rule where id=%s""",(user_id))
+                is_user = cursor.fetchall()
+
                 for collection in value["collections"]:
                     id, collection_title, collection_id = collection
                     # 获取该店铺的ga数据
@@ -736,7 +745,7 @@ class TaskProcessor:
                             logger.info("get all products succeed, limit=250, since_id={}, len products={}".format(since_id,len(products)))
                             if not products:
                                 break
-                            for pro in products[:5]:
+                            for pro in products:
                                 pro_uuid = str(pro.get("id", ""))
                                 if pro_uuid in uuid_list:
                                     continue
@@ -788,6 +797,8 @@ class TaskProcessor:
                                              time_now, store_id, pro_publish_time, pro_uuid,id))
                                         pro_id = cursor.lastrowid
                                         conn.commit()
+                                        if not is_user:
+                                            continue
                                         if store_id not in new_product.keys():
                                             new_product[store_id] = {id:[(pro_id, pro_title, pro_url)]}
                                         else:
@@ -838,7 +849,7 @@ class TaskProcessor:
                                 if not since_id:
                                     break
 
-            self.update_rule(cursor, new_product)
+            #self.update_rule(cursor, new_product)
         except Exception as e:
             logger.exception("get_products e={}".format(e))
             return False
