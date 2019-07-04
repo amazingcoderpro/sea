@@ -93,7 +93,7 @@ class ProductCountFilter(BaseFilterBackend):
     filter_keys = {
         "publish_begin_time": "publish_time__gte",
         "publish_end_time": "publish_time__lte",
-        "product_category_list": "product_category__in"
+        "product_category_list": "product_category_id__in"
     }
 
     def filter_queryset(self, request, queryset, view):
