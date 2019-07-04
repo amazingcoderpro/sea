@@ -103,7 +103,8 @@ class ProductCountFilter(BaseFilterBackend):
             if val is not '':
                 if filter_key == "product_category_list":
                     filte_kwargs[self.filter_keys[filter_key]] = eval(val)
-                filte_kwargs[self.filter_keys[filter_key]] = val
+                else:
+                    filte_kwargs[self.filter_keys[filter_key]] = val
         if not filte_kwargs:
             return []
 
