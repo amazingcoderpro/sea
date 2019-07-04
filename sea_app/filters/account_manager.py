@@ -103,13 +103,15 @@ class ProductCountFilter(BaseFilterBackend):
             if val is not '':
                 if filter_key == "product_category_list":
                     filte_kwargs[self.filter_keys[filter_key]] = eval(val)
+                    continue
                 filte_kwargs[self.filter_keys[filter_key]] = val
         if not filte_kwargs:
             return []
 
-        name = request.query_params.get("product__name", '')
+        name = request.query_params.get("name", '')
         name = ".*" + name.replace(" ", ".*") + ".*"
         filte_kwargs["name__iregex"] = name
+        print(filte_kwargs)
         queryset = queryset.filter(**filte_kwargs)
 
         return queryset
