@@ -381,7 +381,7 @@ class PublishRecord(models.Model):
     class Meta:
         # managed = False
         db_table = 'publish_record'
-        ordering = ["-id"]
+        ordering = ["-execute_time"]
 
 
 class OperationRecord(models.Model):
