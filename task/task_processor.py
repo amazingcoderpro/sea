@@ -76,7 +76,9 @@ class TaskProcessor:
         # 定时更新pinterest数据
         logger.info("start_job_update_pinterest_data")
         self.update_pinterest_data()
-        self.pinterest_job = self.bk_scheduler.add_job(self.update_pinterest_data, 'interval', seconds=interval)
+        # self.pinterest_job = self.bk_scheduler.add_job(self.update_pinterest_data, 'interval', seconds=interval)
+        self.pinterest_job = self.bk_scheduler.add_job(self.update_pinterest_data, 'cron', day_of_week="*", hour=15)
+
 
     def start_job_publish_pin_job(self, interval=240):
         # # 定时发布pin
@@ -97,13 +99,19 @@ class TaskProcessor:
         self.shopify_collections_job = self.bk_scheduler.add_job(self.update_shopify_collections, 'cron', day_of_week="*", hour=1,
                                                      minute=10)
 
-    def start_job_update_shopify_product(self,interval=7200):
+    def start_job_update_shopify_product(self, interval=7200):
         # 定时更新shopify product
         logger.info("start_job_update_shopify_product")
         self.update_shopify_product()
-        self.shopify_product_job = self.bk_scheduler.add_job(self.update_shopify_product, 'cron', day_of_week="*", hour=1,)
+        self.shopify_product_job = self.bk_scheduler.add_job(self.update_shopify_product, 'cron', day_of_week="*", hour=15,)
 
-    def start_job_update_new(self, interval=120):
+    def start_job_update_new(self, interval=900):
+        """
+        店铺激活成功后立即拉取店铺产品信息，　
+        pinterest账号授权成功后，立即拉取pin信息
+        :param interval:
+        :return:
+        """
         def update_new():
             try:
                 conn = DBUtil().get_instance()
@@ -122,6 +130,7 @@ class TaskProcessor:
                 users = cursor.fetchall()
                 for username in users:
                     self.update_shopify_data(username[0])
+                    self.update_shopify_product(username[0])
             except Exception as e:
                 logger.exception("update new exception e={}".format(e))
                 return False
@@ -132,7 +141,7 @@ class TaskProcessor:
         # update_new()
         self.update_new_job = self.bk_scheduler.add_job(update_new, 'interval', seconds=interval, max_instances=50)
 
-    def start_all(self, rule_interval=120, publish_pin_interval=240, pinterest_update_interval=7200, shopify_update_interval=7200, update_new=120):
+    def start_all(self, rule_interval=120, publish_pin_interval=240, pinterest_update_interval=7200, shopify_update_interval=7200, update_new=900):
         logger.info("TaskProcessor start all work.")
         self.start_job_update_new(update_new)
         self.start_job_analyze_rule_job(rule_interval)
@@ -204,11 +213,17 @@ class TaskProcessor:
 
             cursor.execute('''select tag from `pinterest_history_data` where id>0''')
             tags = cursor.fetchall()
+            new_tag = 1
             if not tags:
-                tag_max = 1
+                new_tag = 1
             else:
                 tag_list = [tag[0] if tag[0] else 0 for tag in tags]
                 tag_max = max(tag_list)
+                # 如果仅更新一个账号数据时，tag保持不变，　整体更新时tag+1
+                if specific_account_id >= 0:
+                    new_tag = tag_max
+                else:
+                    new_tag = tag_max + 1
 
             for account in accounts:
                 account_id, token, account_uuid, nickname = account
@@ -261,7 +276,7 @@ class TaskProcessor:
                                 '''insert into `pinterest_history_data` (`board_uuid`, `board_name`, `board_followers`, 
                                 `board_id`, `pinterest_account_id`, `update_time`, `account_followings`, 
                                 `account_followers`, `account_views`, `pin_likes`, `pin_comments`, `pin_saves`, `account_name`, `tag`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                                (None, "", 0, None, account_id, time_now, account_followings, account_followers, 0, 0, 0, 0, user_name, tag_max+1))
+                                (None, "", 0, None, account_id, time_now, account_followings, account_followers, 0, 0, 0, 0, user_name, new_tag))
 
                             conn.commit()
 
@@ -335,7 +350,7 @@ class TaskProcessor:
                                     '''insert into `pinterest_history_data` (`board_uuid`, `board_name`, `board_followers`, 
                                     `board_id`, `pinterest_account_id`, `update_time`, `account_followings`, 
                                     `account_followers`, `account_views`, `pin_likes`, `pin_comments`, `pin_saves`, `account_name`, `tag`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                                    (uuid, name, board_followers, board_id, account_id, time_now, 0, 0, 0, 0, 0, 0, nickname, tag_max+1))
+                                    (uuid, name, board_followers, board_id, account_id, time_now, 0, 0, 0, 0, 0, 0, nickname, new_tag))
 
                                 conn.commit()
                 else:
@@ -460,7 +475,7 @@ class TaskProcessor:
                                             `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`, `account_name`, `tag`) 
                                             values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
                                             (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
-                                             update_time, board_id, pin_id, account_id, product_id, 0, 0, 0, 0, board_uuid, board_name, nickname, tag_max+1))
+                                             update_time, board_id, pin_id, account_id, product_id, 0, 0, 0, 0, board_uuid, board_name, nickname, new_tag))
                                     else:
                                         cursor.execute(
                                             '''insert into `pinterest_history_data` (`pin_uuid`, `pin_note`, `pin_thumbnail`, 
@@ -469,7 +484,7 @@ class TaskProcessor:
                                             `account_followers`, `account_views`, `board_followers`, `board_uuid`, `board_name`, `account_name`, `tag`) 
                                             values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
                                             (uuid, note, pin_thumbnail, pin_likes, pin_comments, pin_saves,
-                                             update_time, board_id, pin_id, account_id, 0, 0, 0, 0, board_uuid, board_name, nickname, tag_max+1))
+                                             update_time, board_id, pin_id, account_id, 0, 0, 0, 0, board_uuid, board_name, nickname, new_tag))
 
                                     conn.commit()
                     else:
@@ -514,8 +529,16 @@ class TaskProcessor:
 
             cursor.execute('''select tag from `product_history_data` where id>0''')
             tags = cursor.fetchall()
-            tag_list = [tag[0] if tag[0] else 0 for tag in tags]
-            tag_max = max(tag_list)
+            new_tag = 1
+            if not tags:
+                new_tag = 1
+            else:
+                tag_list = [tag[0] if tag[0] else 0 for tag in tags]
+                tag_max = max(tag_list)
+                if url:
+                    new_tag = tag_max
+                else:
+                    new_tag = tag_max + 1
 
             # 遍历数据库中的所有store
             for store in stores:
@@ -635,7 +658,7 @@ class TaskProcessor:
                                     # 如果全是0就不存了
                                     if not (pv == 0 and uv == 0 and nuv == 0 and transactions == 0):
                                         cursor.execute('''insert into `product_history_data` (`product_visitors`, `product_new_visitors`, `product_clicks`, `product_scan`, `product_sales`, `product_revenue`, `update_time`, `product_id`, `store_id`, `tag`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                                        ''', (uv, nuv, hits, pv, transactions, transactions_revenue, time_now, pro_id, store_id, tag_max+1))
+                                        ''', (uv, nuv, hits, pv, transactions, transactions_revenue, time_now, pro_id, store_id, new_tag))
                                         conn.commit()
                             else:
                                 logger.warning("get GA data failed, store view id={}, key_words={}".format(store_view_id, pro_uuid))
@@ -683,10 +706,16 @@ class TaskProcessor:
 
             cursor.execute('''select tag from `product_history_data` where id>0''')
             tags = cursor.fetchall()
+            new_tag = 1
             if not tags:
-                tag_max = 1
+                new_tag = 1
+
             else:
                 tag_max = max([tag[0] if tag[0] else 0 for tag in tags])
+                if url:
+                    new_tag = tag_max
+                else:
+                    new_tag = tag_max + 1
 
             # 组装store和collection和product数据，之后放入redis中
             store_collections_dict = {}
@@ -839,7 +868,7 @@ class TaskProcessor:
                                         #     total_visitors += visitors[0]
                                         # 如果全是0就不存了
                                         if not (pv == 0 and uv == 0 and nuv == 0 and transactions == 0):
-                                            cursor.execute('''insert into `product_history_data` (`product_visitors`, `product_new_visitors`, `product_clicks`, `product_scan`, `product_sales`, `product_revenue`, `update_time`, `product_id`, `store_id`, `tag`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', (uv, nuv, hits, pv, transactions, transactions_revenue, time_now, pro_id, store_id, tag_max+1))
+                                            cursor.execute('''insert into `product_history_data` (`product_visitors`, `product_new_visitors`, `product_clicks`, `product_scan`, `product_sales`, `product_revenue`, `update_time`, `product_id`, `store_id`, `tag`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', (uv, nuv, hits, pv, transactions, transactions_revenue, time_now, pro_id, store_id, new_tag))
                                             conn.commit()
                                 else:
                                     logger.warning("get GA data failed, store view id={}, key_words={}".format(store_view_id, pro_uuid))
@@ -1464,7 +1493,7 @@ def test():
     tsp = TaskProcessor()
     # thu = tsp.image_2_base64(image_src="https://i.pinimg.com/60x60_RS/df/5c/53/df5c53facea5fd63d5796334b43f036d.jpg", format="jpeg")
 
-    tsp.start_all(rule_interval=60, publish_pin_interval=120, pinterest_update_interval=3800, shopify_update_interval=3800, update_new=300)
+    tsp.start_all(rule_interval=60, publish_pin_interval=120, pinterest_update_interval=3800, shopify_update_interval=3800, update_new=900)
 
     while 1:
         time.sleep(1)
@@ -1472,7 +1501,7 @@ def test():
 
 def main():
     tsp = TaskProcessor()
-    tsp.start_all(rule_interval=120, publish_pin_interval=120, pinterest_update_interval=7200*3, shopify_update_interval=7200*3, update_new=120)
+    tsp.start_all(rule_interval=120, publish_pin_interval=120, pinterest_update_interval=7200*3, shopify_update_interval=7200*3, update_new=900)
     while 1:
         time.sleep(1)
 
