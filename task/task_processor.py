@@ -103,7 +103,7 @@ class TaskProcessor:
         # 定时更新shopify product
         logger.info("start_job_update_shopify_product")
         self.update_shopify_product()
-        self.shopify_product_job = self.bk_scheduler.add_job(self.update_shopify_product, 'cron', day_of_week="*", hour=15,)
+        self.shopify_product_job = self.bk_scheduler.add_job(self.update_shopify_product, 'cron', day_of_week="*", hour=16,)
 
     def start_job_update_new(self, interval=900):
         """
