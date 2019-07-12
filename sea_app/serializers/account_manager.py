@@ -103,6 +103,7 @@ class RuleSerializer(serializers.ModelSerializer):
             product_list = list(product_dict.values())
             publish_list = self.create_publish_record(product_list, schedule_rule_list,
                         self.context["request"].data["start_time"],self.context["request"].data["end_time"])
+            validated_data["state"] = 0
             rule_instance = super(RuleSerializer, self).create(validated_data)
             for row in schedule_rule_list:
                 row["rule"] = rule_instance
