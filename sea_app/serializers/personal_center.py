@@ -66,8 +66,8 @@ class SetPasswordSerializer(serializers.ModelSerializer):
         return attrs
 
     def update(self, instance, validated_data):
-        if instance.username == validated_data["username"] and instance.is_active == 1:
-            raise serializers.ValidationError("Please check that the input or account is activated.")
+        if instance.username != validated_data["username"]:
+            raise serializers.ValidationError("Please check username")
         instance.set_password(validated_data["password"])
         instance.save()
         comment = {"username": instance.username, "password": validated_data["password"], "code": instance.code}

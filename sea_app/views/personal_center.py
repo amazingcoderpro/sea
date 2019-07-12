@@ -204,8 +204,8 @@ class ShopifyCallback(APIView):
             instance.token = result["data"]
             instance.save()
             user_instance = models.User.objects.filter(id=instance.user_id).first()
-            user_instance.is_active = 0
-            user_instance.password = ""
+            # user_instance.is_active = 0
+            # user_instance.password = ""
             user_instance.save()
             email = user_instance.email
         else:

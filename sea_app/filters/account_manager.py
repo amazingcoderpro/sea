@@ -160,11 +160,11 @@ class ReportFilter(BaseFilterBackend):
             queryset = queryset.filter(state__in=eval(state))
         if start_time and end_time:
             queryset = queryset.filter(execute_time__range=(start_time,end_time))
-        record_manager = request.query_params.get("record_manager", '')
-        if record_manager:
-            queryset = queryset.order_by("execute_time")
-        else:
-            queryset = queryset.order_by("-finished_time")
+        # record_manager = request.query_params.get("record_manager", '')
+        # if record_manager:
+        #     queryset = queryset.order_by("execute_time")
+        # else:
+        #     queryset = queryset.order_by("-finished_time")
         return queryset
 
 
