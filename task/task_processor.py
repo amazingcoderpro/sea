@@ -143,7 +143,7 @@ class TaskProcessor:
     def start_all(self, rule_interval=120, publish_pin_interval=240, pinterest_update_interval=7200, shopify_update_interval=7200, update_new=900):
         logger.info("TaskProcessor start all work.")
         self.start_job_update_new(update_new)
-        self.start_job_analyze_rule_job(rule_interval)
+        #self.start_job_analyze_rule_job(rule_interval)
         self.start_job_publish_pin_job(publish_pin_interval)
         self.start_job_update_pinterest_data(pinterest_update_interval)
         self.start_job_update_shopify_collections(shopify_update_interval)
