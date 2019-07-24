@@ -12,8 +12,10 @@ logger = logging.getLogger()
 SHOPIFY_CONFIG = {
     # "client_id": "f9cd4d9b7362ae81038635518edfd98f",#ordersea
     # "client_secret": "a7159ff763aadb8f6c047563dbbe73e1",
-    "client_id": "7fced15ff9d1a461f10979c3eae2eca8",  # pinbooster
-    "client_secret": "461a69b7c8c13a37416d79769175ce23",
+    # "client_id": "7fced15ff9d1a461f10979c3eae2eca8",  # pinbooster
+    "client_id": "5039319345541466734", # Pin More Pins
+    # "client_secret": "461a69b7c8c13a37416d79769175ce23",
+    "client_secret": "ca3cad3059dd5314abf66144e0e8ce2a72b6c864092c5da3427bbbd914f2ab5d",    # Pin More Pinsr
     "ask_permission_uri": "https://pinbooster.seamarketings.com/api/v1/auth/shopify/ask_permission/",
     "redirect_uri": "https://pinbooster.seamarketings.com/api/v1/auth/shopify/callback/",
     "scopes": ["read_content", "write_content", "read_themes", "write_themes", "read_products",
