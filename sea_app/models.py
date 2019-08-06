@@ -355,7 +355,7 @@ class RuleSchedule(models.Model):
     interval_time = models.IntegerField(default=3600, verbose_name="发布间隔时间（秒）")
     rule = models.ForeignKey(Rule, related_name="schedule_rule", on_delete=models.DO_NOTHING)
 
-    post_time = models.CharField(verbose_name="发布时间节点", null=True, blank=True, max_length=64)
+    post_time = models.TextField(verbose_name="发布时间节点", null=True, blank=True)
 
     class Meta:
         # managed = False
