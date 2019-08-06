@@ -150,7 +150,7 @@ class ProductsApi:
             result = requests.get(shop_url)
             result2 = requests.get(shop_url2)
 
-            if result.status_code == 200 and result2.status_code == 200:
+            if result.status_code and result2.status_code in [200, 201]:
                 logger.info("get shopify all collections info is success")
                 res_dict = json.loads(result.text)
                 res_dict.update(json.loads(result2.text))
@@ -195,7 +195,6 @@ class ProductsApi:
             result = requests.get(products_url)
             if result.status_code == 200:
                 logger.info("get shopify all products is success")
-                # print(result.text)
                 return {"code": 1, "msg": "", "data": json.loads(result.text)}
             else:
                 logger.info("get shopify all products is failed")
@@ -218,6 +217,7 @@ if __name__ == '__main__':
     products_api.get_all_collections()
     # 获取cellection-id 的所有的产品接口
     products_api.get_collections_products(collection_id="80777805869", limit="250")
+
     # products_api.get_custom_collections()
     # products_api.get_all_products(limit="250", since_id="1833170796589")
     # products_api.get_order(create_start_time="2019-05-22T0:0:0-04:00", create_end_time="2019-05-28T0:0:0-04:00", key_word="google", financial_status="paid")
