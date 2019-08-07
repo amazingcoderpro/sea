@@ -1305,8 +1305,9 @@ class TaskProcessor:
                     # conn.commit()
                 else:
                     # 发布失败
+                    logger.error("publish pin error record_id={}, error_message={}".format(record["id"],ret.get("msg", "")))
                     cursor.execute('''insert into `pin` (`note`, `origin_link`, `thumbnail`, `update_time`, `board_id`, `product_id`, `saves`, `comments`, `likes`, `image_url`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    ''', (product_name, link_with_utm, thumbnail, time_now, board_id, product_id, 0, 0, 0, record.get("product_img_url", "")))
+                    ''', (product_name, link_with_utm, "", time_now, board_id, product_id, 0, 0, 0, record.get("product_img_url", "")))
                     pin_id = cursor.lastrowid
 
                     record_state = 3
