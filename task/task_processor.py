@@ -1278,13 +1278,12 @@ class TaskProcessor:
 
                 logger.info("publish pin board name={}, product name={}".format(record["board_name"], product_name))
                 ret = pin_api.create_pin(board_id=record["board_uuid"], note=product_name, image_url=record["product_img_url"], link=link_with_utm)
-
+                thumbnail = self.image_2_base64(record.get("product_img_url", ""))
                 if ret["code"] == 1:
                     data = ret["data"]
                     pin_uuid = data["id"]
                     url = data["url"]
                     # site_url = data["original_link"]
-                    thumbnail = self.image_2_base64(record.get("product_img_url", ""))
                     cursor.execute('''insert into `pin` (`uuid`, `url`, `note`, `origin_link`, `thumbnail`, `publish_time`, `update_time`, `board_id`, `product_id`, `saves`, `comments`, `likes`, `image_url`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     ''', (pin_uuid, url, product_name, link_with_utm, thumbnail, time_now, time_now, board_id, product_id, 0, 0, 0, record.get("product_img_url", "")))
                     pin_id = cursor.lastrowid
@@ -1307,7 +1306,7 @@ class TaskProcessor:
                     # 发布失败
                     logger.error("publish pin error record_id={}, error_message={}".format(record["id"],ret.get("msg", "")))
                     cursor.execute('''insert into `pin` (`note`, `origin_link`, `thumbnail`, `update_time`, `board_id`, `product_id`, `saves`, `comments`, `likes`, `image_url`) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    ''', (product_name, link_with_utm, "", time_now, board_id, product_id, 0, 0, 0, record.get("product_img_url", "")))
+                    ''', (product_name, link_with_utm, thumbnail, time_now, board_id, product_id, 0, 0, 0, record.get("product_img_url", "")))
                     pin_id = cursor.lastrowid
 
                     record_state = 3
