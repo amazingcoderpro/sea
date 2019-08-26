@@ -147,10 +147,11 @@ APPEND_SLASH = False
 list_str = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 's', 't', 'x', 'y',
             'z']
 
-JWT_AUTH_HEADER_PREFIX = "".join(random.sample(list_str, 4))
+# JWT_AUTH_HEADER_PREFIX = "".join(random.sample(list_str, 4))
+JWT_AUTH_HEADER_PREFIX = "JWT"
 
 JWT_AUTH = {
-    'JWT_AUTH_HEADER_PREFIX': JWT_AUTH_HEADER_PREFIX,
+    'JWT_AUTH_HEADER_PREFIX': "JWT",
     'JWT_EXPIRATION_DELTA': datetime.timedelta(days=7),
     'JWT_SECRET_KEY': 'sea',
 }

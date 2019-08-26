@@ -12,7 +12,7 @@ threads = 1
 # 监听端口80
 bind = '0.0.0.0:8000'
 # 设置守护进程,将进程交给supervisor管理
-daemon = 'false'
+daemon = True
 # 开启debug模式
 debug = True
 # 工作模式协程
