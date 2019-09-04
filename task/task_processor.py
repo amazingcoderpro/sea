@@ -1466,14 +1466,23 @@ class TaskProcessor:
                         try:
                             if str(category_id) in exist_collections_dict.keys():
                                 id = exist_collections_dict[str(category_id)]
-                                logger.info("product_collections is already exist, url={}, id={}".format(url,id))
+                                logger.info("product_collections is already exist, url={}, id={}".format(url, id))
                                 cursor.execute(
                                     '''update `product_category` set title=%s, url=%s, category_id=%s, update_time=%s where id=%s''',
                                     (title, url, category_id, update_time, id))
                             else:
                                 cursor.execute(
-                                    "insert into `product_category` (`title`, `url`, `category_id`, `store_id`, `create_time`, `update_time`) values (%s, %s, %s, %s, %s, %s)",
-                                    (title, url, category_id, store_id, update_time, update_time))
+                                    '''select `id`  from product_category where store_id=%s and title=%s''',
+                                    (store_id, title))
+                                already_exists_id = cursor.fetchone()
+                                if already_exists_id:
+                                    cursor.execute(
+                                        '''update `product_category` set title=%s, url=%s, category_id=%s, update_time=%s where id=%s''',
+                                        (title, url, category_id, update_time, already_exists_id[0]))
+                                else:
+                                    cursor.execute(
+                                        "insert into `product_category` (`title`, `url`, `category_id`, `store_id`, `create_time`, `update_time`) values (%s, %s, %s, %s, %s, %s)",
+                                        (title, url, category_id, store_id, update_time, update_time))
                             conn.commit()
                         except Exception as e:
                             logger.exception("update product_category exception e={}".format(e))
